@@ -1,15 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
+
+<!doctype html>
+<html lang="en" data-bs-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src=""></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Singapore Event Finder – discover concerts, nightlife, fitness, food, tech and arts events across SG.">
+  <title>SG Event Finder</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .hero {
+      background: linear-gradient(135deg, rgba(13,110,253,.15), rgba(32,201,151,.15));
+    }
+    .event-img { object-fit: cover; height: 160px; }
+    .badge-tag { text-transform: uppercase; letter-spacing:.02em }
+    .filter-card { position: sticky; top: 1rem; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
     <link rel="stylesheet" href="style.css">
     <script src="script.js"></script>
 </head>
 <body>
-    <h1>Hello Worldddddd</h1>
-    <h1>What are you doing</h1>
-</body>
-</html>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#"><i class="bi bi-geo-alt-fill me-2"></i>SG Event Finder</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navContent">
+        <form class="ms-lg-3 d-flex gap-2 flex-grow-1" role="search" onsubmit="event.preventDefault(); applyFilters();">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="q" class="form-control" type="search" placeholder="Search events, venues, tags" aria-label="Search">
+          </div>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+        <ul class="navbar-nav ms-auto align-items-lg-center mt-2 mt-lg-0">
+          <li class="nav-item me-lg-2">
+            <button class="btn btn-outline-secondary w-100" id="themeToggle" type="button" aria-label="Toggle theme"><i class="bi bi-brightness-high"></i></button>
+          </li>
+          <li class="nav-item">
+            <button class="btn btn-success position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#shortlist" aria-controls="shortlist">
+              <i class="bi bi-bookmark-heart"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="shortlistCount">0</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero / Filters -->
+  <section class="hero py-4 border-bottom">
+    <div class="container">
+      <div class="row g-3">
+        <div class="col-lg-3">
+          <div class="card filter-card shadow-sm">
+            <div class="card-header bg-transparent fw-semibold">Filters</div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select id="category" class="form-select" multiple size="6" aria-describedby="catHelp"></select>
+                <div id="catHelp" class="form-text">Select multiple to broaden results</div>
+              </div>
