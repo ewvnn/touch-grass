@@ -1,0 +1,71 @@
+    .hero {
+      background: linear-gradient(135deg, rgba(13,110,253,.15), rgba(32,201,151,.15));
+    }
+    
+    .event-img { object-fit: cover; height: 160px; }
+    .badge-tag { text-transform: uppercase; letter-spacing:.02em }
+    .filter-card { position: sticky; top: 1rem; }
+    .cursor-pointer { cursor: pointer; }
+
+/* nav bar -- standard for all pages */
+    :root {
+      --tg-primary: #b9f9b9;
+      --tg-secondary: #51b058;
+      --tg-text: #0f172a; /* dark slate for contrast */
+    }
+
+    .navbar-touchgrass {
+      background-color: var(--tg-secondary);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .navbar-touchgrass .navbar-brand {
+      font-weight: 700;
+      color: var(--tg-text);
+      letter-spacing: 0.2px;
+    }
+
+    .navbar-touchgrass .nav-link {
+      color: var(--tg-text);
+      border-radius: .75rem;
+      padding: .5rem .6rem;
+    }
+    .navbar-touchgrass .nav-link:hover,
+    .navbar-touchgrass .nav-link:focus {
+      background-color: rgba(182, 250, 188, 0.35);
+      color: var(--tg-text);
+    }
+
+    .btn-tg {
+      background-color: var(--tg-primary);
+      border-color: var(--tg-primary);
+      color: #0a0a0a;
+      font-weight: 600;
+    }
+    .btn-tg:hover,
+    .btn-tg:focus {
+      filter: brightness(0.95);
+      color: #0a0a0a;
+    }
+
+    .form-control:focus {
+      border-color: var(--tg-primary);
+      box-shadow: 0 0 0 .25rem rgba(182, 250, 188, 0.4);
+    }
+
+    /* Center search on large screens and keep good widths */
+    @media (min-width: 992px) { /* lg */
+      #eventSearchForm {
+        min-width: 460px;
+        max-width: 720px;
+        width: 50%;
+      }
+    }
+
+    /* Simple grass logo sizing */
+    .grass-logo {
+      width: 28px;
+      height: 28px;
+    }
+
+/* calendar.html */
