@@ -1,0 +1,99 @@
+ body { 
+    margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background:#f6f8fb;}
+
+.navbar {
+     width:100%; background:#fff; box-shadow:0 2px 7px 0 rgba(0,0,0,0.01); padding: 14px 28px; display:flex; justify-content:space-between; align-items:center;}
+
+    .logo { 
+        font-weight:bold;font-size:22px; display:flex; align-items:center;}
+
+    .logo img {
+         width:28px; margin-right:8px;}
+
+    .navlinks { 
+        display:flex; gap:28px; align-items:center; font-size:15px;}
+
+    .user { 
+        display:flex; gap:8px; align-items:center;}
+
+    .user img { 
+        width:32px; border-radius:50%; }
+
+    .main {
+         display:flex; min-height:90vh; }
+
+    .left-panel { 
+        background:#fff; width: 50%; padding:44px 36px 22px 36px; border-radius:0 32px 32px 0; display:flex; flex-direction:column; box-shadow:0 6px 24px 0 rgba(0,0,0,.04);}
+
+    .left-panel h2 { 
+        font-size:23px; margin:0 0 7px 0; }
+
+    .left-panel .desc { 
+        font-size:40px; font-weight:600; margin-bottom:20px; margin-top: 40px;}
+    
+    .header-row {
+        display: flex;
+        align-items: center;     /* Vertically center heading and dropdown */
+        justify-content: space-between; /* Push them apart horizontally */
+        margin-bottom: 7px;      /* Match your h2 spacing */
+        }
+
+    .header-row h2 {
+    margin: 0;               /* Remove bottom margin for tight alignment */
+    font-size: 23px;         /* Keep same as before */
+    }
+
+    /* Style the dropdown neatly beside header */
+    .dropdown-select {
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    }
+
+    .location-list {
+         margin-bottom:13px; }
+
+    .location-row { 
+        display:flex; align-items:center; margin: 8px 0;}
+
+    .loc-num { 
+        background:#dde2ed;color:#1e232e;font-size:18px;font-weight:600;width:34px;height:45px; display:flex;align-items:center;justify-content:center; border-radius:10px 0 0 10px;}
+
+    .loc-input { 
+        flex:1;font-size:16px;border:2px solid #dde2ed;outline:none;border-radius:0 10px 10px 0;background:#f7f9fa; padding:11px 14px;}
+
+    .add-btn { 
+        border:none; background:#232c43; color:#fff; border-radius:50%; width:36px; height:36px; margin-left:12px; font-size:24px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+
+    .planner-actions{
+        display:flex;gap:18px;margin-top:31px;}
+
+    .planner-actions button{
+        flex:1;padding:12px 0;font-size:16px;border:none;border-radius:8px;background:#252d47;color:#fff;cursor:pointer;transition:background .18s;}
+
+    .planner-actions button:hover{
+        background:#46569f;}
+
+    .controls-row{
+        display:flex;gap:14px;align-items:center;margin:12px 0 0 0;}
+
+    .dropdown-select{
+        font-size:16px;padding:5px 10px;border-radius:7px;}
+
+    .mapbox-col{
+        flex:1;width: 50%;}
+
+    #map{
+        width:100%;height:91vh;min-height:650px;border-radius:0 0 0 30px;}
+
+    #route-summary { 
+        margin-top: 12px; font-size: 16px; font-weight: 600; }
+        
+    @media (max-width:1100px){
+      .main { flex-direction:column; align-items:center;}
+      .left-panel { margin-bottom:18px; border-radius:0 0 22px 22px;}
+      #map { border-radius:20px; min-height:400px; }
+    }
