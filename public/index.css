@@ -1,0 +1,23 @@
+/* ========= Touch Grass · INDEX ========= */
+.hero {
+    background: linear-gradient(135deg, rgba(13, 110, 253, .15), rgba(32, 201, 151, .15));
+}
+
+.event-img {
+    object-fit: cover;
+    height: 160px;
+}
+
+.badge-tag {
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+.filter-card {
+    position: sticky;
+    top: 1rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
