@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gloob! - Singapore Itinerary Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background:#f6f8fb;}
+    .navbar { width:100%; background:#fff; box-shadow:0 2px 7px 0 rgba(0,0,0,0.01); padding: 14px 28px; display:flex; justify-content:space-between; align-items:center;}
+    .logo { font-weight:bold;font-size:22px; display:flex; align-items:center;}
+    .logo img { width:28px; margin-right:8px;}
+    .navlinks { display:flex; gap:28px; align-items:center; font-size:15px;}
+    .user { display:flex; gap:8px; align-items:center;}
+    .user img { width:32px; border-radius:50%; }
+    .main { display:flex; min-height:90vh; }
+    .left-panel { background:#fff; min-width:400px; max-width:500px; padding:44px 36px 22px 36px; border-radius:0 32px 32px 0; display:flex; flex-direction:column; box-shadow:0 6px 24px 0 rgba(0,0,0,.04);}
+    .left-panel h2 { font-size:23px; margin:0 0 7px 0; }
+    .left-panel .desc { font-size:29px; font-weight:600; margin-bottom:20px;}
+    .location-list { margin-bottom:13px; }
+    .location-row { display:flex; align-items:center; margin: 8px 0;}
+    .loc-num { background:#dde2ed;color:#1e232e;font-size:18px;font-weight:600;width:34px;height:45px; display:flex;align-items:center;justify-content:center; border-radius:10px 0 0 10px;}
+    .loc-input { flex:1;font-size:16px;border:2px solid #dde2ed;outline:none;border-radius:0 10px 10px 0;background:#f7f9fa; padding:11px 14px;}
+    .add-btn { border:none; background:#232c43; color:#fff; border-radius:50%; width:36px; height:36px; margin-left:12px; font-size:24px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+    .planner-actions{display:flex;gap:18px;margin-top:31px;}
+    .planner-actions button{flex:1;padding:12px 0;font-size:16px;border:none;border-radius:8px;background:#252d47;color:#fff;cursor:pointer;transition:background .18s;}
+    .planner-actions button:hover{background:#46569f;}
+    .controls-row{display:flex;gap:14px;align-items:center;margin:12px 0 0 0;}
+    .dropdown-select{font-size:16px;padding:5px 10px;border-radius:7px;}
+    .mapbox-col{flex:1;min-width:370px;}
+    #map{width:100%;height:91vh;min-height:650px;border-radius:0 0 0 30px;}
+    #route-summary { margin-top: 12px; font-size: 16px; font-weight: 600; }
+    @media (max-width:1100px){
+      .main { flex-direction:column; align-items:center;}
+      .left-panel { margin-bottom:18px; border-radius:0 0 22px 22px;}
+      #map { border-radius:20px; min-height:400px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo"><img src="https://img.icons8.com/external-smashingstocks-glyph-smashing-stocks/54/000000/external-globe-travel-smashingstocks-glyph-smashing-stocks.png"/>Gloob!</div>
+    <div class="navlinks"><a href="#">Discover</a><a href="#">Add Reviews</a><a href="#">Plan Itineraries</a></div>
+    <div class="user">
+      <img src="https://randomuser.me/api/portraits/men/32.jpg"/>
+      <div><b>Marcus Jae</b><br><span style="font-size:13px; color:gray;">Singapore University</span></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="left-panel">
+      <h2>Itinerary Planning</h2>
+      <div class="controls-row">
+        <select class="dropdown-select" id="transport">
+          <option value="driving">Car-Live</option>
+          <option value="cycling">Cycling</option>
+          <option value="walking">Walking</option>
+        </select>
+      </div>
+      <div class="desc">Start by adding your<br>locations below !</div>
+      <div class="location-list" id="location-list"></div>
+      <button class="add-btn" id="add-location" title="Add Location">+</button>
+      <div class="planner-actions">
+        <button id="calculate-route">🍒 Calculate Distance</button>
+        <button id="optimize-route">⭐ Optimize Your Route</button>
+        <button id="tour-btn">🧑‍💼 Bring me for a Tour!</button>
+      </div>
+      <div id="route-summary"></div>
+    </div>
+    <div class="mapbox-col">
+      <div id="map"></div>
+    </div>
+  </div>
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1Ijoid2FzaWwwOTAzIiwiYSI6ImNtZ3FibnVlMDJvc3EycnExOWpra3R2NDUifQ.D0VDHKli-MzvMJKVEvWU_A'; // Replace with your Mapbox token
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [103.8198, 1.3521], // Singapore coordinates
+    zoom: 12
+  });
+
+  let locations = [
+    { value: 'Marina Bay Sands Singapore', marker: null, coords: null },
+    { value: 'Singapore Zoo', marker: null, coords: null },
+    { value: 'Gardens by the Bay Singapore', marker: null, coords: null },
+    { value: 'Changi Airport Singapore', marker: null, coords: null }
+  ];
+
+  function updateLocationList() {
+    const parent = document.getElementById('location-list');
+    parent.innerHTML = '';
+    locations.forEach((loc, i) => {
+      const row = document.createElement('div');
+      row.className = 'location-row';
+      const num = document.createElement('div');
+      num.className = 'loc-num';
+      num.textContent = i + 1;
+      const input = document.createElement('input');
+      input.className = 'loc-input';
+      input.value = loc.value;
+      input.placeholder = 'Enter location...';
+      input.oninput = () => {
+        loc.value = input.value;
+        loc.coords = null;
+        removeMarker(loc);
+      };
+      row.appendChild(num);
+      row.appendChild(input);
+      parent.appendChild(row);
+    });
+  }
+  function addLocation() {
+    locations.push({ value: '', marker: null, coords: null });
+    updateLocationList();
+  }
+  document.getElementById('add-location').onclick = addLocation;
+  updateLocationList();
+
+  // Geocode locations (Singapore restricted)
+  async function geocodePlace(name) {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(name)}.json?country=SG&access_token=${mapboxgl.accessToken}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.features?.[0] || null;
+  }
+
+  function removeMarker(loc) {
+    if (loc.marker) {
+      loc.marker.remove();
+      loc.marker = null;
+    }
+  }
+
+  async function showPinsAndPath() {
+    locations.forEach(loc => removeMarker(loc));
+    if (map.getSource('routeLine')) {
+      map.removeLayer('routeLine');
+      map.removeSource('routeLine');
+    }
+    let points = [];
+    for (let loc of locations) {
+      if (!loc.value) continue;
+      if (!loc.coords) {
+        const feat = await geocodePlace(loc.value);
+        if (feat) {
+          loc.coords = feat.center;
+        } else {
+          continue;
+        }
+      }
+      loc.marker = new mapboxgl.Marker({ color: '#e74c3c' })
+        .setLngLat(loc.coords)
+        .setPopup(new mapboxgl.Popup({ offset: 16 }).setText(loc.value))
+        .addTo(map);
+      points.push(loc.coords);
+    }
+    if (points.length >= 2) {
+      map.addSource('routeLine', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: points }
+        }
+      });
+      map.addLayer({
+        id: 'routeLine',
+        type: 'line',
+        source: 'routeLine',
+        paint: { 'line-color': '#2064d1', 'line-width': 4 }
+      });
+      const bounds = new mapboxgl.LngLatBounds();
+      points.forEach(pt => bounds.extend(pt));
+      map.fitBounds(bounds, { padding: 60 });
+    } else if (points.length == 1) {
+      map.flyTo({ center: points[0], zoom: 14 });
+    }
+  }
+
+  async function showRouteStats() {
+    const points = locations.filter(loc => loc.coords).map(loc => loc.coords);
+    if (points.length < 2) return;
+    const mode = document.getElementById('transport').value;
+    const coordsStr = points.map(arr => arr.join(',')).join(';');
+    const url = `https://api.mapbox.com/directions/v5/mapbox/${mode}/${coordsStr}?geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.routes && data.routes[0]) {
+      const dist = (data.routes[0].distance / 1000).toFixed(2);
+      const dur = (data.routes[0].duration / 60).toFixed(0);
+      let statsDiv = document.getElementById('route-summary');
+      if (!statsDiv) {
+        statsDiv = document.createElement('div');
+        statsDiv.id = 'route-summary';
+        statsDiv.style.marginTop = '16px';
+        document.querySelector('.left-panel').appendChild(statsDiv);
+      }
+      statsDiv.innerHTML = `<b>Route Summary</b><br>Distance: ${dist} km<br>Duration: ${dur} min`;
+    }
+  }
+
+  document.getElementById('calculate-route').onclick = async () => {
+    await showPinsAndPath();
+    await showRouteStats();
+  };
+
+  document.getElementById('optimize-route').onclick = async () => {
+    await showPinsAndPath();
+    await showRouteStats();
+  };
+
+  document.getElementById('tour-btn').onclick = async () => {
+    await showPinsAndPath();
+    await showRouteStats();
+  };
+
+  // Auto update pins on input changes after short debounce
+  let typingTimeout = null;
+  document.getElementById('location-list').addEventListener('input', function () {
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(async () => {
+      await showPinsAndPath();
+      await showRouteStats();
+    }, 350);
+  });
+
+  showPinsAndPath();
+  showRouteStats();
+</script>
+</body>
+</html>
