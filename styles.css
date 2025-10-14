@@ -1,4 +1,4 @@
-    .hero {
+/*    .hero {
       background: linear-gradient(135deg, rgba(13,110,253,.15), rgba(32,201,151,.15));
     }
     
@@ -68,4 +68,20 @@
       height: 28px;
     }
 
-/* calendar.html */
+/* calendar.html */ 
+
+
+
+/* Footer */
+.footer-tg {
+  background:
+    radial-gradient(800px 120px at 20% -40px, rgba(32,201,151,.10), transparent),
+    radial-gradient(1000px 120px at 80% -60px, rgba(32,201,151,.08), transparent),
+    var(--tg-soft);
+}
+.footer-tg a:hover { color: var(--tg-primary); }
+.footer-tg .form-text a { text-decoration: underline; }
+
+/* Utilities */
+.bg-body-tertiary { background-color: #f6f9f8 !important; } /* slightly greener than default */
+.rounded-4 { border-radius: 1rem !important; }
