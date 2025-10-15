@@ -36,6 +36,7 @@
     "username": "Autumn",
     "email": "autumn@example.com",
     "password": "password",
-    "friendlist": [1,2]
+    "friendlist": [1,2],
+    "favourites": []
   }
 ]

@@ -2,6 +2,9 @@
 const url="profiles.json";
 async function retrieve_profile_info()
 {
+
+
+  
 axios.get("profiles.json")
   .then(response => {
     const profileinfo = response.data; // THIS is the [[PromiseResult]] value
