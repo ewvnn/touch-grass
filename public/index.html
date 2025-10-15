@@ -177,11 +177,14 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
 
-  <!-- Firebase SDK-->
+  <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { initializeApp, getApps, getApp }
+      from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc }
+      from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDvJe-P_cND8HtHXSy-2JiE4GTv0HjISVQ",
@@ -192,48 +195,94 @@
       appId: "1:274431894037:web:51d11404b04f90fa63641c"
     };
 
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    // Start (or reuse) the Firebase app
+    let app;
+    if (getApps().length > 0) {
+      app = getApp();  // already started somewhere else
+    } else {
+      app = initializeApp(firebaseConfig);
+    }
+
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const show = (selector, on) =>
-      document.querySelectorAll(selector).forEach(el => el.classList.toggle('d-none', !on));
+    function showElements(selector, shouldShow) {
+      const nodes = document.querySelectorAll(selector);
+      nodes.forEach(function (el) {
+        if (shouldShow) {
+          el.classList.remove("d-none");
+        } else {
+          el.classList.add("d-none");
+        }
+      });
+    }
 
-    async function resolveFirstName(user) {
-      // Auth displayName
-      if (user?.displayName) {
-        const first = user.displayName.trim().split(/\s+/)[0];
-        if (first) return first;
+    async function getFirstNameForNavbar(user) {
+      // Check Auth displayName first
+      if (user && user.displayName) {
+        const full = user.displayName.trim();
+        if (full.length > 0) {
+          const first = full.split(/\s+/)[0];
+          if (first.length > 0) {
+            return first;
+          }
+        }
       }
-      // Firestore profile { firstName }
+
+      // Try Firestore users/{uid}.firstName
       try {
-        const ref = doc(db, "users", user.uid);
-        const snap = await getDoc(ref);
-        const data = snap.data();
-        if (data?.firstName) return String(data.firstName).trim();
-      } catch {  } /* ignore */
+        if (user && user.uid) {
+          const userDocRef = doc(db, "users", user.uid);
+          const snap = await getDoc(userDocRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data && typeof data.firstName === "string") {
+              const firstName = data.firstName.trim();
+              if (firstName.length > 0) {
+                return firstName;
+              }
+            }
+          }
+        }
+      } catch (err) { }
+
       return "Profile";
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      show('.authed-only', !!user);
-      show('.anon-only', !user);
 
-      const nameEl = document.getElementById('navDisplayName');
-      if (!nameEl) return;
+    onAuthStateChanged(auth, async function (user) {
+      // Toggle which nav items are visible
+      const isLoggedIn = !!user;
+      showElements(".authed-only", isLoggedIn);
+      showElements(".anon-only", !isLoggedIn);
 
-      nameEl.textContent = user ? await resolveFirstName(user) : 'Profile';
+      // Update the display name text
+      const nameSpan = document.getElementById("navDisplayName");
+      if (nameSpan) {
+        if (isLoggedIn) {
+          const firstName = await getFirstNameForNavbar(user);
+          nameSpan.textContent = firstName;
+        } else {
+          nameSpan.textContent = "Profile";
+        }
+      }
     });
 
     // Sign out
-    document.querySelector('[data-action="logout"]')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await signOut(auth);
-      alert("You have successfully logged out!");
-      window.location.href = "../index.html";
-    });
+    const logoutLink = document.querySelector('[data-action="logout"]');
+    if (logoutLink) {
+      logoutLink.addEventListener("click", async function (evt) {
+        evt.preventDefault();
+        try {
+          await signOut(auth);
+          alert("You have successfully logged out!");
+        } finally {
+          // Go back to the homepage
+          window.location.href = "/index.html";
+        }
+      });
+    }
   </script>
-
 
 </body>
 

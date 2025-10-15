@@ -1,3 +1,4 @@
+// --- Firebase import ---
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import {
     getAuth,
@@ -19,7 +20,7 @@ import {
     serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-/* --- Firebase init --- */
+// --- Firebase setup ---
 const firebaseConfig = {
     apiKey: "AIzaSyDvJe-P_cND8HtHXSy-2JiE4GTv0HjISVQ",
     authDomain: "touch-grass-77c7c.firebaseapp.com",
@@ -28,160 +29,239 @@ const firebaseConfig = {
     messagingSenderId: "274431894037",
     appId: "1:274431894037:web:51d11404b04f90fa63641c"
 };
-// Reuse if already initialized (prevents “Firebase App named '[DEFAULT]' already exists”)
+
+// Re-use existing app if it was already initialized somewhere else
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ROUTES
-const HOME = `${location.origin}/index.html`;
-const LOGIN = `${location.origin}/auth/login.html`;
+// Simple page routes
+const HOME_URL = location.origin + "/index.html";
+const LOGIN_URL = location.origin + "/auth/login.html";
 
-function mapAuthError(err) {
-    const code = err?.code || "";
+// Small helper: turn Firebase errors into friendly messages
+function friendlyAuthMessage(error) {
+    const code = (error && error.code) ? error.code : "";
 
-    switch (code) {
-        case "auth/invalid-email": // Wrong input
-        case "auth/missing-email":
-            return "Please enter a valid email address.";
-
-        case "auth/wrong-password": // Wrong credentials 
-        case "auth/invalid-credential":
-        case "auth/user-not-found":
-            return "Incorrect email or password.";
-
-        case "auth/email-already-in-use": // Sign-up conflicts
-            return "This email is already registered. Try logging in instead.";
-
-        case "auth/weak-password": // Weak passwords
-        case "auth/missing-password":
-            return "Password should be at least 8 characters.";
-
-        case "auth/too-many-requests": // Too many requests
-            return "Too many attempts. Try again later.";
-
-        case "auth/unverified-email": // Email verification issues
-            return "Please verify your email before signing in.";
-
-        default: // Catch-all
-            console.warn("Unhandled Firebase Auth error:", err);
-            return "Something went wrong. Please try again.";
+    if (code === "auth/invalid-email" || code === "auth/missing-email") {
+        return "Please enter a valid email address.";
     }
+    if (code === "auth/wrong-password" || code === "auth/invalid-credential" || code === "auth/user-not-found") {
+        return "Incorrect email or password.";
+    }
+    if (code === "auth/email-already-in-use") {
+        return "This email is already registered. Try logging in instead.";
+    }
+    if (code === "auth/weak-password" || code === "auth/missing-password") {
+        return "Password should be at least 8 characters.";
+    }
+    if (code === "auth/too-many-requests") {
+        return "Too many attempts. Try again later.";
+    }
+    if (code === "auth/unverified-email") {
+        return "Please verify your email before signing in.";
+    }
+    return "Something went wrong. Please try again."; // default
 }
 
-const $ = (sel) => document.querySelector(sel);
-const val = (sel) => ($(sel)?.value || "").trim();
+// Wait until the DOM is ready before reading elements
+document.addEventListener("DOMContentLoaded", () => {
+    // LOGIN
+    const loginForm = document.getElementById("loginForm");
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (evt) => {
+            evt.preventDefault();
 
-// LOGIN
-const loginForm = $("#loginForm");
-if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (!loginForm.checkValidity()) { loginForm.classList.add("was-validated"); return; }
-
-        const email = val("#loginForm #email");
-        const password = val("#loginForm #password");
-        const remember = $("#loginForm #remember");
-
-        try {
-            await setPersistence(auth, (remember && remember.checked) ? browserLocalPersistence : browserSessionPersistence);
-            const cred = await signInWithEmailAndPassword(auth, email, password);
-
-            // update last login in Firestore
-            try {
-                await updateDoc(doc(db, "users", cred.user.uid), {
-                    lastLoginAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
-                });
-            } catch (_) { } /* ignore if doc not found */
-
-            window.location.replace(HOME);
-        } catch (err) {
-            console.error("Login error:", err);
-            alert(mapAuthError(err));
-        }
-    });
-}
-
-// SIGNUP
-const signupForm = $("#signupForm");
-if (signupForm) {
-    signupForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const pwd = $("#signupForm #password");
-        const confirm = $("#signupForm #confirm");
-
-        // Match passwords
-        if (pwd && confirm) {
-            confirm.setCustomValidity(confirm.value !== pwd.value ? "Passwords do not match" : "");
-        }
-        if (!signupForm.checkValidity()) { signupForm.classList.add("was-validated"); return; }
-
-        const email = val("#signupForm #email");
-        const first = val("#signupForm #firstName");
-        const last = val("#signupForm #lastName");
-        const password = pwd.value;
-        const display = `${first} ${last}`.trim();
-
-        try {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-            // Set Auth displayName so navbar can read it without extra queries
-            if (display) {
-                await updateProfile(cred.user, { displayName: display });
+            // HTML5 validation
+            if (!loginForm.checkValidity()) {
+                loginForm.classList.add("was-validated");
+                return;
             }
 
-            // Create Firestore profile document
-            await setDoc(doc(db, "users", cred.user.uid), {
-                uid: cred.user.uid,
-                email,                // stored for profile/admin purposes (not displayed in navbar)
-                firstName: first || "",
-                lastName: last || "",
-                displayName: display, // full name
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            });
+            // Read inputs
+            const emailInput = document.querySelector("#loginForm #email");
+            const passwordInput = document.querySelector("#loginForm #password");
+            const rememberInput = document.querySelector("#loginForm #remember");
 
-            // Send verification email
-            await sendEmailVerification(cred.user, { url: LOGIN });
+            const email = emailInput ? emailInput.value.trim() : "";
+            const password = passwordInput ? passwordInput.value : "";
+            const remember = !!(rememberInput && rememberInput.checked);
 
-            alert("Account created! Please check your email to verify your account.");
-            window.location.replace(HOME);
-        } catch (err) {
-            console.error("Signup error:", err);
-            alert(mapAuthError(err));
-        }
-    });
-}
+            try {
+                // Keep session if "Remember me" is checked
+                await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
-// FORGOT PASSWORD
-const forgetPasswordForm = $("#forgetPasswordForm");
-if (forgetPasswordForm) {
-    forgetPasswordForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (!forgetPasswordForm.checkValidity()) { forgetPasswordForm.classList.add("was-validated"); return; }
+                // Try to sign in
+                const cred = await signInWithEmailAndPassword(auth, email, password);
 
-        const email = val("#forgetPasswordForm #email");
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("A password reset link has been sent to your email.");
-            window.location.replace(LOGIN);
-        } catch (err) {
-            console.error("Reset error:", err);
-            alert(mapAuthError(err));
-        }
-    });
-}
+                // Check for email verification
+                if (!cred.user.emailVerified) {
+                    try {
+                        await sendEmailVerification(cred.user);
+                    } catch (e) { }
 
-// LOGOUT
-document.querySelector("[data-action='logout']")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    try {
-        await signOut(auth);
-        alert("You have successfully logged out!");
-    } finally {
-        window.location.replace(HOME);
+                    await signOut(auth);
+                    alert("Please verify your email first. We just sent you a verification link.");
+                    return;
+                }
+
+                // Update "lastLoginAt" in Firestore
+                try {
+                    const userDoc = doc(db, "users", cred.user.uid);
+                    await updateDoc(userDoc, {
+                        lastLoginAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    });
+                } catch (e) { }
+
+                // Go homepage
+                window.location.replace(HOME_URL);
+            } catch (error) {
+                alert(friendlyAuthMessage(error));
+            }
+        });
     }
-});
 
+    // SIGN UP
+    const signupForm = document.getElementById("signupForm");
+    if (signupForm) {
+        signupForm.addEventListener("submit", async (evt) => {
+            evt.preventDefault();
+
+            // Read inputs
+            const firstNameInput = document.querySelector("#signupForm #firstName");
+            const lastNameInput = document.querySelector("#signupForm #lastName");
+            const emailInput = document.querySelector("#signupForm #email");
+            const passInput = document.querySelector("#signupForm #password");
+            const confirmInput = document.querySelector("#signupForm #confirm");
+
+            const firstName = firstNameInput ? firstNameInput.value.trim() : "";
+            const lastName = lastNameInput ? lastNameInput.value.trim() : "";
+            const email = emailInput ? emailInput.value.trim() : "";
+            const password = passInput ? passInput.value : "";
+            const confirm = confirmInput ? confirmInput.value : "";
+
+            // Check passwords match (add HTML validation message)
+            if (confirmInput) {
+                if (password !== confirm) {
+                    confirmInput.setCustomValidity("Passwords do not match");
+                } else {
+                    confirmInput.setCustomValidity("");
+                }
+            }
+
+            // Run HTML5 validation after setting custom validity
+            if (!signupForm.checkValidity()) {
+                signupForm.classList.add("was-validated");
+                return;
+            }
+
+            try {
+                // Create user in Firebase Auth
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+                // Set display name in Auth (helps the navbar show the first name)
+                const displayName = (firstName + " " + lastName).trim();
+                if (displayName) {
+                    await updateProfile(cred.user, { displayName: displayName });
+                }
+
+                // Create Firestore profile document
+                const userDoc = doc(db, "users", cred.user.uid);
+                await setDoc(userDoc, {
+                    uid: cred.user.uid,
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    displayName: displayName,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+
+                // Send verification email
+                await sendEmailVerification(cred.user, { url: LOGIN_URL });
+
+                // Do NOT keep them signed in until they verify
+                await signOut(auth);
+                alert("Account created! Please check your email to verify your account.");
+                window.location.replace(LOGIN_URL);
+            } catch (error) {
+                alert(friendlyAuthMessage(error));
+            }
+        });
+    }
+
+    // FORGOT PASSWORD (RESET)
+    const resetForm = document.getElementById("forgetPasswordForm");
+    if (resetForm) {
+        resetForm.addEventListener("submit", async (evt) => {
+            evt.preventDefault();
+
+            if (!resetForm.checkValidity()) {
+                resetForm.classList.add("was-validated");
+                return;
+            }
+
+            const emailInput = document.querySelector("#forgetPasswordForm #email");
+            const email = emailInput ? emailInput.value.trim() : "";
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("A password reset link has been sent to your email.");
+                window.location.replace(LOGIN_URL);
+            } catch (error) {
+                alert(friendlyAuthMessage(error));
+            }
+        });
+    }
+
+    // LOG OUT LINK
+    const logoutLink = document.querySelector("[data-action='logout']");
+    if (logoutLink) {
+        logoutLink.addEventListener("click", async (evt) => {
+            evt.preventDefault();
+            try {
+                await signOut(auth);
+                alert("You have successfully logged out!");
+            } finally {
+                window.location.replace(HOME_URL);
+            }
+        });
+    }
+
+    // SHOW / HIDE PASSWORD
+    const toggleButtons = document.querySelectorAll(".toggle-psw");
+    toggleButtons.forEach((btn) => {
+        const targetSelector = btn.getAttribute("data-target");
+        let input = targetSelector ? document.querySelector(targetSelector) : null;
+
+        // If data-target is missing, look for the input in the same .input-group
+        if (!input) {
+            const group = btn.closest(".input-group");
+            if (group) input = group.querySelector("input");
+        }
+        if (!input) return; // nothing to toggle
+
+        btn.addEventListener("click", () => {
+            // If it's "password", switch to "text", otherwise switch back
+            const shouldShow = input.type === "password";
+            input.type = shouldShow ? "text" : "password";
+
+            // Swap the icon classes if there is an <i> inside the button
+            const icon = btn.querySelector("i");
+            if (icon) {
+                if (shouldShow) {
+                    icon.classList.remove("bi-eye");
+                    icon.classList.add("bi-eye-slash");
+                } else {
+                    icon.classList.remove("bi-eye-slash");
+                    icon.classList.add("bi-eye");
+                }
+            }
+
+            // Small accessibility touches
+            btn.setAttribute("aria-label", shouldShow ? "Hide password" : "Show password");
+            btn.title = shouldShow ? "Hide password" : "Show password";
+        });
+    });
+});
