@@ -200,19 +200,18 @@
       document.querySelectorAll(selector).forEach(el => el.classList.toggle('d-none', !on));
 
     async function resolveFirstName(user) {
-      // Prefer Auth displayName
+      // Auth displayName
       if (user?.displayName) {
         const first = user.displayName.trim().split(/\s+/)[0];
         if (first) return first;
       }
-      // Fallback: Firestore profile { firstName }
+      // Firestore profile { firstName }
       try {
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
         const data = snap.data();
         if (data?.firstName) return String(data.firstName).trim();
-      } catch { /* ignore */ }
-      // Final fallback
+      } catch {  } /* ignore */
       return "Profile";
     }
 
@@ -230,7 +229,8 @@
     document.querySelector('[data-action="logout"]')?.addEventListener('click', async (e) => {
       e.preventDefault();
       await signOut(auth);
-      window.location.href = "/auth/login.html";
+      alert("You have successfully logged out!");
+      window.location.href = "../index.html";
     });
   </script>
 

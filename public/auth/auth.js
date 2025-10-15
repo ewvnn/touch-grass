@@ -179,8 +179,9 @@ document.querySelector("[data-action='logout']")?.addEventListener("click", asyn
     e.preventDefault();
     try {
         await signOut(auth);
+        alert("You have successfully logged out!");
     } finally {
-        window.location.replace(LOGIN);
+        window.location.replace(HOME);
     }
 });
 
