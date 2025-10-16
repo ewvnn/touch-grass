@@ -133,22 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const lastNameInput = document.querySelector("#signupForm #lastName");
             const emailInput = document.querySelector("#signupForm #email");
             const passInput = document.querySelector("#signupForm #password");
-            const confirmInput = document.querySelector("#signupForm #confirm");
 
             const firstName = firstNameInput ? firstNameInput.value.trim() : "";
             const lastName = lastNameInput ? lastNameInput.value.trim() : "";
             const email = emailInput ? emailInput.value.trim() : "";
             const password = passInput ? passInput.value : "";
-            const confirm = confirmInput ? confirmInput.value : "";
 
-            // Check passwords match (add HTML validation message)
-            if (confirmInput) {
-                if (password !== confirm) {
-                    confirmInput.setCustomValidity("Passwords do not match");
-                } else {
-                    confirmInput.setCustomValidity("");
-                }
-            }
+            checkMatch();
 
             // Run HTML5 validation after setting custom validity
             if (!signupForm.checkValidity()) {
@@ -264,4 +255,73 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.title = shouldShow ? "Hide password" : "Show password";
         });
     });
+
+    // PASSWORD STRENGTH (Sign Up page only)
+    const signupPasswordInput = document.querySelector('#signupForm #password');
+    const signupConfirmInput = document.querySelector('#signupForm #confirm');
+    const pwBar = document.getElementById('pwBar');
+    const pwHint = document.getElementById('pwHint');
+    const matchHint = document.getElementById('matchHint');
+
+    // Give the password a score from 0 to 4
+    function scorePassword(pass) {
+        let score = 0;
+
+        if (pass.length >= 8) score++; // Rule 1: length at least 8
+        if (/[a-z]/.test(pass) || /[A-Z]/.test(pass)) score++; // Rule 2: contains lowercase or uppercase letters
+        if (/\d/.test(pass)) score++; // Rule 3: contains numbers
+        if (/[^A-Za-z0-9]/.test(pass)) score++; // Rule 4: contains symbols
+
+        if (score < 0) score = 0;
+        if (score > 4) score = 4;
+        return score;
+    }
+
+    // Update the meter bar + label
+    function renderStrength(pass) {
+        if (!pwBar || !pwHint) return;
+
+        const score = scorePassword(pass);
+        const widths = [0, 25, 50, 75, 100];
+        const labels = ["Too short", "Weak", "Okay", "Good", "Strong"];
+        const classes = ["pw-weak", "pw-weak", "pw-ok", "pw-good", "pw-strong"];
+
+        // Reset bar classes, then set the new one
+        pwBar.classList.remove("pw-weak", "pw-ok", "pw-good", "pw-strong");
+        pwBar.classList.add(classes[score]);
+
+        // Set width and label
+        pwBar.style.width = widths[score] + "%";
+        pwHint.textContent = labels[score];
+    }
+
+    // Check if the two passwords match and set HTML5 validation message
+    function checkMatch() {
+        if (!signupPasswordInput || !signupConfirmInput) return;
+
+        const pass = signupPasswordInput.value;
+        const conf = signupConfirmInput.value;
+
+        // If both fields are empty → reset validation
+        if (!pass && !conf) {
+            signupConfirmInput.setCustomValidity("");
+            return;
+        }
+
+        const same = pass === conf && pass.length > 0;
+        signupConfirmInput.setCustomValidity(same ? "" : "Passwords must match.");
+    }
+
+
+    // Connect events
+    if (signupPasswordInput) {
+        signupPasswordInput.addEventListener('input', () => {
+            renderStrength(signupPasswordInput.value);
+            checkMatch();
+        });
+    }
+    if (signupConfirmInput) {
+        signupConfirmInput.addEventListener('input', checkMatch);
+    }
+
 });
