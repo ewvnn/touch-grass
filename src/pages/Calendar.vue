@@ -25,7 +25,7 @@
 
     <div class="btn-group d-flex flex-column align-items-center">
       <!-- give the favourites button a hook class -->
-      <button class="btn btn-primary mb-2 w-50 btn-favourites" type="button">⭐ Hide Favourites</button>
+      <button class="btn btn-success mb-2 w-50 btn-favourites" type="button">⭐ Hide Favourites</button>
       <button class="btn btn-outline-secondary mb-2 w-50" type="button">💾 Saved</button>
     </div>
   </section>
@@ -160,3 +160,13 @@
     });
   });
 </script>
+
+<style>
+li {
+  list-style-type: none;
+}
+
+.friend-check {
+  margin: 1em;
+}
+</style>
