@@ -48,7 +48,7 @@
         </li>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="/itinerary" aria-label="Itinerary planner" title="Itinerary planner">
-            <i class="bi bi-calendar-event fs-5"></i>
+            <i class="bi bi-signpost-2 fs-5"></i>
             <span class="d-inline d-lg-none d-xl-inline">Itinerary</span>
           </a>
         </li>

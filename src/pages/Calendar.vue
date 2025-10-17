@@ -110,6 +110,10 @@
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
       },
+      eventColor: '#32a852',
+      // eventBorderColor: '#32a851',
+      // eventBackgroundColor: '#32a852',
+      textColor: '#32a852',
       events: allEvents,
       eventDidMount: function (info) {
         // add a visual cue for favourite events
@@ -162,6 +166,16 @@
 </script>
 
 <style>
+
+:root {
+  --fc-border-color: black;
+  --fc-daygrid-event-dot-width: 2px;
+  
+  /* Set all text colors to green */
+
+  --fc-list-event-hover-bg-color: rgba(50, 168, 82, 0.1);
+}
+
 li {
   list-style-type: none;
 }
@@ -169,4 +183,7 @@ li {
 .friend-check {
   margin: 1em;
 }
+
+
+
 </style>
