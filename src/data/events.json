@@ -1,0 +1,134 @@
+[
+  {
+    "id": 1,
+    "title": "Sunset Yoga at Marina Barrage",
+    "location": "Marina Barrage, Singapore",
+    "date": "Sat, 18 Oct • 6:00 PM",
+    "duration": "90 mins",
+    "price": "Free",
+    "badge": "Outdoor",
+    "category": "Wellness",
+    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200"
+  },
+  {
+    "id": 2,
+    "title": "Haji Lane Indie Market",
+    "location": "Haji Lane",
+    "date": "Sun, 19 Oct • 12:00 PM",
+    "duration": "All afternoon",
+    "price": "$5",
+    "badge": "Pop-up",
+    "category": "Market",
+    "image": "https://images.unsplash.com/photo-1521334726092-b509a19597c6?q=80&w=1200"
+  },
+  {
+    "id": 3,
+    "title": "DIY Terrarium Workshop",
+    "location": "Bugis Street",
+    "date": "Fri, 24 Oct • 7:30 PM",
+    "duration": "2 hrs",
+    "price": "$9",
+    "badge": "Hands-on",
+    "category": "Workshop",
+    "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200"
+  },
+  {
+    "id": 4,
+    "title": "Botanic Gardens Photo Walk",
+    "location": "Singapore Botanic Gardens",
+    "date": "Sun, 26 Oct • 8:00 AM",
+    "duration": "2 hrs",
+    "price": "Free",
+    "badge": "Nature",
+    "category": "Photography",
+    "image": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200"
+  },
+  {
+    "id": 5,
+    "title": "Esplanade Open Jams",
+    "location": "Esplanade Outdoor Theatre",
+    "date": "Fri, 24 Oct • 8:00 PM",
+    "duration": "90 mins",
+    "price": "Free",
+    "badge": "Live",
+    "category": "Music",
+    "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200"
+  },
+  {
+    "id": 6,
+    "title": "Beginner Salsa Night",
+    "location": "Clarke Quay",
+    "date": "Wed, 22 Oct • 7:00 PM",
+    "duration": "2 hrs",
+    "price": "$8",
+    "badge": "Dance",
+    "category": "Social",
+    "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200"
+  },
+  {
+    "id": 7,
+    "title": "Thrift Flip Meetup",
+    "location": "Queensway Shopping Centre",
+    "date": "Sat, 25 Oct • 2:00 PM",
+    "duration": "2 hrs",
+    "price": "$6",
+    "badge": "Sustainable",
+    "category": "Community",
+    "image": "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200"
+  },
+  {
+    "id": 8,
+    "title": "Bayfront Park Run (5K)",
+    "location": "Bayfront Avenue",
+    "date": "Sun, 19 Oct • 7:00 AM",
+    "duration": "45–60 mins",
+    "price": "Free",
+    "badge": "Fitness",
+    "category": "Running",
+    "image": "https://images.unsplash.com/photo-1520975867597-0f44c2b6e0f4?q=80&w=1200"
+  },
+  {
+    "id": 9,
+    "title": "Board Games & Brew",
+    "location": "Bras Basah",
+    "date": "Thu, 23 Oct • 7:00 PM",
+    "duration": "3 hrs",
+    "price": "$10",
+    "badge": "Indoor",
+    "category": "Games",
+    "image": "https://images.unsplash.com/photo-1493723843671-1d655e66ac1c?q=80&w=1200"
+  },
+  {
+    "id": 10,
+    "title": "Intro to Urban Sketching",
+    "location": "Tiong Bahru",
+    "date": "Sat, 18 Oct • 4:00 PM",
+    "duration": "2 hrs",
+    "price": "$7",
+    "badge": "Art",
+    "category": "Workshop",
+    "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1200"
+  },
+  {
+    "id": 11,
+    "title": "Kampong Glam Night Walk",
+    "location": "Kampong Glam",
+    "date": "Fri, 24 Oct • 8:30 PM",
+    "duration": "90 mins",
+    "price": "Free",
+    "badge": "Culture",
+    "category": "Guided Walk",
+    "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200"
+  },
+  {
+    "id": 12,
+    "title": "Beginner Coding: JS Taster",
+    "location": "SMU Labs",
+    "date": "Tue, 21 Oct • 7:00 PM",
+    "duration": "2 hrs",
+    "price": "$9",
+    "badge": "Tech",
+    "category": "Class",
+    "image": "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200"
+  }
+]
