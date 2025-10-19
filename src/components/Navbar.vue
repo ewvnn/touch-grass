@@ -6,13 +6,13 @@
         <!-- Inline grass SVG logo -->
         <svg class="grass-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img"
           aria-label="Touch Grass logo">
-          <rect x="0" y="44" width="64" height="6" fill="#2d5016" />
-          <path d="M8 44 q2-10 6-16 q-2 8 2 16 Z" fill="#2d5016" />
-          <path d="M16 44 q2-12 8-20 q-3 10 1 20 Z" fill="#2d5016" />
-          <path d="M24 44 q3-14 10-24 q-4 12 0 24 Z" fill="#2d5016" />
-          <path d="M32 44 q2-12 8-20 q-3 10 0 20 Z" fill="#2d5016" />
-          <path d="M40 44 q3-14 10-24 q-4 12 0 24 Z" fill="#2d5016" />
-          <path d="M48 44 q2-10 6-16 q-2 8 2 16 Z" fill="#2d5016" />
+          <rect x="0" y="44" width="64" height="6" fill="white" />
+          <path d="M8 44 q2-10 6-16 q-2 8 2 16 Z" fill="white" />
+          <path d="M16 44 q2-12 8-20 q-3 10 1 20 Z" fill="white" />
+          <path d="M24 44 q3-14 10-24 q-4 12 0 24 Z" fill="white" />
+          <path d="M32 44 q2-12 8-20 q-3 10 0 20 Z" fill="white" />
+          <path d="M40 44 q3-14 10-24 q-4 12 0 24 Z" fill="white" />
+          <path d="M48 44 q2-10 6-16 q-2 8 2 16 Z" fill="white" />
         </svg>
         <span class=''>Touch Grass</span>
       </a>
