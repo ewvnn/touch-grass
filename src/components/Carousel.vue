@@ -23,6 +23,7 @@
             v-for="event in events"
             :key="event.id"
             class="flex-shrink-0 px-2 carousel-item-wrapper"
+            id = "events"
           >
             <div
               class="card h-100 shadow-sm cursor-pointer"

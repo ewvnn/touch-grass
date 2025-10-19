@@ -9,13 +9,13 @@
         Your centralised website for discovering budget-friendly activities!
       </p>
 
-      <router-link 
-        to="#events" 
+      <a
+        href="#events" 
         class="btn btn-lg rounded-pill px-5 py-3 shadow-sm explore-btn text-white"
         style="background-color: #51b058;"
       >
         Explore Events
-      </router-link>
+    </a>
     </div>
 
     <!-- Interactive Grass Patch -->
