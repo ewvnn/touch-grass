@@ -1,7 +1,7 @@
 <template>
   <div class="container py-4">
     <!-- Carousel Container -->
-    <div class="position-relative">
+    <div class="position-relative overflow-hidden" @mouseenter="stopAutoScroll" @mouseleave="startAutoScroll">
       <!-- Previous Button -->
       <button
         class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
@@ -128,7 +128,10 @@ export default {
       showModal: false,
       selectedEvent: null,
       favourites: [],
-      itemsPerView: 3
+      itemsPerView: 3,
+      autoScrollInterval: null, // Add this
+      autoScrollDelay: 3000 // 3 seconds between scrolls
+
     };
   },
   async mounted() {
@@ -141,11 +144,33 @@ export default {
     
     this.updateItemsPerView();
     window.addEventListener('resize', this.updateItemsPerView);
+    this.startAutoScroll(); // Start auto-scroll
+
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateItemsPerView);
+    this.stopAutoScroll(); // Clean up
+
   },
   methods: {
+    startAutoScroll() {
+      this.autoScrollInterval = setInterval(() => {
+        if (this.currentIndex >= this.events.length - this.itemsPerView) {
+          // Loop back to start
+          this.currentIndex = 0;
+        } else {
+          this.currentIndex++;
+        }
+      }, this.autoScrollDelay);
+    },
+
+    stopAutoScroll() {
+      if (this.autoScrollInterval) {
+        clearInterval(this.autoScrollInterval);
+        this.autoScrollInterval = null;
+      }
+    },
+
     updateItemsPerView() {
       const width = window.innerWidth;
       if (width < 768) {
@@ -163,20 +188,32 @@ export default {
     scrollPrev() {
       if (this.currentIndex > 0) {
         this.currentIndex--;
+
+        this.stopAutoScroll(); // Pause auto-scroll when user interacts
+        this.startAutoScroll(); // Restart auto-scroll
       }
     },
     scrollNext() {
       if (this.currentIndex < this.events.length - this.itemsPerView) {
         this.currentIndex++;
+        this.stopAutoScroll(); // Pause auto-scroll when user interacts
+        this.startAutoScroll(); // Restart auto-scroll
+
       }
     },
     openModal(event) {
       this.selectedEvent = event;
       this.showModal = true;
+
+      this.stopAutoScroll(); // Pause when modal is open
+
     },
     closeModal() {
       this.showModal = false;
       this.selectedEvent = null;
+
+      this.startAutoScroll(); // Resume when modal closes
+
     },
     toggleFavourite() {
       const index = this.favourites.indexOf(this.selectedEvent.id);
