@@ -1,0 +1,278 @@
+<template>
+  <div class="container py-4">
+    <!-- Carousel Container -->
+    <div class="position-relative overflow-hidden" @mouseenter="stopAutoScroll" @mouseleave="startAutoScroll">
+      <!-- Previous Button -->
+      <button
+        class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
+        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;"
+        @click="scrollPrev"
+        :disabled="currentIndex === 0"
+      >
+        <span aria-hidden="true">&lsaquo;</span>
+      </button>
+
+      <!-- Carousel Items -->
+      <div class="overflow-hidden">
+        <div
+          class="d-flex transition-transform"
+          :style="{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }"
+          style="transition: transform 0.3s ease;"
+        >
+          <div
+            v-for="event in events"
+            :key="event.id"
+            class="flex-shrink-0 px-2 carousel-item-wrapper"
+            id = "events"
+          >
+            <div
+              class="card h-100 shadow-sm cursor-pointer"
+              @click="openModal(event)"
+              style="cursor: pointer;"
+            >
+              <img
+                :src="event.image"
+                class="card-img-top"
+                :alt="event.title"
+                style="height: 200px; object-fit: cover;"
+              />
+              <div class="card-body">
+                <span class="badge bg-success mb-2">{{ event.badge }}</span>
+                <h5 class="card-title mb-2">{{ event.title }}</h5>
+                <p class="card-text text-muted mb-1">
+                  <small>{{ event.location }}</small>
+                </p>
+                <p class="card-text text-muted mb-1">
+                  <small>{{ event.date }}</small>
+                </p>
+                <p class="card-text fw-bold">{{ event.price }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Button -->
+      <button
+        class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
+        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;"
+        @click="scrollNext"
+        :disabled="currentIndex >= events.length - itemsPerView"
+      >
+        <span aria-hidden="true">&rsaquo;</span>
+      </button>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      :class="{ show: showModal, 'd-block': showModal }"
+      tabindex="-1"
+      style="background-color: rgba(0,0,0,0.5);"
+      @click.self="closeModal"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" v-if="selectedEvent">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ selectedEvent.title }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              @click="closeModal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <img
+              :src="selectedEvent.image"
+              class="img-fluid rounded mb-3"
+              :alt="selectedEvent.title"
+            />
+            <div class="mb-2">
+              <span class="badge bg-success">{{ selectedEvent.badge }}</span>
+              <span class="badge bg-success ms-2">{{ selectedEvent.category }}</span>
+            </div>
+            <p class="mb-2"><strong>Location:</strong> {{ selectedEvent.location }}</p>
+            <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
+            <p class="mb-2"><strong>Duration:</strong> {{ selectedEvent.duration }}</p>
+            <p class="mb-2"><strong>Price:</strong> {{ selectedEvent.price }}</p>
+
+            <div class="modal-tags">
+              <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
+              <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="closeModal"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              @click="toggleFavourite"
+            >
+              {{ isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'EventCarousel',
+  data() {
+    return {
+      events: [],
+      currentIndex: 0,
+      showModal: false,
+      selectedEvent: null,
+      favourites: [],
+      itemsPerView: 3,
+      autoScrollInterval: null, // Add this
+      autoScrollDelay: 3000 // 3 seconds between scrolls
+
+    };
+  },
+  async mounted() {
+    try {
+      const response = await fetch('/src/data/events.json');
+      this.events = await response.json();
+    } catch (error) {
+      console.error('Error loading events:', error);
+    }
+    
+    this.updateItemsPerView();
+    window.addEventListener('resize', this.updateItemsPerView);
+    this.startAutoScroll(); // Start auto-scroll
+
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updateItemsPerView);
+    this.stopAutoScroll(); // Clean up
+
+  },
+  methods: {
+    startAutoScroll() {
+      this.autoScrollInterval = setInterval(() => {
+        if (this.currentIndex >= this.events.length - this.itemsPerView) {
+          // Loop back to start
+          this.currentIndex = 0;
+        } else {
+          this.currentIndex++;
+        }
+      }, this.autoScrollDelay);
+    },
+
+    stopAutoScroll() {
+      if (this.autoScrollInterval) {
+        clearInterval(this.autoScrollInterval);
+        this.autoScrollInterval = null;
+      }
+    },
+
+    updateItemsPerView() {
+      const width = window.innerWidth;
+      if (width < 768) {
+        this.itemsPerView = 1;
+      } else if (width < 992) {
+        this.itemsPerView = 2;
+      } else {
+        this.itemsPerView = 3;
+      }
+      // Reset index if it's now out of bounds
+      if (this.currentIndex > this.events.length - this.itemsPerView) {
+        this.currentIndex = Math.max(0, this.events.length - this.itemsPerView);
+      }
+    },
+    scrollPrev() {
+      if (this.currentIndex > 0) {
+        this.currentIndex--;
+
+        this.stopAutoScroll(); // Pause auto-scroll when user interacts
+        this.startAutoScroll(); // Restart auto-scroll
+      }
+    },
+    scrollNext() {
+      if (this.currentIndex < this.events.length - this.itemsPerView) {
+        this.currentIndex++;
+        this.stopAutoScroll(); // Pause auto-scroll when user interacts
+        this.startAutoScroll(); // Restart auto-scroll
+
+      }
+    },
+    openModal(event) {
+      this.selectedEvent = event;
+      this.showModal = true;
+
+      this.stopAutoScroll(); // Pause when modal is open
+
+    },
+    closeModal() {
+      this.showModal = false;
+      this.selectedEvent = null;
+
+      this.startAutoScroll(); // Resume when modal closes
+
+    },
+    toggleFavourite() {
+      const index = this.favourites.indexOf(this.selectedEvent.id);
+      if (index > -1) {
+        this.favourites.splice(index, 1);
+      } else {
+        this.favourites.push(this.selectedEvent.id);
+      }
+    },
+    isFavourite(id) {
+      return this.favourites.includes(id);
+    }
+  }
+};
+</script>
+
+<style scoped>
+.cursor-pointer:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+}
+
+/* Responsive carousel item widths */
+.carousel-item-wrapper {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .carousel-item-wrapper {
+    width: 50%;
+  }
+}
+
+@media (min-width: 992px) {
+  .carousel-item-wrapper {
+    width: 33.333%;
+  }
+}
+
+.modal-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+</style>
