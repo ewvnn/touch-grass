@@ -160,9 +160,12 @@ export default {
 
 <style scoped>
 .filter-events {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
+
+  background: linear-gradient(to bottom, #f8f9fa 0%, #e8f5e9 100%);
+
 }
 
 .search-container {
