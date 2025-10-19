@@ -65,7 +65,7 @@
 /* nav bar -- standard for all pages */
     :root {
       --tg-primary: #7bd47b;
-      --tg-secondary: #51b058;
+      --tg-secondary: #206d25;
       --tg-text: white; /* dark slate for contrast */
     }
 
