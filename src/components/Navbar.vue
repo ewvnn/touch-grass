@@ -37,12 +37,12 @@
 
         <!-- Right: Icons -->
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="/profile" aria-label="Profile" title="Profile">
             <i class="bi bi-person-circle fs-5"></i>
             <span class="d-inline d-lg-none d-xl-inline">Profile</span>
           </a>
-        </li>
+        </li> -->
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="/calendar" aria-label="Favourites" title="Favourites">
             <i class="bi bi-calendar fs-5"></i>
@@ -55,6 +55,12 @@
             <span class="d-inline d-lg-none d-xl-inline">Itinerary</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="/login" aria-label="Login" title="Login">
+            <i class="bi bi-person-circle fs-5"></i>
+            <span class="d-inline d-lg-none d-xl-inline">Login</span>
+          </a>
+        </li>
       </ul>
       </div>
     </div>
@@ -65,7 +71,7 @@
 /* nav bar -- standard for all pages */
     :root {
       --tg-primary: #7bd47b;
-      --tg-secondary: #51b058;
+      --tg-secondary: #206d25;
       --tg-text: white; /* dark slate for contrast */
     }
 
