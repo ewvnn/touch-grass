@@ -8,7 +8,9 @@
     "price": "Free",
     "badge": "Outdoor",
     "category": "Wellness",
-    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200",
+    "cdc": true,
+    "culturepass": false
   },
   {
     "id": 2,
@@ -19,7 +21,9 @@
     "price": "$5",
     "badge": "Pop-up",
     "category": "Market",
-    "image": "https://images.unsplash.com/photo-1521334726092-b509a19597c6?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1521334726092-b509a19597c6?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 3,
@@ -30,7 +34,9 @@
     "price": "$9",
     "badge": "Hands-on",
     "category": "Workshop",
-    "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200",
+    "cdc": true,
+    "culturepass": false
   },
   {
     "id": 4,
@@ -41,7 +47,9 @@
     "price": "Free",
     "badge": "Nature",
     "category": "Photography",
-    "image": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 5,
@@ -52,7 +60,9 @@
     "price": "Free",
     "badge": "Live",
     "category": "Music",
-    "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 6,
@@ -63,7 +73,9 @@
     "price": "$8",
     "badge": "Dance",
     "category": "Social",
-    "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
+    "cdc": true,
+    "culturepass": true
   },
   {
     "id": 7,
@@ -74,7 +86,9 @@
     "price": "$6",
     "badge": "Sustainable",
     "category": "Community",
-    "image": "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 8,
@@ -85,7 +99,9 @@
     "price": "Free",
     "badge": "Fitness",
     "category": "Running",
-    "image": "https://images.unsplash.com/photo-1520975867597-0f44c2b6e0f4?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1520975867597-0f44c2b6e0f4?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 9,
@@ -96,7 +112,9 @@
     "price": "$10",
     "badge": "Indoor",
     "category": "Games",
-    "image": "https://images.unsplash.com/photo-1493723843671-1d655e66ac1c?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1493723843671-1d655e66ac1c?q=80&w=1200",
+    "cdc": true,
+    "culturepass": false
   },
   {
     "id": 10,
@@ -107,7 +125,9 @@
     "price": "$7",
     "badge": "Art",
     "category": "Workshop",
-    "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1200",
+    "cdc": true,
+    "culturepass": true
   },
   {
     "id": 11,
@@ -118,7 +138,9 @@
     "price": "Free",
     "badge": "Culture",
     "category": "Guided Walk",
-    "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200",
+    "cdc": false,
+    "culturepass": false
   },
   {
     "id": 12,
@@ -129,6 +151,8 @@
     "price": "$9",
     "badge": "Tech",
     "category": "Class",
-    "image": "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200"
+    "image": "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200",
+    "cdc": true,
+    "culturepass": false
   }
 ]
