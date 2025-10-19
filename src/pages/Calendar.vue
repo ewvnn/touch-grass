@@ -31,7 +31,7 @@
             <h5 class="mb-0">Saved Activities</h5>
             <button 
               class="btn btn-sm btn-success" 
-              @click="fetchEventbriteEvents"
+              @click="loadEventsFromJson"
               :disabled="isLoadingActivities"
             >
               <span v-if="isLoadingActivities">Loading...</span>
@@ -52,13 +52,14 @@
                 class="list-group-item list-group-item-action"
                 @click="openActivityModal(activity)"
               >
-                <strong>{{ activity.name }}</strong>
-                <small class="d-block text-muted">{{ activity.description }}</small>
-                <small v-if="activity.start" class="d-block text-muted mt-1">
-                  📅 {{ formatEventDate(activity.start) }}
+                <strong>{{ activity.title }}</strong>
+                <small class="d-block text-muted">{{ activity.location }}</small>
+                <small class="d-block text-muted mt-1">
+                  📅 {{ activity.date }}
                 </small>
-                <small v-if="activity.url" class="d-block text-success mt-1">
-                  🔗 View on Eventbrite
+                <small class="d-block mt-1">
+                  <span class="badge bg-info">{{ activity.category }}</span>
+                  <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
                 </small>
               </button>
             </div>
@@ -100,18 +101,8 @@
             ></button>
           </div>
           <div class="modal-body">
-            <p>Click on dates below to toggle your availability (green = available)</p>
-            <div class="availability-grid">
-              <button
-                v-for="date in availabilityDates"
-                :key="date"
-                class="availability-date btn"
-                :class="{ 'btn-success': isUserAvailable(date), 'btn-outline-secondary': !isUserAvailable(date) }"
-                @click="toggleUserAvailability(date)"
-              >
-                {{ formatDate(date) }}
-              </button>
-            </div>
+            <p>Click on dates in the calendar below to toggle your availability (green = available)</p>
+            <div ref="availabilityCalendar" class="availability-calendar-container"></div>
           </div>
           <div class="modal-footer">
             <button
@@ -147,7 +138,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ selectedActivity?.name }}</h5>
+            <h5 class="modal-title">{{ selectedActivity?.title }}</h5>
             <button
               type="button"
               class="btn-close"
@@ -155,19 +146,19 @@
             ></button>
           </div>
           <div class="modal-body">
-            <p>{{ selectedActivity?.description }}</p>
-            <div v-if="selectedActivity?.url" class="mb-3">
-              <a :href="selectedActivity.url" target="_blank" class="btn btn-sm btn-outline-success">
-                View Event on Eventbrite
-              </a>
+            <div v-if="selectedActivity?.image" class="mb-3">
+              <img :src="selectedActivity.image" :alt="selectedActivity.title" class="img-fluid rounded" />
             </div>
+            <p><strong>Location:</strong> {{ selectedActivity?.location }}</p>
+            <p><strong>Duration:</strong> {{ selectedActivity?.duration }}</p>
+            <p><strong>Price:</strong> {{ selectedActivity?.price }}</p>
             <div class="mb-3">
               <label class="form-label">Select Date</label>
               <input
                 type="date"
                 class="form-control"
                 v-model="activityDate"
-                :min="selectedActivity?.start ? selectedActivity.start.split('T')[0] : ''"
+                :placeholder="selectedActivity?.date"
               />
             </div>
             <div class="mb-3">
@@ -176,6 +167,7 @@
                 type="time"
                 class="form-control"
                 v-model="activityTime"
+                :placeholder="getEventTime(selectedActivity?.date)"
               />
             </div>
           </div>
@@ -209,12 +201,14 @@
 import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import eventsData from '@/data/events.json';
 
 export default {
   name: 'CalendarComponent',
   data() {
     return {
       calendar: null,
+      availabilityCalendar: null,
       showAvailabilityModal: false,
       showActivityModal: false,
       selectedActivity: null,
@@ -228,7 +222,7 @@ export default {
           id: 0,
           name: 'Me',
           selected: false,
-          availabilities: [] // Will be populated from userAvailabilities
+          availabilities: []
         },
         {
           id: 1,
@@ -255,36 +249,21 @@ export default {
           availabilities: ['2025-10-21', '2025-10-24', '2025-10-25', '2025-10-26']
         }
       ],
-      activities: [
-        { 
-          id: 1, 
-          name: 'Tech Innovation Summit 2025', 
-          description: 'Join industry leaders for keynotes on AI, blockchain, and emerging technologies. Featuring workshops and networking sessions.',
-          start: '2025-10-25T09:00:00',
-          url: 'https://www.eventbrite.com'
-        },
-        { 
-          id: 2, 
-          name: 'Local Food & Wine Festival', 
-          description: 'Celebrate local cuisine with tastings from 50+ vendors, live music, and cooking demonstrations from renowned chefs.',
-          start: '2025-10-26T12:00:00',
-          url: 'https://www.eventbrite.com'
-        },
-        { 
-          id: 3, 
-          name: 'Community Art Exhibition Opening', 
-          description: 'Opening night reception for the annual contemporary art showcase featuring 30+ local artists. Free admission.',
-          start: '2025-10-27T18:00:00',
-          url: 'https://www.eventbrite.com'
-        }
-      ],
+      activities: [],
       isLoadingActivities: false
     };
   },
   mounted() {
     this.initCalendar();
     this.generateAvailabilityDates();
-    this.fetchEventbriteEvents();
+    this.loadEventsFromJson();
+  },
+  watch: {
+    showAvailabilityModal(newVal) {
+      if (newVal) {
+        this.initAvailabilityCalendar();
+      }
+    }
   },
   methods: {
     initCalendar() {
@@ -306,12 +285,24 @@ export default {
       });
       this.calendar.render();
     },
+    loadEventsFromJson() {
+      this.isLoadingActivities = true;
+      
+      try {
+        // Load events from imported JSON file
+        this.activities = eventsData;
+      } catch (error) {
+        console.error('Error loading events from JSON:', error);
+        this.activities = [];
+      } finally {
+        this.isLoadingActivities = false;
+      }
+    },
     toggleFriend(friendId) {
       const friend = this.friends.find(f => f.id === friendId);
       if (friend) {
         friend.selected = !friend.selected;
         
-        // Sync 'Me' with userAvailabilities
         if (friendId === 0) {
           friend.availabilities = [...this.userAvailabilities];
         }
@@ -320,7 +311,6 @@ export default {
       }
     },
     updateCalendarHeatmap() {
-      // Count availabilities per date
       const availabilityCount = {};
       const selectedFriends = this.friends.filter(f => f.selected);
       const maxFriends = selectedFriends.length;
@@ -331,11 +321,9 @@ export default {
         });
       });
 
-      // Update calendar with background colors
       if (this.calendar) {
         this.calendar.render();
         
-        // Apply background colors after render
         Object.keys(availabilityCount).forEach(date => {
           const count = availabilityCount[date];
           const intensity = maxFriends > 0 ? count / maxFriends : 0;
@@ -347,7 +335,6 @@ export default {
           }
         });
 
-        // Reset days without availability
         const allDates = this.calendar.el.querySelectorAll('[data-date]');
         allDates.forEach(cell => {
           const date = cell.getAttribute('data-date');
@@ -356,6 +343,59 @@ export default {
           }
         });
       }
+    },
+    initAvailabilityCalendar() {
+      this.$nextTick(() => {
+        if (!this.$refs.availabilityCalendar) return;
+        
+        // Destroy existing calendar if any
+        if (this.availabilityCalendar) {
+          this.availabilityCalendar.destroy();
+        }
+        
+        const calendarEl = this.$refs.availabilityCalendar;
+        this.availabilityCalendar = new Calendar(calendarEl, {
+          plugins: [dayGridPlugin, interactionPlugin],
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+          },
+          height: 'auto',
+          dateClick: (info) => {
+            this.toggleUserAvailability(info.dateStr);
+            this.updateAvailabilityCalendarDisplay();
+          },
+          dayCellDidMount: (info) => {
+            const dateStr = info.date.toISOString().split('T')[0];
+            if (this.isUserAvailable(dateStr)) {
+              info.el.style.backgroundColor = '#38a169';
+              info.el.style.color = 'white';
+              info.el.style.cursor = 'pointer';
+            } else {
+              info.el.style.cursor = 'pointer';
+            }
+          }
+        });
+        
+        this.availabilityCalendar.render();
+      });
+    },
+    updateAvailabilityCalendarDisplay() {
+      if (!this.availabilityCalendar) return;
+      
+      const allDates = this.availabilityCalendar.el.querySelectorAll('[data-date]');
+      allDates.forEach(cell => {
+        const date = cell.getAttribute('data-date');
+        if (this.isUserAvailable(date)) {
+          cell.style.backgroundColor = '#38a169';
+          cell.style.color = 'white';
+        } else {
+          cell.style.backgroundColor = '';
+          cell.style.color = '';
+        }
+      });
     },
     updateDayBackground(info) {
       const dateStr = info.date.toISOString().split('T')[0];
@@ -374,16 +414,15 @@ export default {
       }
     },
     getHeatmapColor(intensity) {
-      // Generate green heatmap colors based on intensity (0 to 1)
       if (intensity === 0) return '';
       
       const greenShades = [
-        '#c6f6d5', // lightest
+        '#c6f6d5',
         '#9ae6b4',
         '#68d391',
         '#48bb78',
         '#38a169',
-        '#2f855a', // darkest
+        '#2f855a',
       ];
       
       const index = Math.min(
@@ -394,20 +433,25 @@ export default {
       return greenShades[index];
     },
     saveAvailability() {
-      // Update 'Me' friend with new availabilities
       const me = this.friends.find(f => f.id === 0);
       if (me) {
         me.availabilities = [...this.userAvailabilities];
       }
       
       this.showAvailabilityModal = false;
+      
+      // Destroy the availability calendar when modal closes
+      if (this.availabilityCalendar) {
+        this.availabilityCalendar.destroy();
+        this.availabilityCalendar = null;
+      }
+      
       this.updateCalendarHeatmap();
     },
     generateAvailabilityDates() {
       const dates = [];
       const today = new Date();
       
-      // Generate next 30 days
       for (let i = 0; i < 30; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
@@ -432,103 +476,59 @@ export default {
       const options = { month: 'short', day: 'numeric' };
       return date.toLocaleDateString('en-US', options);
     },
-    formatEventDate(dateStr) {
-      const date = new Date(dateStr);
-      const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
-      return date.toLocaleDateString('en-US', options);
-    },
-    async fetchEventbriteEvents() {
-      this.isLoadingActivities = true;
-      
-      try {
-        // Replace with your actual Eventbrite API credentials and endpoint
-        const EVENTBRITE_TOKEN = 'YOUR_EVENTBRITE_PRIVATE_TOKEN';
-        const ORGANIZATION_ID = 'YOUR_ORGANIZATION_ID'; // or use other search parameters
-        
-        // Example: Fetch events by organization
-        const response = await fetch(
-          `https://www.eventbriteapi.com/v3/organizations/${ORGANIZATION_ID}/events/`,
-          {
-            headers: {
-              'Authorization': `Bearer ${EVENTBRITE_TOKEN}`
-            }
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch events');
-        }
-        
-        const data = await response.json();
-        
-        // Transform Eventbrite events to our format
-        this.activities = data.events.map(event => ({
-          id: event.id,
-          name: event.name.text,
-          description: event.description?.text || event.summary || 'No description available',
-          start: event.start.local,
-          end: event.end.local,
-          url: event.url,
-          eventbriteId: event.id
-        }));
-        
-      } catch (error) {
-        console.error('Error fetching Eventbrite events:', error);
-        
-        // Fallback to realistic event examples if API fails
-        this.activities = [
-          { 
-            id: 1, 
-            name: 'Tech Innovation Summit 2025', 
-            description: 'Join industry leaders for keynotes on AI, blockchain, and emerging technologies. Featuring workshops and networking sessions.',
-            start: '2025-10-25T09:00:00',
-            url: 'https://www.eventbrite.com'
-          },
-          { 
-            id: 2, 
-            name: 'Local Food & Wine Festival', 
-            description: 'Celebrate local cuisine with tastings from 50+ vendors, live music, and cooking demonstrations from renowned chefs.',
-            start: '2025-10-26T12:00:00',
-            url: 'https://www.eventbrite.com'
-          },
-          { 
-            id: 3, 
-            name: 'Community Art Exhibition Opening', 
-            description: 'Opening night reception for the annual contemporary art showcase featuring 30+ local artists. Free admission.',
-            start: '2025-10-27T18:00:00',
-            url: 'https://www.eventbrite.com'
-          },
-          { 
-            id: 4, 
-            name: 'Professional Networking Mixer', 
-            description: 'Monthly networking event for young professionals across industries. Includes speed networking and guest speaker.',
-            start: '2025-10-28T18:30:00',
-            url: 'https://www.eventbrite.com'
-          },
-          { 
-            id: 5, 
-            name: 'Startup Pitch Night', 
-            description: '10 early-stage startups pitch to investors and the community. Q&A session and drinks to follow.',
-            start: '2025-10-29T19:00:00',
-            url: 'https://www.eventbrite.com'
-          },
-          { 
-            id: 6, 
-            name: 'Charity 5K Run/Walk', 
-            description: 'Annual fundraiser run supporting local education initiatives. All fitness levels welcome. T-shirt and medal included.',
-            start: '2025-11-02T08:00:00',
-            url: 'https://www.eventbrite.com'
-          }
-        ];
-      } finally {
-        this.isLoadingActivities = false;
-      }
-    },
     openActivityModal(activity) {
       this.selectedActivity = activity;
-      this.activityDate = '';
-      this.activityTime = '';
+      // Parse the date string and set as placeholder values
+      const parsedDate = this.parseEventDate(activity.date);
+      this.activityDate = parsedDate.date;
+      this.activityTime = parsedDate.time;
       this.showActivityModal = true;
+    },
+    parseEventDate(dateStr) {
+      // Parse "Sun, 19 Oct • 12:00 PM" format
+      const parts = dateStr.split('•');
+      const datePart = parts[0]?.trim();
+      const timePart = parts[1]?.trim();
+      
+      // Extract day and month
+      const dateMatch = datePart?.match(/(\d+)\s+(\w+)/);
+      let formattedDate = '';
+      
+      if (dateMatch) {
+        const day = dateMatch[1].padStart(2, '0');
+        const monthName = dateMatch[2];
+        const monthMap = {
+          'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+          'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+          'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        };
+        const month = monthMap[monthName] || '01';
+        const year = new Date().getFullYear();
+        formattedDate = `${year}-${month}-${day}`;
+      }
+      
+      // Convert 12-hour to 24-hour time
+      let formattedTime = '';
+      if (timePart) {
+        const timeMatch = timePart.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (timeMatch) {
+          let hours = parseInt(timeMatch[1]);
+          const minutes = timeMatch[2];
+          const meridiem = timeMatch[3].toUpperCase();
+          
+          if (meridiem === 'PM' && hours !== 12) hours += 12;
+          if (meridiem === 'AM' && hours === 12) hours = 0;
+          
+          formattedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+      }
+      
+      return { date: formattedDate, time: formattedTime };
+    },
+    getEventTime(dateStr) {
+      if (!dateStr) return '';
+      const parsed = this.parseEventDate(dateStr);
+      return parsed.time;
     },
     signUpForActivity() {
       if (!this.activityDate || !this.activityTime) {
@@ -537,7 +537,7 @@ export default {
       }
 
       const newEvent = {
-        title: this.selectedActivity.name,
+        title: this.selectedActivity.title,
         start: `${this.activityDate}T${this.activityTime}`,
         backgroundColor: '#38a169',
         borderColor: '#2f855a'
@@ -596,7 +596,6 @@ export default {
   border-color: #6c757d;
 }
 
-/* Change FullCalendar colors to green */
 :deep(.fc-button-primary) {
   background-color: #38a169 !important;
   border-color: #38a169 !important;
@@ -617,17 +616,17 @@ export default {
   background-color: #c6f6d5 !important;
 }
 
-.availability-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-  max-height: 400px;
-  overflow-y: auto;
+.availability-calendar-container {
+  min-height: 400px;
 }
 
-.availability-date {
-  padding: 10px;
-  font-size: 0.9rem;
+.availability-calendar-container :deep(.fc-daygrid-day) {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.availability-calendar-container :deep(.fc-daygrid-day:hover) {
+  opacity: 0.8;
 }
 
 .activities-scrollable {
