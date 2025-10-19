@@ -95,6 +95,12 @@
             <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
             <p class="mb-2"><strong>Duration:</strong> {{ selectedEvent.duration }}</p>
             <p class="mb-2"><strong>Price:</strong> {{ selectedEvent.price }}</p>
+
+            <div class="modal-tags">
+              <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
+              <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
+            </div>
+
           </div>
           <div class="modal-footer">
             <button
@@ -252,4 +258,21 @@ export default {
     width: 33.333%;
   }
 }
+
+.modal-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
 </style>
