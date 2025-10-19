@@ -1,15 +1,17 @@
 <script setup>
+import { useRoute } from 'vue-router'
 // import HelloWorld from './components/HelloWorld.vue'
 // import TheWelcome from './components/TheWelcome.vue'
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+const route = useRoute()
 </script>
 
 <template>
 <div id="app">
-    <Navbar />
+    <Navbar v-if="!route.meta?.hideChrome" />
      <router-view />
-  <Footer />
+  <Footer v-if="!route.meta?.hideChrome" />
 </div>
 </template>
 

@@ -5,5 +5,8 @@ import router from './router';
 
 import { createApp } from 'vue'
 import App from './App.vue'
+import { initSessionListener } from './stores/session'
+
+initSessionListener()
 
 createApp(App).use(router).mount('#app')

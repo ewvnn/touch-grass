@@ -1,3 +1,22 @@
+<script setup>
+import { computed, onMounted } from 'vue'
+import { currentUser } from '../stores/session'
+import { signOutUser } from '../services/auth'
+
+const displayName = computed(() =>
+  currentUser.value?.displayName || currentUser.value?.email || ''
+)
+
+// close mobile menu after navigation (optional)
+function closeMobile() {
+  const el = document.getElementById('tgNav')
+  // If Bootstrap JS is loaded, use Collapse API; otherwise just remove 'show'
+  // @ts-ignore
+  if (window.bootstrap?.Collapse) new window.bootstrap.Collapse(el, { toggle: true })
+  else el?.classList.remove('show')
+}
+</script>
+
 <template>
   <nav class="navbar navbar-expand-lg navbar-touchgrass" aria-label="Touch Grass main navigation">
     <div class="container">
@@ -37,31 +56,46 @@
 
         <!-- Right: Icons -->
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-        <!-- <li class="nav-item">
+          <!-- <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="/profile" aria-label="Profile" title="Profile">
             <i class="bi bi-person-circle fs-5"></i>
             <span class="d-inline d-lg-none d-xl-inline">Profile</span>
           </a>
         </li> -->
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="/calendar" aria-label="Favourites" title="Favourites">
-            <i class="bi bi-calendar fs-5"></i>
-            <span class="d-inline d-lg-none d-xl-inline">Calendar</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="/itinerary" aria-label="Itinerary planner" title="Itinerary planner">
-            <i class="bi bi-signpost-2 fs-5"></i>
-            <span class="d-inline d-lg-none d-xl-inline">Itinerary</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="/login" aria-label="Login" title="Login">
-            <i class="bi bi-person-circle fs-5"></i>
-            <span class="d-inline d-lg-none d-xl-inline">Login</span>
-          </a>
-        </li>
-      </ul>
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" href="/calendar" aria-label="Favourites"
+              title="Favourites">
+              <i class="bi bi-calendar fs-5"></i>
+              <span class="d-inline d-lg-none d-xl-inline">Calendar</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" href="/itinerary" aria-label="Itinerary planner"
+              title="Itinerary planner">
+              <i class="bi bi-signpost-2 fs-5"></i>
+              <span class="d-inline d-lg-none d-xl-inline">Itinerary</span>
+            </a>
+          </li>
+          <li class="nav-item" v-if="!currentUser">
+            <RouterLink class="nav-link d-flex align-items-center gap-2" to="/login" @click="closeMobile">
+              <i class="bi bi-person-circle fs-5"></i>
+              <span class="d-inline d-lg-none d-xl-inline">Login</span>
+            </RouterLink>
+          </li>
+
+          <li class="nav-item dropdown" v-else>
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle fs-5"></i>
+              <span class="d-inline d-lg-none d-xl-inline">{{ displayName }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <!-- <li><RouterLink class="dropdown-item" to="/profile" @click="closeMobile">Profile</RouterLink></li> -->
+              <li><button class="dropdown-item" @click="Profile">Profile</button></li>
+              <li><button class="dropdown-item" @click="signOutUser">Sign out</button></li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>
@@ -69,64 +103,68 @@
 
 <style>
 /* nav bar -- standard for all pages */
-    :root {
-      --tg-primary: #7bd47b;
-      --tg-secondary: #206d25;
-      --tg-text: white; /* dark slate for contrast */
-    }
+:root {
+  --tg-primary: #7bd47b;
+  --tg-secondary: #206d25;
+  --tg-text: white;
+  /* dark slate for contrast */
+}
 
-    .navbar-touchgrass {
-      background-color: var(--tg-secondary);
-      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-    }
+.navbar-touchgrass {
+  background-color: var(--tg-secondary);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
 
-    .navbar-touchgrass .navbar-brand {
-      font-weight: 700;
-      color: var(--tg-text);
-      letter-spacing: 0.2px;
-    }
+.navbar-touchgrass .navbar-brand {
+  font-weight: 700;
+  color: var(--tg-text);
+  letter-spacing: 0.2px;
+}
 
-    .navbar-touchgrass .nav-link {
-      color: var(--tg-text);
-      border-radius: .75rem;
-      padding: .5rem .6rem;
-    }
-    .navbar-touchgrass .nav-link:hover,
-    .navbar-touchgrass .nav-link:focus {
-      background-color: rgba(182, 250, 188, 0.35);
-      color: var(--tg-text);
-    }
+.navbar-touchgrass .nav-link {
+  color: var(--tg-text);
+  border-radius: .75rem;
+  padding: .5rem .6rem;
+}
 
-    .btn-tg {
-      background-color: var(--tg-primary);
-      border-color: var(--tg-primary);
-      color: white;
-      font-weight: 600;
-    }
-    .btn-tg:hover,
-    .btn-tg:focus {
-      filter: brightness(0.95);
-      color: #0a0a0a;
-    }
+.navbar-touchgrass .nav-link:hover,
+.navbar-touchgrass .nav-link:focus {
+  background-color: rgba(182, 250, 188, 0.35);
+  color: var(--tg-text);
+}
 
-    .form-control:focus {
-      border-color: var(--tg-primary);
-      box-shadow: 0 0 0 .25rem rgba(182, 250, 188, 0.4);
-    }
+.btn-tg {
+  background-color: var(--tg-primary);
+  border-color: var(--tg-primary);
+  color: white;
+  font-weight: 600;
+}
 
-    /* Center search on large screens and keep good widths */
-    @media (min-width: 992px) { /* lg */
-      #eventSearchForm {
-        min-width: 460px;
-        max-width: 720px;
-        width: 50%;
-      }
-    }
+.btn-tg:hover,
+.btn-tg:focus {
+  filter: brightness(0.95);
+  color: #0a0a0a;
+}
 
-    /* Simple grass logo sizing */
-    .grass-logo {
-      width: 28px;
-      height: 28px;
-    }
+.form-control:focus {
+  border-color: var(--tg-primary);
+  box-shadow: 0 0 0 .25rem rgba(182, 250, 188, 0.4);
+}
 
+/* Center search on large screens and keep good widths */
+@media (min-width: 992px) {
+
+  /* lg */
+  #eventSearchForm {
+    min-width: 460px;
+    max-width: 720px;
+    width: 50%;
+  }
+}
+
+/* Simple grass logo sizing */
+.grass-logo {
+  width: 28px;
+  height: 28px;
+}
 </style>
