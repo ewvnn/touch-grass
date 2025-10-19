@@ -10,6 +10,7 @@ const routes = [
   { path: '/', component: Index },         // Landing page
   { path: '/calendar', component: Calendar }, // Calendar page
   { path: '/itinerary', component: Itinerary} // itinerary page
+  { path: '/self', component: Self} // Own Profile
 ]
 
 const router = createRouter({
