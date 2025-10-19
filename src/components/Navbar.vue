@@ -26,17 +26,17 @@
       <!-- Collapsible content -->
       <div class="collapse navbar-collapse" id="tgNav">
         <!-- Middle: Search -->
-        <form id="eventSearchForm" class="mx-lg-auto my-3 my-lg-0 w-100" role="search" action="/search" method="get">
+        <!-- <form id="eventSearchForm" class="mx-lg-auto my-3 my-lg-0 w-100" role="search" action="/search" method="get">
           <div class="input-group">
             <span class="input-group-text" id="search-addon"><i class="bi bi-search"></i></span>
             <input type="search" class="form-control" name="q" placeholder="Search events" aria-label="Search events"
               aria-describedby="search-addon" />
             <button class="btn btn-tg border border-success-subtle" type="submit">Search</button>
           </div>
-        </form>
+        </form> -->
 
         <!-- Right: Icons -->
-        <ul class="navbar-nav ms-lg-3 align-items-lg-center gap-lg-2 ">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="/profile" aria-label="Profile" title="Profile">
             <i class="bi bi-person-circle fs-5"></i>
@@ -66,7 +66,7 @@
     :root {
       --tg-primary: #7bd47b;
       --tg-secondary: #51b058;
-      --tg-text: #0f172a; /* dark slate for contrast */
+      --tg-text: white; /* dark slate for contrast */
     }
 
     .navbar-touchgrass {
@@ -94,7 +94,7 @@
     .btn-tg {
       background-color: var(--tg-primary);
       border-color: var(--tg-primary);
-      color: #0a0a0a;
+      color: white;
       font-weight: 600;
     }
     .btn-tg:hover,
