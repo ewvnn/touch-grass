@@ -1,25 +1,20 @@
-import {
-  createWebHistory,
-  createRouter
-} from "vue-router";
-import Index from '@/pages/Index.vue'
-import Auth from '@/pages/Auth.vue'
-import Calendar from '@/pages/Calendar.vue'
-import Itinerary from '@/pages/Itinerary.vue'
-import { waitForAuthInit } from '../services/auth'
-import { auth } from '../lib/firebase'
+import { createWebHistory, createRouter } from 'vue-router'
+const Index = () => import('@/pages/Index.vue')
+const Auth = () => import('@/pages/Auth.vue')
+const Calendar = () => import('@/pages/Calendar.vue')
+const Itinerary = () => import('@/pages/Itinerary.vue')
+
+import { waitForAuthInit } from '@/services/auth.js'
+import { auth } from '@/lib/firebase'
 
 const routes = [
-  { path: '/', component: Index},         // Landing page
+  { path: '/', component: Index },
   { path: '/login', component: Auth, meta: { guestOnly: true, hideChrome: true } },
-  { path: '/calendar', component: Calendar, meta: { requiresAuth: true } }, // Calendar page
-  { path: '/itinerary', component: Itinerary, meta: { requiresAuth: true } }, // itinerary page
+  { path: '/calendar', component: Calendar, meta: { requiresAuth: true } },
+  { path: '/itinerary', component: Itinerary, meta: { requiresAuth: true } },
 ]
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-})
+const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach(async (to) => {
   const user = auth.currentUser ?? (await waitForAuthInit())

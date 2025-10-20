@@ -1,12 +1,9 @@
 import './assets/main.css'
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JavaScript (with Popper.js)
-import router from './router';
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 import { createApp } from 'vue'
+import router from './router'
 import App from './App.vue'
-import { initSessionListener } from './stores/session'
-
-initSessionListener()
 
 createApp(App).use(router).mount('#app')

@@ -4,15 +4,17 @@ import { useRoute } from 'vue-router'
 // import TheWelcome from './components/TheWelcome.vue'
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+import Toaster from './components/Toaster.vue';
 const route = useRoute()
 </script>
 
 <template>
-<div id="app">
+  <div id="app">
     <Navbar v-if="!route.meta?.hideChrome" />
-     <router-view />
-  <Footer v-if="!route.meta?.hideChrome" />
-</div>
+    <router-view />
+    <Footer v-if="!route.meta?.hideChrome" />
+    <Toaster />
+  </div>
 </template>
 
 <style scoped>
