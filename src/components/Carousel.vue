@@ -125,6 +125,8 @@
 </template>
 
 <script>
+import { loadEvents } from '@/services/events';
+
 export default {
   name: 'EventCarousel',
   data() {
@@ -142,8 +144,7 @@ export default {
   },
   async mounted() {
     try {
-      const response = await fetch('/src/data/events.json');
-      this.events = await response.json();
+      this.events = await loadEvents();
     } catch (error) {
       console.error('Error loading events:', error);
     }

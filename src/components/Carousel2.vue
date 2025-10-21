@@ -158,6 +158,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { loadEvents } from '@/services/events'
 
 // State: loaded events + saved IDs + modal
 const popularEvents = ref([])
@@ -167,10 +168,9 @@ const selectedEvent = ref(null)
 // Refs for the rail and item width calc
 const rail = ref(null)
 
-// Load hardcoded data from /src/data/events.json
+// Load hardcoded data from /data/events.json
 onMounted(async () => {
-  const res = await fetch('src/data/events.json')
-  popularEvents.value = await res.json()
+  popularEvents.value = await loadEvents()
 })
 
 // Scroll the rail by one card (direction: -1 left, 1 right)

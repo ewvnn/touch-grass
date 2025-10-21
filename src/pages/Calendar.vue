@@ -10,14 +10,9 @@
           </div>
           <div class="card-body">
             <div class="list-group list-group-flush">
-              <button
-                v-for="friend in friends"
-                :key="friend.id"
-                type="button"
+              <button v-for="friend in friends" :key="friend.id" type="button"
                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                :class="{ active: friend.selected }"
-                @click="toggleFriend(friend.id)"
-              >
+                :class="{ active: friend.selected }" @click="toggleFriend(friend.id)">
                 {{ friend.name }}
                 <span v-if="friend.selected" class="badge bg-success">✓</span>
               </button>
@@ -29,11 +24,7 @@
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Saved Activities</h5>
-            <button 
-              class="btn btn-sm btn-success" 
-              @click="loadEventsFromJson"
-              :disabled="isLoadingActivities"
-            >
+            <button class="btn btn-sm btn-success" @click="loadEventsFromJson" :disabled="isLoadingActivities">
               <span v-if="isLoadingActivities">Loading...</span>
               <span v-else>Refresh</span>
             </button>
@@ -45,13 +36,8 @@
               </div>
             </div>
             <div v-else class="list-group list-group-flush">
-              <button
-                v-for="activity in activities"
-                :key="activity.id"
-                type="button"
-                class="list-group-item list-group-item-action"
-                @click="openActivityModal(activity)"
-              >
+              <button v-for="activity in activities" :key="activity.id" type="button"
+                class="list-group-item list-group-item-action" @click="openActivityModal(activity)">
                 <strong>{{ activity.title }}</strong>
                 <small class="d-block text-muted">{{ activity.location }}</small>
                 <small class="d-block text-muted mt-1">
@@ -84,66 +70,39 @@
     </div>
 
     <!-- Availability Modal -->
-    <div
-      class="modal"
-      :class="{ show: showAvailabilityModal }"
-      :style="{ display: showAvailabilityModal ? 'block' : 'none' }"
-      tabindex="-1"
-    >
+    <div class="modal" :class="{ show: showAvailabilityModal }"
+      :style="{ display: showAvailabilityModal ? 'block' : 'none' }" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Select Your Availability</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="showAvailabilityModal = false"
-            ></button>
+            <button type="button" class="btn-close" @click="showAvailabilityModal = false"></button>
           </div>
           <div class="modal-body">
             <p>Click on dates in the calendar below to toggle your availability (green = available)</p>
             <div ref="availabilityCalendar" class="availability-calendar-container"></div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="showAvailabilityModal = false"
-            >
+            <button type="button" class="btn-secondary" @click="showAvailabilityModal = false">
               Close
             </button>
-            <button
-              type="button"
-              class="btn-success"
-              @click="saveAvailability"
-            >
+            <button type="button" class="btn-success" @click="saveAvailability">
               Save Changes
             </button>
           </div>
         </div>
       </div>
     </div>
-    <div
-      v-if="showAvailabilityModal"
-      class="modal-backdrop fade show"
-    ></div>
+    <div v-if="showAvailabilityModal" class="modal-backdrop fade show"></div>
 
     <!-- Activity Sign Up Modal -->
-    <div
-      class="modal"
-      :class="{ show: showActivityModal }"
-      :style="{ display: showActivityModal ? 'block' : 'none' }"
-      tabindex="-1"
-    >
+    <div class="modal" :class="{ show: showActivityModal }" :style="{ display: showActivityModal ? 'block' : 'none' }"
+      tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ selectedActivity?.title }}</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="showActivityModal = false"
-            ></button>
+            <button type="button" class="btn-close" @click="showActivityModal = false"></button>
           </div>
           <div class="modal-body">
             <div v-if="selectedActivity?.image" class="mb-3">
@@ -154,46 +113,26 @@
             <p><strong>Price:</strong> {{ selectedActivity?.price }}</p>
             <div class="mb-3">
               <label class="form-label">Select Date</label>
-              <input
-                type="date"
-                class="form-control"
-                v-model="activityDate"
-                :placeholder="selectedActivity?.date"
-              />
+              <input type="date" class="form-control" v-model="activityDate" :placeholder="selectedActivity?.date" />
             </div>
             <div class="mb-3">
               <label class="form-label">Select Time</label>
-              <input
-                type="time"
-                class="form-control"
-                v-model="activityTime"
-                :placeholder="getEventTime(selectedActivity?.date)"
-              />
+              <input type="time" class="form-control" v-model="activityTime"
+                :placeholder="getEventTime(selectedActivity?.date)" />
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="showActivityModal = false"
-            >
+            <button type="button" class="btn-secondary" @click="showActivityModal = false">
               Cancel
             </button>
-            <button
-              type="button"
-              class="btn-success"
-              @click="signUpForActivity"
-            >
+            <button type="button" class="btn-success" @click="signUpForActivity">
               Add to Calendar
             </button>
           </div>
         </div>
       </div>
     </div>
-    <div
-      v-if="showActivityModal"
-      class="modal-backdrop fade show"
-    ></div>
+    <div v-if="showActivityModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -201,7 +140,8 @@
 import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import eventsData from '@/data/events.json';
+import { loadEvents } from '@/services/events';
+
 
 export default {
   name: 'CalendarComponent',
@@ -285,12 +225,10 @@ export default {
       });
       this.calendar.render();
     },
-    loadEventsFromJson() {
+    async loadEventsFromJson() {
       this.isLoadingActivities = true;
-      
       try {
-        // Load events from imported JSON file
-        this.activities = eventsData;
+        this.activities = await loadEvents();
       } catch (error) {
         console.error('Error loading events from JSON:', error);
         this.activities = [];
@@ -298,15 +236,16 @@ export default {
         this.isLoadingActivities = false;
       }
     },
+
     toggleFriend(friendId) {
       const friend = this.friends.find(f => f.id === friendId);
       if (friend) {
         friend.selected = !friend.selected;
-        
+
         if (friendId === 0) {
           friend.availabilities = [...this.userAvailabilities];
         }
-        
+
         this.updateCalendarHeatmap();
       }
     },
@@ -323,12 +262,12 @@ export default {
 
       if (this.calendar) {
         this.calendar.render();
-        
+
         Object.keys(availabilityCount).forEach(date => {
           const count = availabilityCount[date];
           const intensity = maxFriends > 0 ? count / maxFriends : 0;
           const color = this.getHeatmapColor(intensity);
-          
+
           const dayCell = this.calendar.el.querySelector(`[data-date="${date}"]`);
           if (dayCell) {
             dayCell.style.backgroundColor = color;
@@ -347,12 +286,12 @@ export default {
     initAvailabilityCalendar() {
       this.$nextTick(() => {
         if (!this.$refs.availabilityCalendar) return;
-        
+
         // Destroy existing calendar if any
         if (this.availabilityCalendar) {
           this.availabilityCalendar.destroy();
         }
-        
+
         const calendarEl = this.$refs.availabilityCalendar;
         this.availabilityCalendar = new Calendar(calendarEl, {
           plugins: [dayGridPlugin, interactionPlugin],
@@ -378,13 +317,13 @@ export default {
             }
           }
         });
-        
+
         this.availabilityCalendar.render();
       });
     },
     updateAvailabilityCalendarDisplay() {
       if (!this.availabilityCalendar) return;
-      
+
       const allDates = this.availabilityCalendar.el.querySelectorAll('[data-date]');
       allDates.forEach(cell => {
         const date = cell.getAttribute('data-date');
@@ -401,10 +340,10 @@ export default {
       const dateStr = info.date.toISOString().split('T')[0];
       const selectedFriends = this.friends.filter(f => f.selected);
       const maxFriends = selectedFriends.length;
-      
+
       if (maxFriends === 0) return;
 
-      const count = selectedFriends.filter(f => 
+      const count = selectedFriends.filter(f =>
         f.availabilities.includes(dateStr)
       ).length;
 
@@ -415,7 +354,7 @@ export default {
     },
     getHeatmapColor(intensity) {
       if (intensity === 0) return '';
-      
+
       const greenShades = [
         '#c6f6d5',
         '#9ae6b4',
@@ -424,12 +363,12 @@ export default {
         '#38a169',
         '#2f855a',
       ];
-      
+
       const index = Math.min(
         Math.floor(intensity * greenShades.length),
         greenShades.length - 1
       );
-      
+
       return greenShades[index];
     },
     saveAvailability() {
@@ -437,27 +376,27 @@ export default {
       if (me) {
         me.availabilities = [...this.userAvailabilities];
       }
-      
+
       this.showAvailabilityModal = false;
-      
+
       // Destroy the availability calendar when modal closes
       if (this.availabilityCalendar) {
         this.availabilityCalendar.destroy();
         this.availabilityCalendar = null;
       }
-      
+
       this.updateCalendarHeatmap();
     },
     generateAvailabilityDates() {
       const dates = [];
       const today = new Date();
-      
+
       for (let i = 0; i < 30; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         dates.push(date.toISOString().split('T')[0]);
       }
-      
+
       this.availabilityDates = dates;
     },
     toggleUserAvailability(date) {
@@ -489,11 +428,11 @@ export default {
       const parts = dateStr.split('•');
       const datePart = parts[0]?.trim();
       const timePart = parts[1]?.trim();
-      
+
       // Extract day and month
       const dateMatch = datePart?.match(/(\d+)\s+(\w+)/);
       let formattedDate = '';
-      
+
       if (dateMatch) {
         const day = dateMatch[1].padStart(2, '0');
         const monthName = dateMatch[2];
@@ -506,7 +445,7 @@ export default {
         const year = new Date().getFullYear();
         formattedDate = `${year}-${month}-${day}`;
       }
-      
+
       // Convert 12-hour to 24-hour time
       let formattedTime = '';
       if (timePart) {
@@ -515,14 +454,14 @@ export default {
           let hours = parseInt(timeMatch[1]);
           const minutes = timeMatch[2];
           const meridiem = timeMatch[3].toUpperCase();
-          
+
           if (meridiem === 'PM' && hours !== 12) hours += 12;
           if (meridiem === 'AM' && hours === 12) hours = 0;
-          
+
           formattedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
         }
       }
-      
+
       return { date: formattedDate, time: formattedTime };
     },
     getEventTime(dateStr) {
@@ -544,7 +483,7 @@ export default {
       };
 
       this.userEvents.push(newEvent);
-      
+
       if (this.calendar) {
         this.calendar.addEvent(newEvent);
       }

@@ -2,12 +2,7 @@
   <div class="filter-events">
     <!-- Search Bar -->
     <div class="search-container">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search events..."
-        class="search-input"
-      />
+      <input v-model="searchQuery" type="text" placeholder="Search events..." class="search-input" />
     </div>
 
     <!-- Filter Tabs -->
@@ -36,12 +31,7 @@
 
     <!-- Events Grid -->
     <div class="events-grid">
-      <div
-        v-for="event in filteredEvents"
-        :key="event.id"
-        class="event-card"
-        @click="openModal(event)"
-      >
+      <div v-for="event in filteredEvents" :key="event.id" class="event-card" @click="openModal(event)">
         <div class="event-image">
           <img :src="event.image" :alt="event.title" />
           <span v-if="event.badge" class="badge">{{ event.badge }}</span>
@@ -95,7 +85,7 @@
 </template>
 
 <script>
-import eventsData from '@/data/events.json';
+import { loadEvents } from '@/services/events';
 
 export default {
   name: 'FilterEvents',
@@ -113,27 +103,33 @@ export default {
     filteredEvents() {
       return this.events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            event.location.toLowerCase().includes(this.searchQuery.toLowerCase());
-        
-        const matchesCategory = this.selectedCategory === 'all' || 
-                               event.category === this.selectedCategory;
-        
-        const matchesBudget = this.selectedBudget === 'all' || 
-                             this.checkBudget(event.price);
-        
+          event.location.toLowerCase().includes(this.searchQuery.toLowerCase());
+
+        const matchesCategory = this.selectedCategory === 'all' ||
+          event.category === this.selectedCategory;
+
+        const matchesBudget = this.selectedBudget === 'all' ||
+          this.checkBudget(event.price);
+
         return matchesSearch && matchesCategory && matchesBudget;
       });
     }
   },
-  mounted() {
-    this.events = eventsData;
-    this.categories = [...new Set(eventsData.map(e => e.category))];
+  async mounted() {
+    try {
+      this.events = await loadEvents();
+      this.categories = [...new Set(this.events.map(e => e.category))];
+    } catch (e) {
+      console.error('Failed to load events:', e);
+      this.events = [];
+      this.categories = [];
+    }
   },
   methods: {
     checkBudget(price) {
       const amount = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
-      
-      switch(this.selectedBudget) {
+
+      switch (this.selectedBudget) {
         case 'free': return amount === 0;
         case 'low': return amount > 0 && amount < 10;
         case 'medium': return amount >= 10 && amount <= 50;
@@ -214,7 +210,8 @@ export default {
   transition: border-color 0.3s;
 }
 
-.filter-select:hover, .filter-select:focus {
+.filter-select:hover,
+.filter-select:focus {
   border-color: #085702;
 }
 
@@ -228,14 +225,14 @@ export default {
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .event-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .event-image {
@@ -273,7 +270,8 @@ export default {
   color: #1f2937;
 }
 
-.location, .date {
+.location,
+.date {
   margin: 4px 0;
   font-size: 14px;
   color: #6b7280;
@@ -354,7 +352,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 1;
   color: #374151;
 }
@@ -416,20 +414,20 @@ export default {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
   }
-  
+
   .filters {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .filter-group {
     width: 100%;
   }
-  
+
   .filter-select {
     flex: 1;
   }
-  
+
   .modal-image {
     height: 200px;
   }
