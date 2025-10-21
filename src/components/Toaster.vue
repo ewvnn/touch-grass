@@ -16,8 +16,7 @@ function subtleClasses(type) {
     <div class="toast-zone position-fixed start-50 translate-middle-x p-3"
         style="z-index:1080; top:1rem; pointer-events:none;" aria-live="polite" aria-atomic="true">
         <div v-for="t in toasts" :key="t.id" class="toast show shadow-lg rounded-3 mb-2" :class="subtleClasses(t.type)"
-            role="status" style="pointer-events:auto; min-width:280px; max-width:min(420px, 92vw);" <!-- viewport-safe
-            -->
+            role="status" style="pointer-events:auto; min-width:280px; max-width:min(420px, 92vw);"
             >
             <div class="d-flex align-items-center">
                 <div class="toast-body fw-medium">{{ t.message }}</div>
