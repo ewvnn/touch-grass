@@ -1,4 +1,3 @@
-<!-- src/pages/Auth.vue -->
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -75,11 +74,23 @@ const pwClass = computed(() => ['pw-weak', 'pw-weak', 'pw-ok', 'pw-good', 'pw-st
 const pwWidth = computed(() => [0, 25, 50, 75, 100][pwScore.value] + '%')
 const pwTextClass = computed(() => (['text-danger', 'text-danger', 'text-warning', 'text-success', 'text-success'][pwScore.value]))
 
+function resetFormState() {
+    email.value = ''
+    password.value = ''
+    confirmPassword.value = ''
+    displayName.value = ''
+    agreed.value = false
+    remember.value = false
+    showPassword.value = false
+    showConfirm.value = false
+    loading.value = false
+    resending.value = false
+    resetErrors()
+}
+
 async function switchMode(next) {
     mode.value = next
-    resetErrors()
-    if (next !== 'register') agreed.value = false
-    if (next === 'reset') { password.value = ''; confirmPassword.value = '' }
+    resetFormState()
     await nextTick()
     emailEl.value?.focus()
 }
@@ -93,6 +104,7 @@ function validate() {
 
     if (mode.value !== 'reset' && !password.value) errs.password = 'Password is required.'
     if (mode.value === 'register') {
+        if (!displayName.value.trim()) errs.displayName = 'Name is required.'
         if ((password.value || '').length < MIN_PASSWORD_LENGTH) errs.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`
         if (password.value !== confirmPassword.value) errs.confirmPassword = 'Passwords do not match.'
         if (!agreed.value) errs.agree = 'You must agree to the Terms.'
@@ -125,7 +137,7 @@ async function submit() {
                 if (e?.code !== 'auth/user-not-found') throw e
             }
             toast.info('If that email exists, a reset link was sent.')
-            mode.value = 'login'
+            await switchMode('login')
         }
     } catch (e) {
         if (e?.code === 'auth/unverified-email') {
@@ -200,14 +212,16 @@ const toTop = () => {
                     <!-- RIGHT -->
                     <main class="col-lg-7 form-pane d-flex">
                         <div class="form-wrap">
-                            <form @submit.prevent="submit" class="form-stack" novalidate>
+                            <form @submit.prevent="submit" class="form-stack" novalidate :key="mode">
                                 <!-- Name (register only) -->
                                 <div v-if="mode === 'register'" class="field-block">
-                                    <label class="form-label" for="displayName">Name</label>
-                                    <div class="input-group input-group-lg">
+                                    <label class="form-label" for="displayName">Name *</label>
+                                    <div class="input-group input-group-lg has-validation">
                                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                                         <input id="displayName" v-model.trim="displayName" type="text"
-                                            class="form-control tg-input" placeholder="Your name" autocomplete="name" />
+                                            :class="['form-control', 'tg-input', { 'is-invalid': fieldErr.displayName }]"
+                                            placeholder="Your name" autocomplete="name" />
+                                        <div class="invalid-feedback">{{ fieldErr.displayName }}</div>
                                     </div>
                                 </div>
 

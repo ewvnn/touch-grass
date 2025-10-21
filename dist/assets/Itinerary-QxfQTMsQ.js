@@ -1,1 +1,0 @@
-import{_ as e}from"./index-CzPkZV4J.js";const t={};function n(r,i){return" Lorem ipsum dolor sit amet consectetur adipisicing elit. Deleniti ut consequuntur provident nemo repellendus corrupti. Illo velit vitae inventore consequuntur doloremque atque laudantium amet labore eius deleniti aut, repellendus veniam. "}const u=e(t,[["render",n]]);export{u as default};

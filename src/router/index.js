@@ -17,7 +17,9 @@ const routes = [
 const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach(async (to) => {
-  const user = auth.currentUser ?? (await waitForAuthInit())
+  await waitForAuthInit()
+
+  const user = auth.currentUser
 
   if (to.meta?.requiresAuth && !user) {
     return { path: '/login', query: { redirect: to.fullPath } }
