@@ -3,6 +3,7 @@ const Index = () => import('@/pages/Index.vue')
 const Auth = () => import('@/pages/Auth.vue')
 const Calendar = () => import('@/pages/Calendar.vue')
 const Itinerary = () => import('@/pages/Itinerary.vue')
+const Profile = () => import('@/pages/Profile.vue')
 
 import { waitForAuthInit } from '@/services/auth.js'
 import { auth } from '@/lib/firebase'
@@ -12,6 +13,7 @@ const routes = [
   { path: '/login', component: Auth, meta: { guestOnly: true, hideChrome: true } },
   { path: '/calendar', component: Calendar, meta: { requiresAuth: true } },
   { path: '/itinerary', component: Itinerary, meta: { requiresAuth: true } },
+  { path: '/profile', component: Profile, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })
