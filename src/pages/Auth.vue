@@ -335,8 +335,8 @@ const toTop = () => {
                                 </button>
 
                                 <!-- Mode switch links -->
-                                <p v-if="mode === 'login'" class="text-center small mt-2">
-                                    Don’t have an account?
+                                <p v-if="mode === 'login'" class="text-center fs-6 mt-2">
+                                    Don’t have an account?<br>
                                     <button class="btn btn-link p-0 link-deep" type="button"
                                         @click="switchMode('register')">Create an account</button>
                                 </p>
@@ -345,8 +345,8 @@ const toTop = () => {
                                     <button class="btn btn-link p-0 link-deep" type="button"
                                         @click="switchMode('login')">Sign in</button>
                                 </p>
-                                <p v-else class="text-center small mt-2">
-                                    Remember your password?
+                                <p v-else class="text-center fs-6 mt-2">
+                                    Remember your password?<br>
                                     <button class="btn btn-link p-0 link-deep" type="button"
                                         @click="switchMode('login')">Sign in</button>
                                 </p>
