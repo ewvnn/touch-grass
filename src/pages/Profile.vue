@@ -134,10 +134,14 @@
         </div>
       </div>
     </div>
+  
+    <FriendsList />
   </div>
+
 </template>
 
 <script setup>
+import FriendsList from '../components/FriendsList.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { auth, db, storage } from '../firebase.js';
 import { 
