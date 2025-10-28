@@ -75,8 +75,12 @@
             <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
             <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
           </div>
-          <button class="save-btn btn btn-success" @click="saveEvent(selectedEvent)">
-            Save Event
+          <button 
+            class="save-btn btn btn-success" 
+            @click="toggleFavourite"
+            :disabled="savingFavourite"
+          >
+            {{ savingFavourite ? 'Saving...' : (isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites') }}
           </button>
         </div>
       </div>
@@ -86,6 +90,9 @@
 
 <script>
 import { loadEvents } from '@/services/events';
+import { auth, db } from '../firebase.js';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default {
   name: 'FilterEvents',
@@ -96,7 +103,10 @@ export default {
       selectedCategory: 'all',
       selectedBudget: 'all',
       selectedEvent: null,
-      categories: []
+      categories: [],
+      currentUser: null,
+      favourites: [],
+      savingFavourite: false
     };
   },
   computed: {
@@ -124,8 +134,78 @@ export default {
       this.events = [];
       this.categories = [];
     }
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      this.currentUser = user;
+      if (user) {
+        await this.loadFavourites();
+      } else {
+        this.favourites = [];
+      }
+    });
   },
   methods: {
+    async loadFavourites() {
+      if (!this.currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
+        if (userDoc.exists()) {
+          const favouritesList = userDoc.data().favouritesList || [];
+          // Extract just the IDs for easier checking
+          this.favourites = favouritesList.map(fav => fav.id);
+        }
+      } catch (error) {
+        console.error('Error loading favourites:', error);
+      }
+    },
+
+    async toggleFavourite() {
+      if (!this.currentUser) {
+        alert('Please log in to save favourites');
+        return;
+      }
+
+      const eventId = this.selectedEvent.id;
+      const userRef = doc(db, 'users', this.currentUser.uid);
+
+      this.savingFavourite = true;
+
+      try {
+        if (this.isFavourite(eventId)) {
+          // Remove from favourites
+          const userDoc = await getDoc(userRef);
+          const currentFavourites = userDoc.data().favouritesList || [];
+          const updatedFavourites = currentFavourites.filter(fav => fav.id !== eventId);
+          
+          await updateDoc(userRef, {
+            favouritesList: updatedFavourites
+          });
+          
+          // Update local state
+          this.favourites = this.favourites.filter(id => id !== eventId);
+        } else {
+          // Add to favourites
+          await updateDoc(userRef, {
+            favouritesList: arrayUnion(this.selectedEvent)
+          });
+          
+          // Update local state
+          this.favourites.push(eventId);
+        }
+      } catch (error) {
+        console.error('Error toggling favourite:', error);
+        alert('Failed to update favourites. Error: ' + error.message);
+      } finally {
+        this.savingFavourite = false;
+      }
+    },
+
+    isFavourite(id) {
+      return this.favourites.includes(id);
+    },
+
     checkBudget(price) {
       const amount = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
 
@@ -144,11 +224,6 @@ export default {
     closeModal() {
       this.selectedEvent = null;
       document.body.style.overflow = 'auto';
-    },
-    saveEvent(event) {
-      // Implement save functionality here
-      console.log('Saving event:', event);
-      alert(`Event "${event.title}" has been saved!`);
     }
   }
 };
@@ -394,7 +469,6 @@ export default {
   width: 100%;
   margin-top: 24px;
   padding: 12px 24px;
-  /* background: #6366f1; */
   color: white;
   border: none;
   border-radius: 8px;
@@ -404,8 +478,13 @@ export default {
   transition: background 0.3s;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   background: #053901;
+}
+
+.save-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
 }
 
 /* Responsive */

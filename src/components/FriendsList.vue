@@ -36,6 +36,13 @@
             class="friend-avatar"
           />
           <span class="friend-name">{{ friend.displayName }}</span>
+          <button 
+            @click="openRemoveModal(friend)" 
+            class="btn-remove-friend"
+            title="Remove friend"
+          >
+            <img src="/images/remove-icon.png" alt="Remove" class="remove-icon" />
+          </button>
         </div>
       </div>
     </div>
@@ -75,6 +82,27 @@
         </div>
       </div>
     </div>
+
+    <!-- Remove Friend Confirmation Modal -->
+    <div v-if="showRemoveModal" class="modal-overlay" @click.self="closeRemoveModal">
+      <div class="remove-modal">
+        <h3>Remove Friend</h3>
+        <p>Are you sure you want to remove <strong>{{ friendToRemove?.displayName }}</strong> from your friends list?</p>
+        
+        <div class="modal-buttons">
+          <button 
+            @click="confirmRemoveFriend" 
+            class="btn-confirm-remove"
+            :disabled="removingFriend"
+          >
+            {{ removingFriend ? 'Removing...' : 'Yes, Remove' }}
+          </button>
+          <button @click="closeRemoveModal" class="btn-cancel-remove">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -90,7 +118,8 @@ import {
   query, 
   where, 
   getDocs,
-  arrayUnion 
+  arrayUnion,
+  arrayRemove 
 } from 'firebase/firestore';
 
 const placeholderImage = '/images/placeholder-avatar.png';
@@ -110,6 +139,11 @@ const searchError = ref('');
 const addingFriend = ref(false);
 const addFriendSuccess = ref('');
 const addFriendError = ref('');
+
+// Remove friend
+const showRemoveModal = ref(false);
+const friendToRemove = ref(null);
+const removingFriend = ref(false);
 
 // Computed
 const isAlreadyFriend = computed(() => {
@@ -273,12 +307,55 @@ async function addFriend() {
     addingFriend.value = false;
   }
 }
+
+// Remove friend functions
+function openRemoveModal(friend) {
+  friendToRemove.value = friend;
+  showRemoveModal.value = true;
+}
+
+function closeRemoveModal() {
+  showRemoveModal.value = false;
+  friendToRemove.value = null;
+}
+
+async function confirmRemoveFriend() {
+  if (!currentUser.value || !friendToRemove.value) return;
+
+  removingFriend.value = true;
+
+  try {
+    const currentUserRef = doc(db, 'users', currentUser.value.uid);
+    const friendUserRef = doc(db, 'users', friendToRemove.value.uid);
+
+    // Remove friend's UID from current user's friendsList
+    await updateDoc(currentUserRef, {
+      friendsList: arrayRemove(friendToRemove.value.uid)
+    });
+
+    // Remove current user's UID from friend's friendsList
+    await updateDoc(friendUserRef, {
+      friendsList: arrayRemove(currentUser.value.uid)
+    });
+
+    // Reload friends list
+    await loadFriends();
+
+    // Close modal
+    closeRemoveModal();
+
+  } catch (err) {
+    console.error('Error removing friend:', err);
+    alert('Failed to remove friend: ' + (err.message || 'Unknown error'));
+  } finally {
+    removingFriend.value = false;
+  }
+}
 </script>
 
 <style scoped>
 .friends-list-container {
-  max-width: 600px;
-  margin: 2rem auto;
+  margin: 0;  /* Changed from 2rem auto */
   padding: 1.5rem;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -335,8 +412,7 @@ async function addFriend() {
 }
 
 .friends-list-wrapper {
-  min-height: 200px;
-  max-height: 400px;
+  height: 214px;  /* Exactly 3 rows: (66px × 3) + (12px gap × 2) + 2rem padding */
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -363,6 +439,7 @@ async function addFriend() {
   padding: 0.5rem;
   border-radius: 6px;
   transition: background 0.2s;
+  position: relative;
 }
 
 .friend-item:hover {
@@ -381,6 +458,29 @@ async function addFriend() {
   font-size: 1rem;
   font-weight: 500;
   color: #374151;
+  flex: 1;
+}
+
+.btn-remove-friend {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  padding: 0;
+  margin: 0;
+}
+
+.remove-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.btn-remove-friend:hover {
+  opacity: 0.7;
 }
 
 /* Modal Styles */
@@ -474,5 +574,68 @@ async function addFriend() {
   color: #6b7280;
   border-radius: 6px;
   font-size: 0.95rem;
+}
+
+/* Remove Friend Modal */
+.remove-modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.remove-modal h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.remove-modal p {
+  margin: 0 0 1.5rem 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn-confirm-remove {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-confirm-remove:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-confirm-remove:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-cancel-remove {
+  padding: 0.5rem 1rem;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-cancel-remove:hover {
+  background: #d1d5db;
 }
 </style>

@@ -135,7 +135,11 @@
       </div>
     </div>
   
-    <FriendsList />
+    
+    <div class="lists-container">
+      <FriendsList />
+      <FavouritesList />
+    </div>
   </div>
 
 </template>
@@ -144,6 +148,7 @@
 import FriendsList from '../components/FriendsList.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { auth, db, storage } from '../firebase.js';
+import FavouritesList from '../components/FavouritesList.vue';
 import { 
   onAuthStateChanged, 
   updateEmail, 
@@ -519,5 +524,21 @@ async function changePassword() {
 .modal button:last-child:hover {
   background: #d1d5db;
 }
+
+.lists-container {
+  display: grid;
+  grid-template-columns: 4fr 6fr;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 2rem auto;
+}
+
+/* Make it stack on smaller screens */
+@media (max-width: 968px) {
+  .lists-container {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 </style>

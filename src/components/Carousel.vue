@@ -114,8 +114,9 @@
               type="button"
               class="btn btn-success"
               @click="toggleFavourite"
+              :disabled="savingFavourite"
             >
-              {{ isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites' }}
+              {{ savingFavourite ? 'Saving...' : (isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites') }}
             </button>
           </div>
         </div>
@@ -126,6 +127,9 @@
 
 <script>
 import { loadEvents } from '@/services/events';
+import { auth, db } from '../firebase.js';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default {
   name: 'EventCarousel',
@@ -137,9 +141,10 @@ export default {
       selectedEvent: null,
       favourites: [],
       itemsPerView: 3,
-      autoScrollInterval: null, // Add this
-      autoScrollDelay: 3000 // 3 seconds between scrolls
-
+      autoScrollInterval: null,
+      autoScrollDelay: 3000,
+      currentUser: null,
+      savingFavourite: false
     };
   },
   async mounted() {
@@ -149,21 +154,88 @@ export default {
       console.error('Error loading events:', error);
     }
     
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      this.currentUser = user;
+      if (user) {
+        await this.loadFavourites();
+      } else {
+        this.favourites = [];
+      }
+    });
+    
     this.updateItemsPerView();
     window.addEventListener('resize', this.updateItemsPerView);
-    this.startAutoScroll(); // Start auto-scroll
-
+    this.startAutoScroll();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateItemsPerView);
-    this.stopAutoScroll(); // Clean up
-
+    this.stopAutoScroll();
   },
   methods: {
+    async loadFavourites() {
+      if (!this.currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
+        if (userDoc.exists()) {
+          const favouritesList = userDoc.data().favouritesList || [];
+          // Extract just the IDs for easier checking
+          this.favourites = favouritesList.map(fav => fav.id);
+        }
+      } catch (error) {
+        console.error('Error loading favourites:', error);
+      }
+    },
+
+    async toggleFavourite() {
+      if (!this.currentUser) {
+        alert('Please log in to save favourites');
+        return;
+      }
+
+      const eventId = this.selectedEvent.id;
+      const userRef = doc(db, 'users', this.currentUser.uid);
+
+      this.savingFavourite = true;
+
+      try {
+        if (this.isFavourite(eventId)) {
+          // Remove from favourites
+          const userDoc = await getDoc(userRef);
+          const currentFavourites = userDoc.data().favouritesList || [];
+          const updatedFavourites = currentFavourites.filter(fav => fav.id !== eventId);
+          
+          await updateDoc(userRef, {
+            favouritesList: updatedFavourites
+          });
+          
+          // Update local state
+          this.favourites = this.favourites.filter(id => id !== eventId);
+        } else {
+          // Add to favourites
+          await updateDoc(userRef, {
+            favouritesList: arrayUnion(this.selectedEvent)
+          });
+          
+          // Update local state
+          this.favourites.push(eventId);
+        }
+      } catch (error) {
+        console.error('Error toggling favourite:', error);
+        alert('Failed to update favourites. Error: ' + error.message);
+      } finally {
+        this.savingFavourite = false;
+      }
+    },
+
+    isFavourite(id) {
+      return this.favourites.includes(id);
+    },
+
     startAutoScroll() {
       this.autoScrollInterval = setInterval(() => {
         if (this.currentIndex >= this.events.length - this.itemsPerView) {
-          // Loop back to start
           this.currentIndex = 0;
         } else {
           this.currentIndex++;
@@ -187,51 +259,37 @@ export default {
       } else {
         this.itemsPerView = 3;
       }
-      // Reset index if it's now out of bounds
       if (this.currentIndex > this.events.length - this.itemsPerView) {
         this.currentIndex = Math.max(0, this.events.length - this.itemsPerView);
       }
     },
+
     scrollPrev() {
       if (this.currentIndex > 0) {
         this.currentIndex--;
-
-        this.stopAutoScroll(); // Pause auto-scroll when user interacts
-        this.startAutoScroll(); // Restart auto-scroll
+        this.stopAutoScroll();
+        this.startAutoScroll();
       }
     },
+
     scrollNext() {
       if (this.currentIndex < this.events.length - this.itemsPerView) {
         this.currentIndex++;
-        this.stopAutoScroll(); // Pause auto-scroll when user interacts
-        this.startAutoScroll(); // Restart auto-scroll
-
+        this.stopAutoScroll();
+        this.startAutoScroll();
       }
     },
+
     openModal(event) {
       this.selectedEvent = event;
       this.showModal = true;
-
-      this.stopAutoScroll(); // Pause when modal is open
-
+      this.stopAutoScroll();
     },
+
     closeModal() {
       this.showModal = false;
       this.selectedEvent = null;
-
-      this.startAutoScroll(); // Resume when modal closes
-
-    },
-    toggleFavourite() {
-      const index = this.favourites.indexOf(this.selectedEvent.id);
-      if (index > -1) {
-        this.favourites.splice(index, 1);
-      } else {
-        this.favourites.push(this.selectedEvent.id);
-      }
-    },
-    isFavourite(id) {
-      return this.favourites.includes(id);
+      this.startAutoScroll();
     }
   }
 };
@@ -275,5 +333,4 @@ export default {
   font-size: 11px;
   font-weight: 500;
 }
-
 </style>
