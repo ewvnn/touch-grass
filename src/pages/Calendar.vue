@@ -9,10 +9,23 @@
             <h5 class="mb-0">Friends</h5>
           </div>
           <div class="card-body">
-            <div class="list-group list-group-flush">
-              <button v-for="friend in friends" :key="friend.id" type="button"
+            <div v-if="loadingFriends" class="text-center py-3">
+              <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div v-else-if="friends.length === 0" class="text-center text-muted py-3">
+              No friends yet
+            </div>
+            <div v-else class="list-group list-group-flush">
+              <button
+                v-for="friend in friends"
+                :key="friend.id"
+                type="button"
                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                :class="{ active: friend.selected }" @click="toggleFriend(friend.id)">
+                :class="{ active: friend.selected }"
+                @click="toggleFriend(friend.id)"
+              >
                 {{ friend.name }}
                 <span v-if="friend.selected" class="badge bg-success">✓</span>
               </button>
@@ -24,7 +37,7 @@
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Saved Activities</h5>
-            <button class="btn btn-sm btn-success" @click="loadEventsFromJson" :disabled="isLoadingActivities">
+            <button class="btn btn-sm btn-success" @click="loadFavourites" :disabled="isLoadingActivities">
               <span v-if="isLoadingActivities">Loading...</span>
               <span v-else>Refresh</span>
             </button>
@@ -35,25 +48,29 @@
                 <span class="visually-hidden">Loading...</span>
               </div>
             </div>
+            <div v-else-if="activities.length === 0" class="text-center text-muted py-3">
+              No saved activities
+            </div>
             <div v-else class="list-group list-group-flush">
-              <button v-for="activity in activities" :key="activity.id" type="button"
-                class="list-group-item list-group-item-action" @click="openActivityModal(activity)">
+              <div
+                v-for="activity in activities"
+                :key="activity.id"
+                class="list-group-item"
+              >
                 <strong>{{ activity.title }}</strong>
                 <small class="d-block text-muted">{{ activity.location }}</small>
-                <small class="d-block text-muted mt-1">
-                  📅 {{ activity.date }}
-                </small>
+                <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
                 <small class="d-block mt-1">
                   <span class="badge bg-info">{{ activity.category }}</span>
                   <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
                 </small>
-              </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Main Calendar Area -->
+      <!-- Main Calendar -->
       <div class="col-md-9">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
@@ -62,16 +79,37 @@
               Select Your Availability
             </button>
           </div>
-          <div class="card-body">
+          <div class="card-body position-relative">
             <div ref="calendar"></div>
+            <div
+              v-if="hoveredEvent"
+              class="custom-tooltip"
+              :style="{ top: tooltipPos.top + 'px', left: tooltipPos.left + 'px' }"
+              @mouseenter="keepHoveredEvent"
+              @mouseleave="clearHoveredEvent"
+            >
+              <div class="tooltip-image">
+                <img :src="hoveredEvent.extendedProps.image" :alt="hoveredEvent.title" />
+              </div>
+              <div class="tooltip-content">
+                <strong>{{ hoveredEvent.title }}</strong>
+                <div>Time: {{ hoveredEvent.extendedProps.time }}</div>
+                <div>Location: {{ hoveredEvent.extendedProps.location }}</div>
+                <div>Price: {{ hoveredEvent.extendedProps.price }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Availability Modal -->
-    <div class="modal" :class="{ show: showAvailabilityModal }"
-      :style="{ display: showAvailabilityModal ? 'block' : 'none' }" tabindex="-1">
+    <div
+      class="modal"
+      :class="{ show: showAvailabilityModal }"
+      :style="{ display: showAvailabilityModal ? 'block' : 'none' }"
+      tabindex="-1"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -79,180 +117,267 @@
             <button type="button" class="btn-close" @click="showAvailabilityModal = false"></button>
           </div>
           <div class="modal-body">
-            <p>Click on dates in the calendar below to toggle your availability (green = available)</p>
+            <p>Click on dates to toggle your availability (green = available)</p>
             <div ref="availabilityCalendar" class="availability-calendar-container"></div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" @click="showAvailabilityModal = false">
-              Close
-            </button>
-            <button type="button" class="btn-success" @click="saveAvailability">
-              Save Changes
-            </button>
+            <button type="button" class="btn-secondary" @click="showAvailabilityModal = false">Close</button>
+            <button type="button" class="btn-success" @click="saveAvailability">Save Changes</button>
           </div>
         </div>
       </div>
     </div>
     <div v-if="showAvailabilityModal" class="modal-backdrop fade show"></div>
-
-    <!-- Activity Sign Up Modal -->
-    <div class="modal" :class="{ show: showActivityModal }" :style="{ display: showActivityModal ? 'block' : 'none' }"
-      tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ selectedActivity?.title }}</h5>
-            <button type="button" class="btn-close" @click="showActivityModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div v-if="selectedActivity?.image" class="mb-3">
-              <img :src="selectedActivity.image" :alt="selectedActivity.title" class="img-fluid rounded" />
-            </div>
-            <p><strong>Location:</strong> {{ selectedActivity?.location }}</p>
-            <p><strong>Duration:</strong> {{ selectedActivity?.duration }}</p>
-            <p><strong>Price:</strong> {{ selectedActivity?.price }}</p>
-            <div class="mb-3">
-              <label class="form-label">Select Date</label>
-              <input type="date" class="form-control" v-model="activityDate" :placeholder="selectedActivity?.date" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Select Time</label>
-              <input type="time" class="form-control" v-model="activityTime"
-                :placeholder="getEventTime(selectedActivity?.date)" />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn-secondary" @click="showActivityModal = false">
-              Cancel
-            </button>
-            <button type="button" class="btn-success" @click="signUpForActivity">
-              Add to Calendar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-if="showActivityModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
 <script>
-import { Calendar } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { loadEvents } from '@/services/events';
-
+import { Calendar } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { auth, db } from "../firebase.js";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default {
-  name: 'CalendarComponent',
+  name: "CalendarComponent",
   data() {
     return {
       calendar: null,
       availabilityCalendar: null,
       showAvailabilityModal: false,
-      showActivityModal: false,
-      selectedActivity: null,
-      activityDate: '',
-      activityTime: '',
-      userEvents: [],
       userAvailabilities: [],
-      availabilityDates: [],
-      friends: [
-        {
-          id: 0,
-          name: 'Me',
-          selected: false,
-          availabilities: []
-        },
-        {
-          id: 1,
-          name: 'Alice Johnson',
-          selected: false,
-          availabilities: ['2025-10-20', '2025-10-21', '2025-10-25', '2025-10-27']
-        },
-        {
-          id: 2,
-          name: 'Bob Smith',
-          selected: false,
-          availabilities: ['2025-10-20', '2025-10-22', '2025-10-25', '2025-10-28']
-        },
-        {
-          id: 3,
-          name: 'Charlie Brown',
-          selected: false,
-          availabilities: ['2025-10-20', '2025-10-21', '2025-10-23', '2025-10-25']
-        },
-        {
-          id: 4,
-          name: 'Diana Prince',
-          selected: false,
-          availabilities: ['2025-10-21', '2025-10-24', '2025-10-25', '2025-10-26']
-        }
-      ],
+      friends: [],
       activities: [],
-      isLoadingActivities: false
+      isLoadingActivities: false,
+      loadingFriends: false,
+      currentUser: null,
+      unsubscribeFriends: [],
+      hoveredEvent: null,
+      tooltipPos: { top: 0, left: 0 },
+      isMouseOverPopup: false,
+      isMouseOverEvent: false,
     };
   },
-  mounted() {
+  async mounted() {
     this.initCalendar();
-    this.generateAvailabilityDates();
-    this.loadEventsFromJson();
+
+    onAuthStateChanged(auth, async (user) => {
+      this.currentUser = user;
+      if (user) {
+        await this.loadUserAvailability();
+        await this.loadFriends();
+        await this.loadFavourites();
+      } else {
+        this.friends = [];
+        this.activities = [];
+      }
+    });
+  },
+  beforeUnmount() {
+    this.unsubscribeFriends.forEach((unsub) => unsub());
   },
   watch: {
     showAvailabilityModal(newVal) {
-      if (newVal) {
-        this.initAvailabilityCalendar();
-      }
-    }
+      if (newVal) this.initAvailabilityCalendar();
+    },
   },
   methods: {
-    initCalendar() {
-      const calendarEl = this.$refs.calendar;
-      this.calendar = new Calendar(calendarEl, {
-        plugins: [dayGridPlugin, interactionPlugin],
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,dayGridWeek'
-        },
-        height: 'auto',
-        events: this.userEvents,
-        eventColor: '#38a169',
-        dayCellDidMount: (info) => {
-          this.updateDayBackground(info);
+    async loadUserAvailability() {
+      if (!this.currentUser) return;
+      try {
+        const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
+        if (userDoc.exists()) {
+          this.userAvailabilities = userDoc.data().availableDates || [];
         }
-      });
-      this.calendar.render();
+      } catch (err) {
+        console.error("Error loading user availability:", err);
+      }
     },
-    async loadEventsFromJson() {
+
+    async loadFriends() {
+      if (!this.currentUser) return;
+      this.loadingFriends = true;
+      try {
+        const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
+        if (!userDoc.exists()) return;
+        const friendsListUIDs = userDoc.data().friendsList || [];
+
+        this.friends = [
+          {
+            id: this.currentUser.uid,
+            name: "Me",
+            selected: false,
+            availabilities: this.userAvailabilities,
+          },
+        ];
+
+        this.unsubscribeFriends.forEach((unsub) => unsub());
+        this.unsubscribeFriends = [];
+
+        for (const uid of friendsListUIDs) {
+          const friendDoc = await getDoc(doc(db, "users", uid));
+          if (friendDoc.exists()) {
+            const friendData = {
+              id: uid,
+              name: friendDoc.data().displayName || "Unknown",
+              selected: false,
+              availabilities: friendDoc.data().availableDates || [],
+            };
+            this.friends.push(friendData);
+
+            const unsubscribe = onSnapshot(doc(db, "users", uid), (docSnap) => {
+              if (docSnap.exists()) {
+                const friend = this.friends.find((f) => f.id === uid);
+                if (friend) {
+                  friend.availabilities = docSnap.data().availableDates || [];
+                  if (friend.selected) this.updateCalendarHeatmap();
+                }
+              }
+            });
+            this.unsubscribeFriends.push(unsubscribe);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading friends:", err);
+      } finally {
+        this.loadingFriends = false;
+      }
+    },
+
+    async loadFavourites() {
+      if (!this.currentUser) return;
       this.isLoadingActivities = true;
       try {
-        this.activities = await loadEvents();
+        const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
+        this.activities = userDoc.exists() ? userDoc.data().favouritesList || [] : [];
+
+        this.calendar.getEvents().forEach(event => {
+          if (event.extendedProps.isActivity) {
+            event.remove();
+          }
+        });
+
+        this.activities.forEach((activity) => {
+          const startDate = this.parseActivityDate(activity.date);
+          this.calendar.addEvent({
+            id: activity.id,
+            title: activity.title,
+            start: startDate,
+            allDay: true,
+            backgroundColor: "#FFD700",
+            borderColor: "#FFD700",
+            textColor: "#000080",
+            extendedProps: {
+              isActivity: true,
+              image: activity.image,
+              location: activity.location,
+              time: activity.date.split('•')[1]?.trim() || "",
+              price: activity.price,
+              duration: activity.duration,
+            },
+          });
+        });
       } catch (error) {
-        console.error('Error loading events from JSON:', error);
-        this.activities = [];
+        console.error("Error loading favourites:", error);
       } finally {
         this.isLoadingActivities = false;
       }
     },
 
-    toggleFriend(friendId) {
-      const friend = this.friends.find(f => f.id === friendId);
-      if (friend) {
-        friend.selected = !friend.selected;
+    parseActivityDate(dateStr) {
+      try {
+        const parts = dateStr.split('•');
+        let datePart = parts[0].trim();
+        let timePart = parts[1]?.trim() || "12:00 AM";
 
-        if (friendId === 0) {
-          friend.availabilities = [...this.userAvailabilities];
+        datePart = datePart.replace(/^\w+,\s*/, '');
+
+        const currentYear = new Date().getFullYear();
+        const fullDateStr = `${datePart} ${currentYear} ${timePart}`;
+
+        const dateObj = new Date(Date.parse(fullDateStr));
+        if (isNaN(dateObj)) {
+          return new Date(Date.parse(`${datePart} ${currentYear}`)).toISOString();
         }
-
-        this.updateCalendarHeatmap();
+        return dateObj.toISOString();
+      } catch {
+        return new Date().toISOString();
       }
     },
+
+    initCalendar() {
+      const calendarEl = this.$refs.calendar;
+      this.calendar = new Calendar(calendarEl, {
+        plugins: [dayGridPlugin, interactionPlugin],
+        initialView: "dayGridMonth",
+        headerToolbar: { left: "prev,next today", center: "title", right: "dayGridMonth,dayGridWeek" },
+        height: "auto",
+        eventDisplay: "block",
+        eventContent: (arg) => ({
+          html: `<div style="color:#000080; display:flex; align-items:center; height:100%; padding-left:4px;">${arg.event.title}</div>`,
+        }),
+        eventDidMount: (info) => {
+          info.el.setAttribute('title', `${info.event.title}\nTime: ${info.event.extendedProps.time}\nLocation: ${info.event.extendedProps.location}\nPrice: ${info.event.extendedProps.price}`);
+
+          info.el.addEventListener('mouseenter', e => {
+            this.isMouseOverEvent = true;
+            this.hoveredEvent = info.event;
+
+            const rect = e.target.getBoundingClientRect();
+            const calendarRect = this.$refs.calendar.getBoundingClientRect();
+
+            let left = rect.left - calendarRect.left;
+            const top = rect.top - calendarRect.top - 140;
+
+            const tooltipWidth = 260;
+            const viewportWidth = window.innerWidth;
+            const absoluteLeft = rect.left + tooltipWidth;
+            if (absoluteLeft > viewportWidth) {
+              left -= (absoluteLeft - viewportWidth);
+            }
+            if (left < 0) left = 0;
+
+            this.tooltipPos = { top, left };
+          });
+
+          info.el.addEventListener('mouseleave', () => {
+            this.isMouseOverEvent = false;
+            setTimeout(() => {
+              if (!this.isMouseOverPopup && !this.isMouseOverEvent) {
+                this.hoveredEvent = null;
+              }
+            }, 150);
+          });
+        },
+      });
+      this.calendar.render();
+    },
+
+    keepHoveredEvent() {
+      this.isMouseOverPopup = true;
+    },
+    clearHoveredEvent() {
+      this.isMouseOverPopup = false;
+      setTimeout(() => {
+        if (!this.isMouseOverPopup && !this.isMouseOverEvent) {
+          this.hoveredEvent = null;
+        }
+      }, 150);
+    },
+
+    toggleFriend(friendId) {
+      const friend = this.friends.find(f => f.id === friendId);
+      if (!friend) return;
+      friend.selected = !friend.selected;
+      this.updateCalendarHeatmap();
+    },
+
     updateCalendarHeatmap() {
-      const availabilityCount = {};
+      if (!this.calendar) return;
       const selectedFriends = this.friends.filter(f => f.selected);
-      const maxFriends = selectedFriends.length;
+      const availabilityCount = {};
+      const max = selectedFriends.length;
 
       selectedFriends.forEach(friend => {
         friend.availabilities.forEach(date => {
@@ -260,240 +385,72 @@ export default {
         });
       });
 
-      if (this.calendar) {
-        this.calendar.render();
-
-        Object.keys(availabilityCount).forEach(date => {
-          const count = availabilityCount[date];
-          const intensity = maxFriends > 0 ? count / maxFriends : 0;
-          const color = this.getHeatmapColor(intensity);
-
-          const dayCell = this.calendar.el.querySelector(`[data-date="${date}"]`);
-          if (dayCell) {
-            dayCell.style.backgroundColor = color;
-          }
-        });
-
-        const allDates = this.calendar.el.querySelectorAll('[data-date]');
-        allDates.forEach(cell => {
-          const date = cell.getAttribute('data-date');
-          if (!availabilityCount[date]) {
-            cell.style.backgroundColor = '';
-          }
-        });
-      }
+      const allCells = this.calendar.el.querySelectorAll("[data-date]");
+      allCells.forEach(cell => {
+        const date = cell.getAttribute("data-date");
+        const count = availabilityCount[date] || 0;
+        const intensity = max ? count / max : 0;
+        cell.style.backgroundColor = intensity ? this.getHeatmapColor(intensity) : "";
+      });
     },
+
     initAvailabilityCalendar() {
       this.$nextTick(() => {
-        if (!this.$refs.availabilityCalendar) return;
-
-        // Destroy existing calendar if any
-        if (this.availabilityCalendar) {
-          this.availabilityCalendar.destroy();
-        }
-
-        const calendarEl = this.$refs.availabilityCalendar;
-        this.availabilityCalendar = new Calendar(calendarEl, {
+        if (this.availabilityCalendar) this.availabilityCalendar.destroy();
+        const calEl = this.$refs.availabilityCalendar;
+        this.availabilityCalendar = new Calendar(calEl, {
           plugins: [dayGridPlugin, interactionPlugin],
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: ''
-          },
-          height: 'auto',
+          initialView: "dayGridMonth",
           dateClick: (info) => {
             this.toggleUserAvailability(info.dateStr);
             this.updateAvailabilityCalendarDisplay();
           },
-          dayCellDidMount: (info) => {
-            const dateStr = info.date.toISOString().split('T')[0];
-            if (this.isUserAvailable(dateStr)) {
-              info.el.style.backgroundColor = '#38a169';
-              info.el.style.color = 'white';
-              info.el.style.cursor = 'pointer';
-            } else {
-              info.el.style.cursor = 'pointer';
-            }
-          }
         });
-
         this.availabilityCalendar.render();
+        this.updateAvailabilityCalendarDisplay();
       });
     },
+
+    toggleUserAvailability(date) {
+      const i = this.userAvailabilities.indexOf(date);
+      if (i > -1) this.userAvailabilities.splice(i, 1);
+      else this.userAvailabilities.push(date);
+    },
+
     updateAvailabilityCalendarDisplay() {
       if (!this.availabilityCalendar) return;
-
-      const allDates = this.availabilityCalendar.el.querySelectorAll('[data-date]');
-      allDates.forEach(cell => {
-        const date = cell.getAttribute('data-date');
-        if (this.isUserAvailable(date)) {
-          cell.style.backgroundColor = '#38a169';
-          cell.style.color = 'white';
-        } else {
-          cell.style.backgroundColor = '';
-          cell.style.color = '';
-        }
+      const allCells = this.availabilityCalendar.el.querySelectorAll("[data-date]");
+      allCells.forEach(cell => {
+        const date = cell.getAttribute("data-date");
+        const available = this.userAvailabilities.includes(date);
+        cell.style.backgroundColor = available ? "#38a169" : "";
+        cell.style.color = available ? "white" : "";
       });
     },
-    updateDayBackground(info) {
-      const dateStr = info.date.toISOString().split('T')[0];
-      const selectedFriends = this.friends.filter(f => f.selected);
-      const maxFriends = selectedFriends.length;
 
-      if (maxFriends === 0) return;
-
-      const count = selectedFriends.filter(f =>
-        f.availabilities.includes(dateStr)
-      ).length;
-
-      if (count > 0) {
-        const intensity = count / maxFriends;
-        info.el.style.backgroundColor = this.getHeatmapColor(intensity);
-      }
-    },
     getHeatmapColor(intensity) {
-      if (intensity === 0) return '';
-
-      const greenShades = [
-        '#c6f6d5',
-        '#9ae6b4',
-        '#68d391',
-        '#48bb78',
-        '#38a169',
-        '#2f855a',
-      ];
-
-      const index = Math.min(
-        Math.floor(intensity * greenShades.length),
-        greenShades.length - 1
-      );
-
-      return greenShades[index];
+      const shades = ["#c6f6d5", "#9ae6b4", "#68d391", "#48bb78", "#38a169", "#2f855a"];
+      return shades[Math.min(Math.floor(intensity * shades.length), shades.length - 1)];
     },
-    saveAvailability() {
-      const me = this.friends.find(f => f.id === 0);
-      if (me) {
-        me.availabilities = [...this.userAvailabilities];
-      }
 
-      this.showAvailabilityModal = false;
+    async saveAvailability() {
+      if (!this.currentUser) return;
+      try {
+        const ref = doc(db, "users", this.currentUser.uid);
+        await setDoc(ref, { availableDates: this.userAvailabilities }, { merge: true });
 
-      // Destroy the availability calendar when modal closes
-      if (this.availabilityCalendar) {
-        this.availabilityCalendar.destroy();
-        this.availabilityCalendar = null;
-      }
+        const me = this.friends.find(f => f.id === this.currentUser.uid);
+        if (me) me.availabilities = [...this.userAvailabilities];
 
-      this.updateCalendarHeatmap();
-    },
-    generateAvailabilityDates() {
-      const dates = [];
-      const today = new Date();
-
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        dates.push(date.toISOString().split('T')[0]);
-      }
-
-      this.availabilityDates = dates;
-    },
-    toggleUserAvailability(date) {
-      const index = this.userAvailabilities.indexOf(date);
-      if (index > -1) {
-        this.userAvailabilities.splice(index, 1);
-      } else {
-        this.userAvailabilities.push(date);
+        this.showAvailabilityModal = false;
+        if (this.availabilityCalendar) this.availabilityCalendar.destroy();
+        this.updateCalendarHeatmap();
+      } catch (err) {
+        console.error("Error saving availability:", err);
+        alert("Failed to save availability");
       }
     },
-    isUserAvailable(date) {
-      return this.userAvailabilities.includes(date);
-    },
-    formatDate(dateStr) {
-      const date = new Date(dateStr);
-      const options = { month: 'short', day: 'numeric' };
-      return date.toLocaleDateString('en-US', options);
-    },
-    openActivityModal(activity) {
-      this.selectedActivity = activity;
-      // Parse the date string and set as placeholder values
-      const parsedDate = this.parseEventDate(activity.date);
-      this.activityDate = parsedDate.date;
-      this.activityTime = parsedDate.time;
-      this.showActivityModal = true;
-    },
-    parseEventDate(dateStr) {
-      // Parse "Sun, 19 Oct • 12:00 PM" format
-      const parts = dateStr.split('•');
-      const datePart = parts[0]?.trim();
-      const timePart = parts[1]?.trim();
-
-      // Extract day and month
-      const dateMatch = datePart?.match(/(\d+)\s+(\w+)/);
-      let formattedDate = '';
-
-      if (dateMatch) {
-        const day = dateMatch[1].padStart(2, '0');
-        const monthName = dateMatch[2];
-        const monthMap = {
-          'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
-          'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
-          'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
-        };
-        const month = monthMap[monthName] || '01';
-        const year = new Date().getFullYear();
-        formattedDate = `${year}-${month}-${day}`;
-      }
-
-      // Convert 12-hour to 24-hour time
-      let formattedTime = '';
-      if (timePart) {
-        const timeMatch = timePart.match(/(\d+):(\d+)\s*(AM|PM)/i);
-        if (timeMatch) {
-          let hours = parseInt(timeMatch[1]);
-          const minutes = timeMatch[2];
-          const meridiem = timeMatch[3].toUpperCase();
-
-          if (meridiem === 'PM' && hours !== 12) hours += 12;
-          if (meridiem === 'AM' && hours === 12) hours = 0;
-
-          formattedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
-        }
-      }
-
-      return { date: formattedDate, time: formattedTime };
-    },
-    getEventTime(dateStr) {
-      if (!dateStr) return '';
-      const parsed = this.parseEventDate(dateStr);
-      return parsed.time;
-    },
-    signUpForActivity() {
-      if (!this.activityDate || !this.activityTime) {
-        alert('Please select both date and time');
-        return;
-      }
-
-      const newEvent = {
-        title: this.selectedActivity.title,
-        start: `${this.activityDate}T${this.activityTime}`,
-        backgroundColor: '#38a169',
-        borderColor: '#2f855a'
-      };
-
-      this.userEvents.push(newEvent);
-
-      if (this.calendar) {
-        this.calendar.addEvent(newEvent);
-      }
-
-      this.showActivityModal = false;
-      this.selectedActivity = null;
-      this.activityDate = '';
-      this.activityTime = '';
-    }
-  }
+  },
 };
 </script>
 
@@ -502,42 +459,19 @@ export default {
   background-color: #38a169;
   border-color: #38a169;
 }
-
 .modal.show {
   background-color: rgba(0, 0, 0, 0.5);
 }
-
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+.activities-scrollable {
+  max-height: 500px;
+  overflow-y: auto;
 }
 
-.list-group-item {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.list-group-item:hover:not(.active) {
-  background-color: #f8f9fa;
-}
-
-.btn-success {
-  background-color: #38a169;
-  border-color: #38a169;
-}
-
-.btn-success:hover {
-  background-color: #2f855a;
-  border-color: #2f855a;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
+/* FullCalendar button styling - GREEN THEME */
 :deep(.fc-button-primary) {
   background-color: #38a169 !important;
   border-color: #38a169 !important;
+  color: white !important;
 }
 
 :deep(.fc-button-primary:hover) {
@@ -551,43 +485,50 @@ export default {
   border-color: #2f855a !important;
 }
 
+:deep(.fc-button-primary:focus) {
+  box-shadow: 0 0 0 0.2rem rgba(56, 161, 105, 0.5) !important;
+}
+
+:deep(.fc-button-primary:disabled) {
+  background-color: #9ae6b4 !important;
+  border-color: #9ae6b4 !important;
+}
+
 :deep(.fc-daygrid-day.fc-day-today) {
   background-color: #c6f6d5 !important;
 }
 
-.availability-calendar-container {
-  min-height: 400px;
+/* Event styling overrides for yellow bars with dark blue text */
+:deep(.fc-event) {
+  border-radius: 3px !important;
+  font-weight: normal !important;
+  padding: 2px 6px !important;
+  cursor: default !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.availability-calendar-container :deep(.fc-daygrid-day) {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.availability-calendar-container :deep(.fc-daygrid-day:hover) {
-  opacity: 0.8;
-}
-
-.activities-scrollable {
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.activities-scrollable::-webkit-scrollbar {
-  width: 8px;
-}
-
-.activities-scrollable::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* Tooltip styling */
+.custom-tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  padding: 10px;
+  width: 260px;
   border-radius: 4px;
+  z-index: 1200;
+  user-select: none;
 }
-
-.activities-scrollable::-webkit-scrollbar-thumb {
-  background: #38a169;
+.tooltip-image img {
+  max-width: 100%;
   border-radius: 4px;
+  margin-bottom: 8px;
 }
-
-.activities-scrollable::-webkit-scrollbar-thumb:hover {
-  background: #2f855a;
+.tooltip-content strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #000080;
 }
 </style>
