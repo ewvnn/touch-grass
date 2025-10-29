@@ -5,7 +5,7 @@
         Find Affordable Events in Singapore
       </h1>
 
-      <p class="lead text-secondary mx-auto mb-5" style="max-width: 48rem;">
+      <p class="lead hero-lead text-secondary mx-auto mb-5">
         Your centralised website for discovering budget-friendly activities!
       </p>
 
@@ -23,6 +23,7 @@
       <svg 
         class="grass-svg" 
         viewBox="0 0 1200 200" 
+        preserveAspectRatio="xMidYMax meet"
         xmlns="http://www.w3.org/2000/svg"
         @mousemove="onMouseMove"
         @mouseleave="onMouseLeave"
@@ -151,18 +152,27 @@ onUnmounted(() => {
 <style scoped>
 .hero-section {
   position: relative;
-  padding: 5rem 0 2rem;
-  background: linear-gradient(to bottom, #f8f9fa 0%, #e8f5e9 100%);
+  padding: 3rem 0 2rem;
+  background: white;
   overflow: hidden;
-  min-height: 70vh;
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  --grass-h: 150px;
+  padding-bottom: 141px;
 }
 
 .container {
   position: relative;
   z-index: 2;
+}
+
+.hero-lead{
+  max-width: min(48rem, 92vw);   
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 auto 3rem;
 }
 
 .explore-btn {
@@ -181,9 +191,10 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 200px;
+  height: var(--grass-h);
   overflow: hidden;
   pointer-events: all;
+  z-index: 1;
 }
 
 .grass-svg {
@@ -198,32 +209,30 @@ onUnmounted(() => {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .hero-section {
-    padding: 3rem 0 2rem;
-    min-height: 60vh;
+    padding: 6rem 0 2rem;
+    padding-bottom: calc(2rem + var(--grass-h));
+    min-height: 70vh;
+    --grass-h: 200px;
   }
   
+  .display-4 {
+    font-size: 3.5rem;
+  }
+}
+
+@media (min-width: 576px) {
   .display-4 {
     font-size: 2.5rem;
   }
   
-  .grass-container {
-    height: 150px;
-  }
-}
-
-@media (max-width: 576px) {
-  .display-4 {
-    font-size: 2rem;
-  }
-  
   .lead {
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
   
   .explore-btn {
-    padding: 0.75rem 2rem !important;
+    padding: 1rem 3rem !important;
   }
 }
 </style>

@@ -321,7 +321,7 @@ export default {
 .modal-tags {
   display: flex;
   gap: 8px;
-  margin-top: 20px;
+  margin: 20px;
   flex-wrap: wrap;
 }
 
