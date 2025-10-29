@@ -245,13 +245,14 @@ export default {
   },
   methods: {
     loadGoogleMapsScript() {
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
       if (window.google) {
         this.initMap();
         return;
       }
       const script = document.createElement('script');
       // **IMPORTANT**: Replace 'YOUR_API_KEY' with your actual Google Maps API Key
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = this.initMap;
