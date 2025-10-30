@@ -21,15 +21,16 @@
     <!-- Interactive Grass Patch -->
     <div class="grass-container">
       <svg 
+        ref="svgRef"
         class="grass-svg" 
-        viewBox="0 0 1200 200" 
-        preserveAspectRatio="xMidYMax meet"
+        :viewBox="'0 0 ' + vbWidth + ' 200'" 
+        preserveAspectRatio="xMidYMax slice"
         xmlns="http://www.w3.org/2000/svg"
         @mousemove="onMouseMove"
         @mouseleave="onMouseLeave"
       >
         <!-- Ground -->
-        <rect x="0" y="150" width="1200" height="50" fill="#5a8f4a" opacity="0.3"/>
+        <rect x="0" y="150" :width="vbWidth" height="50" fill="#5a8f4a" opacity="0.3"/>
         
         <!-- Grass Blades -->
         <g v-for="(blade, index) in grassBlades" :key="index">
@@ -48,39 +49,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const grassBlades = ref([])
 const mouseX = ref(-1000)
 const mouseY = ref(-1000)
 
-// Generate grass blades on mount
-onMounted(() => {
-  const blades = []
-  const colors = ['#4a7c3a', '#5a8f4a', '#6ba85e', '#3d6b2f']
-  
-  for (let i = 0; i < 120; i++) {
-    const x = (i * 10) + Math.random() * 8
-    const height = 40 + Math.random() * 60
-    const width = 3 + Math.random() * 3
-    const curve = 10 + Math.random() * 15
-    
-    blades.push({
-      x,
-      height,
-      width,
-      curve,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      opacity: 0.7 + Math.random() * 0.3,
-      baseRotation: (Math.random() - 0.5) * 5,
-      swayOffset: Math.random() * Math.PI * 2,
-      path: generateBladePath(x, height, width, curve),
-      transition: 'transform 0.3s ease-out'
-    })
-  }
-  
-  grassBlades.value = blades
-})
+const svgRef = ref(null)
+const vbWidth = ref(1200)
+const vbHeight = ref(200)
 
 function generateBladePath(x, height, width, curve) {
   const baseY = 150
@@ -92,6 +69,37 @@ function generateBladePath(x, height, width, curve) {
     Q ${x - width * 0.3} ${baseY - height * 0.3}, ${x} ${baseY}
     Z
   `
+}
+
+function makeBlades(width){
+  const colors = ['#4a7c3a', '#5a8f4a', '#6ba85e', '#3d6b2f']
+  const spacing = 10                          // ~1 blade per 10px
+  const count = Math.ceil(width / spacing)
+  const blades = []
+  for (let i = 0; i < count; i++) {
+    const x = i * spacing + Math.random() * 8
+    const height = 40 + Math.random() * 60
+    const w = 3 + Math.random() * 3
+    const curve = 10 + Math.random() * 15
+    blades.push({
+      x, height, width: w, curve,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      opacity: 0.7 + Math.random() * 0.3,
+      baseRotation: (Math.random() - 0.5) * 5,
+      swayOffset: Math.random() * Math.PI * 2,
+      path: generateBladePath(x, height, w, curve),
+      transition: 'transform 0.3s ease-out'
+    })
+  }
+  return blades
+}
+
+function resizeSvg(){
+  const el = svgRef.value
+  if (!el) return
+  const w = Math.max(320, Math.round(el.clientWidth))
+  vbWidth.value = w
+  grassBlades.value = makeBlades(w)
 }
 
 function onMouseMove(event) {
@@ -132,6 +140,9 @@ function getBladeTransform(blade, index) {
 // Continuous animation for ambient sway
 let animationFrame
 onMounted(() => {
+  resizeSvg()
+  window.addEventListener('resize', resizeSvg)
+
   const animate = () => {
     // Force re-render for ambient animation
     grassBlades.value = [...grassBlades.value]
@@ -141,8 +152,8 @@ onMounted(() => {
 })
 
 // Cleanup
-import { onUnmounted } from 'vue'
 onUnmounted(() => {
+  window.removeEventListener('resize', resizeSvg)
   if (animationFrame) {
     cancelAnimationFrame(animationFrame)
   }
@@ -209,6 +220,20 @@ onUnmounted(() => {
 }
 
 /* Responsive adjustments */
+@media (min-width: 576px) {
+  .display-4 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-lead {
+    font-size: 1.25rem;
+  }
+  
+  .explore-btn {
+    padding: 1rem 3rem !important;
+  }
+}
+
 @media (min-width: 768px) {
   .hero-section {
     padding: 6rem 0 2rem;
@@ -219,20 +244,6 @@ onUnmounted(() => {
   
   .display-4 {
     font-size: 3.5rem;
-  }
-}
-
-@media (min-width: 576px) {
-  .display-4 {
-    font-size: 2.5rem;
-  }
-  
-  .lead {
-    font-size: 1.25rem;
-  }
-  
-  .explore-btn {
-    padding: 1rem 3rem !important;
   }
 }
 </style>
