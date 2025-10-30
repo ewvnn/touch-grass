@@ -59,9 +59,6 @@
       <!-- [Chunk] Bottom bar -->
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-2 pb-4 small">
         <span class="text-secondary">© {{ year }} Touch Grass. All rights reserved.</span>
-        <button type="button" class="btn btn-link p-0 link-body-emphasis" @click="scrollTop" aria-label="Back to top">
-          Back to top <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
-        </button>
       </div>
     </div>
   </footer>
@@ -71,10 +68,6 @@
 // [Chunk] Script handles year and smooth scrolling
 import { ref } from 'vue'
 const year = new Date().getFullYear()
-
-function scrollTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 </script>
 
 <style scoped>

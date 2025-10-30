@@ -2,6 +2,7 @@
 import Hero from '../components/Hero.vue'
 import Carousel from '../components/Carousel.vue'
 import FilterEvents from '../components/FilterEvents.vue';
+import BackToTop from '@/components/BackToTop.vue';
 
 </script>
 
@@ -9,5 +10,6 @@ import FilterEvents from '../components/FilterEvents.vue';
     <Hero />
     <Carousel />
     <FilterEvents />
+    <BackToTop />
 </template>
 

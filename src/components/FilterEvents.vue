@@ -231,12 +231,10 @@ export default {
 
 <style scoped>
 .filter-events {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 20px;
+  padding-block: 50px;
+  padding-inline: 16px;
 
   background: linear-gradient(to bottom, #f8f9fa 0%, #e8f5e9 100%);
-
 }
 
 .search-container {
@@ -292,17 +290,19 @@ export default {
 
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   gap: 24px;
 }
 
 .event-card {
   background: white;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .event-card:hover {
@@ -315,6 +315,8 @@ export default {
   width: 100%;
   height: 200px;
   overflow: hidden;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .event-image img {
@@ -324,15 +326,22 @@ export default {
 }
 
 .badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 20px;
+  right: 20px;
   background: #085702;
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.event-image .badge { 
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 2;
 }
 
 .event-content {
@@ -488,10 +497,54 @@ export default {
 }
 
 /* Responsive */
+@media (min-width: 576px) {
+  .filter-events { 
+    padding-inline: 24px; 
+  }
+}
+
+@media (min-width: 768px) {
+  .filter-events {
+    padding-inline: 0;
+    display: grid;
+    grid-template-columns: 1fr 720px 1fr;
+  }
+  .filter-events > *:not(.modal-overlay) { 
+    grid-column: 2; 
+  }
+
+  .events-grid { 
+    grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  }
+}
+
+@media (min-width: 992px) {
+  .filter-events { 
+    grid-template-columns: 1fr 960px 1fr; 
+  }
+
+  .events-grid { 
+    grid-template-columns: repeat(3, minmax(0, 1fr)); 
+  }
+}
+
+@media (min-width: 1200px) {
+  .filter-events { 
+    grid-template-columns: 1fr 1280px 1fr; 
+  }
+}
+
+@media (max-width: 992px) {
+  .event-image .badge {
+    top: 22px;
+    right: 22px;
+  }
+}
+
 @media (max-width: 768px) {
-  .events-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 16px;
+  .event-image .badge {
+    top: 24px !important;
+    right: 24px !important;
   }
 
   .filters {

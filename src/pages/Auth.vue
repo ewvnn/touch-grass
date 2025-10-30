@@ -356,11 +356,6 @@ const toTop = () => {
                 </div>
             </div>
         </div>
-
-        <!-- Back to top -->
-        <button type="button" class="btn btn-top" aria-label="Back to top" @click="toTop">
-            <i class="bi bi-arrow-up"></i>
-        </button>
     </section>
 
     <!-- Terms of Service Modal -->
@@ -624,25 +619,6 @@ const toTop = () => {
     color: #fff !important;
     border-radius: 12px;
     padding: .9rem 1rem;
-}
-
-/* Back-to-top */
-.btn-top {
-    position: fixed;
-    right: 16px;
-    bottom: 20px;
-    z-index: 40;
-    width: 44px;
-    height: 44px;
-    border-radius: 999px;
-    background: #206D25;
-    color: #fff;
-    border: none;
-    box-shadow: 0 10px 24px rgba(32, 109, 37, .25);
-}
-
-.btn-top:hover {
-    filter: brightness(.96);
 }
 
 @media (max-width: 992px) {
