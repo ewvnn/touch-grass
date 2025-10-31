@@ -42,8 +42,8 @@ Explain the core features and the benefit each provides.
 |:--|:--|:--|
 | Register & Login | Secure authentication system | Personalized experience and data security |
 | Search & Filter | Find items by category or location | Saves time finding relevant results |
-| Favorites | Bookmark preferred items or places | Quick access to commonly used data |
-| Reviews | Submit ratings and comments | Builds trust and community feedback |
+| Calendar | Plan out your schedule | Align availability with Friends | 
+| Itinerary | Plan routes for the day | |
 
 ---
 
