@@ -16,7 +16,7 @@
           <select v-model="selectedCategory" class="filter-select">
             <option value="all">All Categories</option>
             <option v-for="cat in categories" :key="cat" :value="cat">
-            {{ cat }}
+              {{ cat }}
             </option>
           </select>
           <div class="select-arrow" aria-hidden="true">▼</div>
@@ -79,10 +79,21 @@
     <!-- Modal -->
     <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
-        <button class="close-btn" @click="closeModal">&times;</button>
+        <button class="close-btn" @click="closeModal" aria-label="Close">
+          <span class="close-icon">&times;</span>
+        </button>
+
         <img :src="selectedEvent.image" :alt="selectedEvent.title" class="modal-image" />
         <div class="modal-details">
-          <h2>{{ selectedEvent.title }}</h2>
+          <div class="title-row">
+            <h2 class="modal-title">{{ selectedEvent.title }}</h2>
+            <button class="fav-btn" v-if="selectedEvent" :aria-pressed="isFavourite(selectedEvent.id)"
+              :disabled="savingFavourite" @click.stop="toggleFavourite"
+              :title="isFavourite(selectedEvent.id) ? 'Remove from favourites' : 'Save to favourites'">
+              <i :class="['bi', isFavourite(selectedEvent.id) ? 'bi-heart-fill' : 'bi-heart']"></i>
+            </button>
+          </div>
+
           <div class="modal-info">
             <p><strong>Location:</strong> {{ selectedEvent.location }}</p>
             <p><strong>Date:</strong> {{ selectedEvent.date }}</p>
@@ -90,18 +101,17 @@
             <p><strong>Price:</strong> {{ selectedEvent.price }}</p>
             <p><strong>Category:</strong> {{ selectedEvent.category }}</p>
           </div>
+
           <div class="modal-tags">
             <span v-if="selectedEvent.badge" class="badge">{{ selectedEvent.badge }}</span>
             <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
             <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
           </div>
-          <button 
-            class="save-btn btn btn-success" 
-            @click="toggleFavourite"
-            :disabled="savingFavourite"
-          >
+
+          <button class="save-btn btn btn-success" @click="toggleFavourite" :disabled="savingFavourite">
             {{ savingFavourite ? 'Saving...' : (isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites') }}
           </button>
+
         </div>
       </div>
     </div>
@@ -144,7 +154,7 @@ export default {
           this.checkBudget(event.price);
 
         const matchesCDC = !this.filterCDC || !!event.cdc;
-        
+
         const matchesCulture = !this.filterCulturePass || !!event.culturepass;
 
         return matchesSearch && matchesCategory && matchesBudget && matchesCDC && matchesCulture;
@@ -155,6 +165,7 @@ export default {
     try {
       this.events = await loadEvents();
       this.categories = [...new Set(this.events.map(e => e.category))].sort();
+      this.openFromQuery();
     } catch (e) {
       console.error('Failed to load events:', e);
       this.events = [];
@@ -174,7 +185,7 @@ export default {
   methods: {
     async loadFavourites() {
       if (!this.currentUser) return;
-      
+
       try {
         const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
         if (userDoc.exists()) {
@@ -190,6 +201,14 @@ export default {
     async toggleFavourite() {
       if (!this.currentUser) {
         alert('Please log in to save favourites');
+
+        const redirect = this.$route?.fullPath || '/';
+        if (this.$router) {
+          await this.$router.push({ path: '/login', query: { redirect } });
+        }
+        else {
+          window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
+        }
         return;
       }
 
@@ -204,11 +223,11 @@ export default {
           const userDoc = await getDoc(userRef);
           const currentFavourites = userDoc.data().favouritesList || [];
           const updatedFavourites = currentFavourites.filter(fav => fav.id !== eventId);
-          
+
           await updateDoc(userRef, {
             favouritesList: updatedFavourites
           });
-          
+
           // Update local state
           this.favourites = this.favourites.filter(id => id !== eventId);
         } else {
@@ -216,7 +235,7 @@ export default {
           await updateDoc(userRef, {
             favouritesList: arrayUnion(this.selectedEvent)
           });
-          
+
           // Update local state
           this.favourites.push(eventId);
         }
@@ -246,12 +265,42 @@ export default {
     openModal(event) {
       this.selectedEvent = event;
       document.body.style.overflow = 'hidden';
+
+      if (this.$router) {
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...this.$route.query, modal: 'event', eventId: String(event.id) }
+        });
+      }
     },
     closeModal() {
       this.selectedEvent = null;
       document.body.style.overflow = 'auto';
+
+      if (this.$router) {
+        const q = { ...this.$route.query };
+        delete q.modal;
+        delete q.eventId;
+        this.$router.replace({ path: this.$route.path, query: q });
+      }
+    },
+
+    openFromQuery() {
+      const modal = this.$route?.query?.modal;
+      const eventId = this.$route?.query?.eventId;
+      if (modal === 'event' && eventId && !this.selectedEvent) {
+        const ev = this.events.find(e => String(e.id) === String(eventId));
+        if (ev) this.openModal(ev);
+      }
+    },
+
+  },
+  watch: {
+    '$route.query'() {
+      this.openFromQuery();
     }
-  }
+  },
+
 };
 </script>
 
@@ -269,9 +318,17 @@ export default {
   font-weight: 800;
   color: #1f2937;
 }
+
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .search-container {
@@ -318,6 +375,7 @@ export default {
   width: max-content;
   max-width: 100%;
 }
+
 .filter-group:not(.checkbox-group) .filter-select {
   width: auto;
   min-width: 180px;
@@ -353,23 +411,30 @@ export default {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px; height: 20px;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
-  font-size: 12px; color: #374151;
-}
-
-.checkbox-group { 
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
-  gap: 14px; 
+  justify-content: center;
+  pointer-events: none;
+  font-size: 12px;
+  color: #374151;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
   flex: 0 0 auto;
 }
 
 .checkbox {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 14px; color: #333;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
 }
 
 .events-grid {
@@ -421,7 +486,7 @@ export default {
   white-space: nowrap;
 }
 
-.event-image .badge { 
+.event-image .badge {
   position: absolute;
   top: 22px;
   right: 22px;
@@ -501,9 +566,10 @@ export default {
   border-radius: 16px;
   max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   position: relative;
+  overscroll-behavior: contain;
 }
 
 .close-btn {
@@ -521,12 +587,50 @@ export default {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1;
+  z-index: 2;
   color: #374151;
+  padding: 0;
+  line-height: 1;
 }
 
 .close-btn:hover {
   background: #f3f4f6;
+}
+
+.close-icon {
+  font-size: 22px;
+  display: inline-block;
+  transform: translateY(-1px);
+}
+
+.fav-btn {
+  border: none;
+  background: transparent;
+  padding: 6px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 9999px;
+  color: #085702;
+}
+
+.fav-btn i {
+  font-size: 22px;
+}
+
+.fav-btn:hover {
+  background: #f3f4f6;
+}
+
+/* .fav-btn[aria-pressed="false"] i { 
+  color: #085702; 
+}
+.fav-btn[aria-pressed="true"]  i { 
+  color: #085702; 
+} */
+
+.fav-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
 }
 
 .modal-image {
@@ -543,6 +647,18 @@ export default {
 .modal-details h2 {
   margin: 0 0 20px 0;
   color: #1f2937;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-title {
+  margin: 0;
+  flex: 1;
 }
 
 .modal-info p {
@@ -582,8 +698,8 @@ export default {
 
 /* Responsive */
 @media (min-width: 576px) {
-  .filter-events { 
-    padding-inline: 24px; 
+  .filter-events {
+    padding-inline: 24px;
   }
 }
 
@@ -593,28 +709,29 @@ export default {
     display: grid;
     grid-template-columns: 1fr 720px 1fr;
   }
-  .filter-events > *:not(.modal-overlay) { 
-    grid-column: 2; 
+
+  .filter-events>*:not(.modal-overlay) {
+    grid-column: 2;
   }
 
-  .events-grid { 
-    grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  .events-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 992px) {
-  .filter-events { 
-    grid-template-columns: 1fr 960px 1fr; 
+  .filter-events {
+    grid-template-columns: 1fr 960px 1fr;
   }
 
-  .events-grid { 
-    grid-template-columns: repeat(3, minmax(0, 1fr)); 
+  .events-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1200px) {
-  .filter-events { 
-    grid-template-columns: 1fr 1280px 1fr; 
+  .filter-events {
+    grid-template-columns: 1fr 1280px 1fr;
   }
 }
 
