@@ -11,7 +11,7 @@
         class="search-input"
         @keyup.enter="searchUser"
       />
-      <button @click="searchUser" class="btn-search">Search</button>
+      <button @click="searchUser" class="btn-search bg-success">Search</button>
     </div>
 
     <p v-if="searchError" class="error">{{ searchError }}</p>

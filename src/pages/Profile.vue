@@ -14,7 +14,7 @@
             alt="Profile picture"
           />
           <div class="avatar-buttons">
-            <label for="profile-pic-upload" class="btn-upload-pic">
+            <label for="profile-pic-upload" class="btn-upload-pic bg-success">
               Upload Picture
             </label>
             <input
@@ -95,7 +95,7 @@
 
         <!-- Change Password Section -->
         <div class="change-password-section">
-          <button class="btn-change-password" @click="openPasswordModal">Change Password</button>
+          <button class="btn-change-password bg-success" @click="openPasswordModal">Change Password</button>
         </div>
 
         <p v-if="successMessage" class="success">{{ successMessage }}</p>
@@ -471,15 +471,19 @@ async function changePassword() {
   background: #fff;
   padding: 2rem;
   border-radius: 12px;
-  width: auto;
+  /* width: auto; */
   max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-
   height: auto;       /* shrink to content */
   max-height: 90vh;   /* prevent going off-screen */
+  border: 3px solid black;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 

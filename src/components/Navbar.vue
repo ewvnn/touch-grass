@@ -133,4 +133,8 @@ function goProfile() {
   width: 28px;
   height: 28px;
 }
+
+.dropdown-item:active {
+  background-color: #206d25;
+}
 </style>

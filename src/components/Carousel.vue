@@ -1,7 +1,9 @@
 <template>
-  <div class="container py-4">
+  <div class="container py-4" id="events">
     <!-- Carousel Container -->
-    <div class="position-relative overflow-hidden" @mouseenter="stopAutoScroll" @mouseleave="startAutoScroll">
+    <div class="position-relative overflow-hidden" style="margin: 30px auto"
+      @mouseenter="stopAutoScroll" @mouseleave="startAutoScroll">
+      
       <!-- Previous Button -->
       <button
         class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
@@ -23,7 +25,6 @@
             v-for="event in events"
             :key="event.id"
             class="flex-shrink-0 px-2 carousel-item-wrapper"
-            id = "events"
           >
             <div
               class="card h-100 shadow-sm cursor-pointer"
@@ -38,6 +39,7 @@
               />
               <div class="card-body">
                 <span class="badge bg-success mb-2">{{ event.badge }}</span>
+                <span class="badge bg-success ms-2">{{ event.category }}</span>
                 <h5 class="card-title mb-2">{{ event.title }}</h5>
                 <p class="card-text text-muted mb-1">
                   <small>{{ event.location }}</small>
@@ -75,17 +77,15 @@
         <div class="modal-content" v-if="selectedEvent">
           <div class="modal-header">
             <h5 class="modal-title">{{ selectedEvent.title }}</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeModal"
-            ></button>
+            <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body">
+            <!-- Fixed-size modal image -->
             <img
               :src="selectedEvent.image"
               class="img-fluid rounded mb-3"
               :alt="selectedEvent.title"
+              style="width: 100%; height: 300px; object-fit: cover;"
             />
             <div class="mb-2">
               <span class="badge bg-success">{{ selectedEvent.badge }}</span>
@@ -100,16 +100,10 @@
               <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
               <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
             </div>
-
           </div>
+
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              @click="closeModal"
-            >
-              Close
-            </button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
             <button
               type="button"
               class="btn btn-success"
@@ -142,7 +136,7 @@ export default {
       favourites: [],
       itemsPerView: 3,
       autoScrollInterval: null,
-      autoScrollDelay: 3000,
+      autoScrollDelay: 3000, // Auto scroll every 3 seconds
       currentUser: null,
       savingFavourite: false
     };
@@ -153,17 +147,13 @@ export default {
     } catch (error) {
       console.error('Error loading events:', error);
     }
-    
-    // Listen for auth state changes
+
     onAuthStateChanged(auth, async (user) => {
       this.currentUser = user;
-      if (user) {
-        await this.loadFavourites();
-      } else {
-        this.favourites = [];
-      }
+      if (user) await this.loadFavourites();
+      else this.favourites = [];
     });
-    
+
     this.updateItemsPerView();
     window.addEventListener('resize', this.updateItemsPerView);
     this.startAutoScroll();
@@ -175,12 +165,10 @@ export default {
   methods: {
     async loadFavourites() {
       if (!this.currentUser) return;
-      
       try {
         const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
         if (userDoc.exists()) {
           const favouritesList = userDoc.data().favouritesList || [];
-          // Extract just the IDs for easier checking
           this.favourites = favouritesList.map(fav => fav.id);
         }
       } catch (error) {
@@ -196,29 +184,17 @@ export default {
 
       const eventId = this.selectedEvent.id;
       const userRef = doc(db, 'users', this.currentUser.uid);
-
       this.savingFavourite = true;
 
       try {
         if (this.isFavourite(eventId)) {
-          // Remove from favourites
           const userDoc = await getDoc(userRef);
           const currentFavourites = userDoc.data().favouritesList || [];
           const updatedFavourites = currentFavourites.filter(fav => fav.id !== eventId);
-          
-          await updateDoc(userRef, {
-            favouritesList: updatedFavourites
-          });
-          
-          // Update local state
+          await updateDoc(userRef, { favouritesList: updatedFavourites });
           this.favourites = this.favourites.filter(id => id !== eventId);
         } else {
-          // Add to favourites
-          await updateDoc(userRef, {
-            favouritesList: arrayUnion(this.selectedEvent)
-          });
-          
-          // Update local state
+          await updateDoc(userRef, { favouritesList: arrayUnion(this.selectedEvent) });
           this.favourites.push(eventId);
         }
       } catch (error) {
@@ -234,6 +210,9 @@ export default {
     },
 
     startAutoScroll() {
+  // Prevent multiple intervals from stacking
+      this.stopAutoScroll();
+
       this.autoScrollInterval = setInterval(() => {
         if (this.currentIndex >= this.events.length - this.itemsPerView) {
           this.currentIndex = 0;
@@ -252,13 +231,10 @@ export default {
 
     updateItemsPerView() {
       const width = window.innerWidth;
-      if (width < 768) {
-        this.itemsPerView = 1;
-      } else if (width < 992) {
-        this.itemsPerView = 2;
-      } else {
-        this.itemsPerView = 3;
-      }
+      if (width < 768) this.itemsPerView = 1;
+      else if (width < 992) this.itemsPerView = 2;
+      else this.itemsPerView = 3;
+
       if (this.currentIndex > this.events.length - this.itemsPerView) {
         this.currentIndex = Math.max(0, this.events.length - this.itemsPerView);
       }
@@ -307,15 +283,11 @@ export default {
 }
 
 @media (min-width: 768px) {
-  .carousel-item-wrapper {
-    width: 50%;
-  }
+  .carousel-item-wrapper { width: 50%; }
 }
 
 @media (min-width: 992px) {
-  .carousel-item-wrapper {
-    width: 33.333%;
-  }
+  .carousel-item-wrapper { width: 33.333%; }
 }
 
 .modal-tags {

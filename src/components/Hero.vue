@@ -6,13 +6,13 @@
       </h1>
 
       <p class="lead hero-lead text-secondary mx-auto mb-5">
-        Your centralised website for discovering budget-friendly activities!
+        Go ahead and touch the grass!
+
       </p>
 
       <a
         href="#events" 
-        class="btn btn-lg rounded-pill px-5 py-3 shadow-sm explore-btn text-white"
-        style="background-color: #51b058;"
+        class="btn btn-lg rounded-pill px-5 py-3 shadow-sm explore-btn text-white bg-success"
       >
         Explore Events
     </a>
