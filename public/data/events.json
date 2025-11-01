@@ -9,6 +9,7 @@
     "badge": "Outdoor",
     "category": "Wellness",
     "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1200",
+    "featured": true,
     "cdc": true,
     "culturepass": false
   },
@@ -22,6 +23,7 @@
     "badge": "Pop-up",
     "category": "Market",
     "image": "https://images.unsplash.com/photo-1521334726092-b509a19597c6?q=80&w=1200",
+    "featured": true,
     "cdc": false,
     "culturepass": false
   },
@@ -35,6 +37,7 @@
     "badge": "Hands-on",
     "category": "Workshop",
     "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200",
+    "featured": true,
     "cdc": true,
     "culturepass": false
   },
@@ -48,6 +51,7 @@
     "badge": "Nature",
     "category": "Photography",
     "image": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200",
+    "featured": false,
     "cdc": false,
     "culturepass": false
   },
@@ -61,6 +65,7 @@
     "badge": "Live",
     "category": "Music",
     "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200",
+    "featured": true,
     "cdc": false,
     "culturepass": false
   },
@@ -74,6 +79,7 @@
     "badge": "Dance",
     "category": "Social",
     "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
+    "featured": true,
     "cdc": true,
     "culturepass": true
   },
@@ -87,6 +93,7 @@
     "badge": "Sustainable",
     "category": "Community",
     "image": "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200",
+    "featured": false,
     "cdc": false,
     "culturepass": false
   },
@@ -100,6 +107,7 @@
     "badge": "Fitness",
     "category": "Running",
     "image": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=1200&auto=format&fit=crop",
+    "featured": false,
     "cdc": false,
     "culturepass": false
   },
@@ -113,6 +121,7 @@
     "badge": "Indoor",
     "category": "Games",
     "image": "https://images.unsplash.com/photo-1493723843671-1d655e66ac1c?q=80&w=1200",
+    "featured": true,
     "cdc": true,
     "culturepass": false
   },
@@ -126,6 +135,7 @@
     "badge": "Art",
     "category": "Workshop",
     "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1200",
+    "featured": false,
     "cdc": true,
     "culturepass": true
   },
@@ -139,6 +149,7 @@
     "badge": "Culture",
     "category": "Guided Walk",
     "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1200",
+    "featured": true,
     "cdc": false,
     "culturepass": false
   },
@@ -152,6 +163,7 @@
     "badge": "Tech",
     "category": "Class",
     "image": "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200",
+    "featured": false,
     "cdc": true,
     "culturepass": false
   }

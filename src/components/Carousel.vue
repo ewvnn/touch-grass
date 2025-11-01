@@ -1,42 +1,26 @@
 <template>
-  <div class="container py-4" id="events">
+  <div class="container py-5" id="events">
+    <h2 class="section-title">Featured Events</h2>
     <!-- Carousel Container -->
-    <div class="position-relative overflow-hidden" style="margin: 30px auto"
-      @mouseenter="stopAutoScroll" @mouseleave="startAutoScroll">
-      
+    <div class="position-relative overflow-hidden" style="margin: 30px auto" @mouseenter="stopAutoScroll"
+      @mouseleave="startAutoScroll">
+
       <!-- Previous Button -->
-      <button
-        class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
-        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;"
-        @click="scrollPrev"
-        :disabled="currentIndex === 0"
-      >
+      <button class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
+        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;" @click="scrollPrev"
+        :disabled="currentIndex === 0">
         <span aria-hidden="true">&lsaquo;</span>
       </button>
 
       <!-- Carousel Items -->
       <div class="overflow-hidden">
-        <div
-          class="d-flex transition-transform"
+        <div class="d-flex transition-transform"
           :style="{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }"
-          style="transition: transform 0.3s ease;"
-        >
-          <div
-            v-for="event in events"
-            :key="event.id"
-            class="flex-shrink-0 px-2 carousel-item-wrapper"
-          >
-            <div
-              class="card h-100 shadow-sm cursor-pointer"
-              @click="openModal(event)"
-              style="cursor: pointer;"
-            >
-              <img
-                :src="event.image"
-                class="card-img-top"
-                :alt="event.title"
-                style="height: 200px; object-fit: cover;"
-              />
+          style="transition: transform 0.3s ease;">
+          <div v-for="event in displayEvents" :key="event.id" class="flex-shrink-0 px-2 carousel-item-wrapper">
+            <div class="card h-100 shadow-sm cursor-pointer" @click="openModal(event)" style="cursor: pointer;">
+              <img :src="event.image" class="card-img-top" :alt="event.title"
+                style="height: 200px; object-fit: cover;" />
               <div class="card-body">
                 <span class="badge bg-success mb-2">{{ event.badge }}</span>
                 <span class="badge bg-success ms-2">{{ event.category }}</span>
@@ -55,24 +39,16 @@
       </div>
 
       <!-- Next Button -->
-      <button
-        class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
-        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;"
-        @click="scrollNext"
-        :disabled="currentIndex >= events.length - itemsPerView"
-      >
+      <button class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
+        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;" @click="scrollNext"
+        :disabled="currentIndex >= endIndex">
         <span aria-hidden="true">&rsaquo;</span>
       </button>
     </div>
 
     <!-- Modal -->
-    <div
-      class="modal fade"
-      :class="{ show: showModal, 'd-block': showModal }"
-      tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);"
-      @click.self="closeModal"
-    >
+    <div class="modal fade" :class="{ show: showModal, 'd-block': showModal }" tabindex="-1"
+      style="background-color: rgba(0,0,0,0.5);" @click.self="closeModal">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" v-if="selectedEvent">
           <div class="modal-header">
@@ -81,12 +57,8 @@
           </div>
           <div class="modal-body">
             <!-- Fixed-size modal image -->
-            <img
-              :src="selectedEvent.image"
-              class="img-fluid rounded mb-3"
-              :alt="selectedEvent.title"
-              style="width: 100%; height: 300px; object-fit: cover;"
-            />
+            <img :src="selectedEvent.image" class="img-fluid rounded mb-3" :alt="selectedEvent.title"
+              style="width: 100%; height: 300px; object-fit: cover;" />
             <div class="mb-2">
               <span class="badge bg-success">{{ selectedEvent.badge }}</span>
               <span class="badge bg-success ms-2">{{ selectedEvent.category }}</span>
@@ -104,12 +76,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <button
-              type="button"
-              class="btn btn-success"
-              @click="toggleFavourite"
-              :disabled="savingFavourite"
-            >
+            <button type="button" class="btn btn-success" @click="toggleFavourite" :disabled="savingFavourite">
               {{ savingFavourite ? 'Saving...' : (isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites') }}
             </button>
           </div>
@@ -162,6 +129,16 @@ export default {
     window.removeEventListener('resize', this.updateItemsPerView);
     this.stopAutoScroll();
   },
+
+  computed: {
+    displayEvents() {
+      return this.events.filter(e => e.featured === true);
+    },
+    endIndex() {
+      return Math.max(0, this.displayEvents.length - this.itemsPerView);
+    }
+  },
+
   methods: {
     async loadFavourites() {
       if (!this.currentUser) return;
@@ -210,11 +187,11 @@ export default {
     },
 
     startAutoScroll() {
-  // Prevent multiple intervals from stacking
+      // Prevent multiple intervals from stacking
       this.stopAutoScroll();
 
       this.autoScrollInterval = setInterval(() => {
-        if (this.currentIndex >= this.events.length - this.itemsPerView) {
+        if (this.currentIndex >= this.endIndex) {
           this.currentIndex = 0;
         } else {
           this.currentIndex++;
@@ -235,8 +212,8 @@ export default {
       else if (width < 992) this.itemsPerView = 2;
       else this.itemsPerView = 3;
 
-      if (this.currentIndex > this.events.length - this.itemsPerView) {
-        this.currentIndex = Math.max(0, this.events.length - this.itemsPerView);
+      if (this.currentIndex > this.endIndex) {
+        this.currentIndex = Math.max(0, this.endIndex);
       }
     },
 
@@ -249,7 +226,7 @@ export default {
     },
 
     scrollNext() {
-      if (this.currentIndex < this.events.length - this.itemsPerView) {
+      if (this.currentIndex < this.endIndex) {
         this.currentIndex++;
         this.stopAutoScroll();
         this.startAutoScroll();
@@ -267,11 +244,25 @@ export default {
       this.selectedEvent = null;
       this.startAutoScroll();
     }
+  },
+  watch: {
+    displayEvents() {
+      if (this.currentIndex > this.endIndex) this.currentIndex = 0;
+    }
   }
+
 };
 </script>
 
 <style scoped>
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+  padding-left: 0.5rem;
+}
+
 .cursor-pointer:hover {
   transform: translateY(-5px);
   transition: transform 0.3s ease;
@@ -283,11 +274,15 @@ export default {
 }
 
 @media (min-width: 768px) {
-  .carousel-item-wrapper { width: 50%; }
+  .carousel-item-wrapper {
+    width: 50%;
+  }
 }
 
 @media (min-width: 992px) {
-  .carousel-item-wrapper { width: 33.333%; }
+  .carousel-item-wrapper {
+    width: 33.333%;
+  }
 }
 
 .modal-tags {

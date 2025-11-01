@@ -1,5 +1,8 @@
 <template>
   <div class="filter-events">
+    <h1 class="sr-only">Events</h1>
+    <h2 class="section-title">All Events</h2>
+
     <!-- Search Bar -->
     <div class="search-container">
       <input v-model="searchQuery" type="text" placeholder="Search events..." class="search-input" />
@@ -9,23 +12,40 @@
     <div class="filters">
       <div class="filter-group">
         <label>Category:</label>
-        <select v-model="selectedCategory" class="filter-select">
-          <option value="all">All Categories</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">
+        <div class="select-wrapper">
+          <select v-model="selectedCategory" class="filter-select">
+            <option value="all">All Categories</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">
             {{ cat }}
-          </option>
-        </select>
+            </option>
+          </select>
+          <div class="select-arrow" aria-hidden="true">▼</div>
+        </div>
       </div>
 
       <div class="filter-group">
         <label>Budget:</label>
-        <select v-model="selectedBudget" class="filter-select">
-          <option value="all">All Budgets</option>
-          <option value="free">Free</option>
-          <option value="low">Under $10</option>
-          <option value="medium">$10 - $50</option>
-          <option value="high">Over $50</option>
-        </select>
+        <div class="select-wrapper">
+          <select v-model="selectedBudget" class="filter-select">
+            <option value="all">All Budgets</option>
+            <option value="free">Free</option>
+            <option value="low">Under $10</option>
+            <option value="medium">$10 - $50</option>
+            <option value="high">Over $50</option>
+          </select>
+          <div class="select-arrow" aria-hidden="true">▼</div>
+        </div>
+      </div>
+
+      <div class="filter-group checkbox-group">
+        <label class="checkbox">
+          <input type="checkbox" v-model="filterCDC" />
+          <span>CDC</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" v-model="filterCulturePass" />
+          <span>CulturePass</span>
+        </label>
       </div>
     </div>
 
@@ -104,6 +124,8 @@ export default {
       selectedBudget: 'all',
       selectedEvent: null,
       categories: [],
+      filterCDC: false,
+      filterCulturePass: false,
       currentUser: null,
       favourites: [],
       savingFavourite: false
@@ -121,14 +143,18 @@ export default {
         const matchesBudget = this.selectedBudget === 'all' ||
           this.checkBudget(event.price);
 
-        return matchesSearch && matchesCategory && matchesBudget;
+        const matchesCDC = !this.filterCDC || !!event.cdc;
+        
+        const matchesCulture = !this.filterCulturePass || !!event.culturepass;
+
+        return matchesSearch && matchesCategory && matchesBudget && matchesCDC && matchesCulture;
       });
     }
   },
   async mounted() {
     try {
       this.events = await loadEvents();
-      this.categories = [...new Set(this.events.map(e => e.category))];
+      this.categories = [...new Set(this.events.map(e => e.category))].sort();
     } catch (e) {
       console.error('Failed to load events:', e);
       this.events = [];
@@ -207,7 +233,7 @@ export default {
     },
 
     checkBudget(price) {
-      const amount = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
+      const amount = parseFloat(String(price).replace(/[^0-9.]/g, '')) || 0;
 
       switch (this.selectedBudget) {
         case 'free': return amount === 0;
@@ -237,6 +263,17 @@ export default {
   background: linear-gradient(to bottom, #f8f9fa 0%, #e8f5e9 100%);
 }
 
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
 .search-container {
   margin-bottom: 20px;
 }
@@ -260,32 +297,79 @@ export default {
   gap: 20px;
   margin-bottom: 30px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .filter-group {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
 }
 
 .filter-group label {
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.filter-group:not(.checkbox-group) .select-wrapper {
+  width: max-content;
+  max-width: 100%;
+}
+.filter-group:not(.checkbox-group) .filter-select {
+  width: auto;
+  min-width: 180px;
+  height: 42px;
+}
+
+.select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
 .filter-select {
-  padding: 8px 16px;
+  padding: 8px 40px 8px 12px;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
   outline: none;
   transition: border-color 0.3s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .filter-select:hover,
 .filter-select:focus {
   border-color: #085702;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  font-size: 12px; color: #374151;
+}
+
+.checkbox-group { 
+  display: flex;
+  align-items: center;
+  gap: 14px; 
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.checkbox {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; color: #333;
 }
 
 .events-grid {
@@ -548,16 +632,16 @@ export default {
   }
 
   .filters {
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
   }
 
   .filter-group {
-    width: 100%;
+    width: auto;
   }
 
   .filter-select {
-    flex: 1;
+    flex: 0 0 auto;
   }
 
   .modal-image {
