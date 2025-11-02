@@ -1,10 +1,8 @@
 <template>
   <div id="itinerary-planner">
-    <!-- NOTE: Header and Footer Components are assumed to be implemented elsewhere -->
-    <header-component></header-component>
 
     <!-- Layout is now always the split view, regardless of itinerary length -->
-    <div class="itinerary-split-view">
+    <div class="itinerary-split-view container-fluid">
 
       <div class="itinerary-sidebar">
         <h2>Itinerary</h2>
@@ -12,7 +10,7 @@
         <!-- NEW: Empty State Prompt (show if no dates are set) -->
         <div v-if="Object.keys(dailyItinerary).length === 0" class="empty-state-prompt p-5 text-center">
           <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
-          <button @click="showDateSelectionModal = true" class="btn btn-primary btn-lg shadow-sm">
+          <button @click="showDateSelectionModal = true" class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
             <i class="fas fa-calendar-alt me-2"></i> Add trip dates
           </button>
         </div>
@@ -25,7 +23,7 @@
             </button>
             {{ dateRangeDisplay }}
           </div>
-
+          
           <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
             <h3 @click="toggleDay(date)" class="day-header">
               {{ formatDay(date) }}
@@ -101,7 +99,45 @@
             <hr />
           </div>
         </div>
+<!-- Saved Activities -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Saved Activities</h5>
+            <button class="btn btn-sm btn-success" @click="loadFavourites" :disabled="isLoadingActivities">
+              <span v-if="isLoadingActivities">Loading...</span>
+              <span v-else>Refresh</span>
+            </button>
+          </div>
+          <div class="card-body activities-scrollable">
+            <div v-if="isLoadingActivities" class="text-center py-3">
+              <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div v-else-if="activities.length === 0" class="text-center text-muted py-3">
+              No saved activities
+            </div>
+            <div v-else class="list-group list-group-flush">
+              <div
+                v-for="activity in activities"
+                :key="activity.id"
+                class="list-group-item"
+              >
+                <strong>{{ activity.title }}</strong>
+                <small class="d-block text-muted">{{ activity.location }}</small>
+                <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
+                <small class="d-block mt-1">
+                  <span class="badge bg-info">{{ activity.category }}</span>
+                  <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
+
+      
 
       <!-- Map Container (Always 60% of width now) -->
       <div class="map-container">
@@ -223,6 +259,9 @@ export default {
       endDateInput: '', // YYYY-MM-DD
       dateError: '',
 
+      //favourite list
+      activities: [],
+
       // Map/Search State
       map: null,
       marker: null,
@@ -274,6 +313,46 @@ export default {
       script.defer = true;
       script.onload = this.initMap;
       document.head.appendChild(script);
+    },
+
+    async loadFavourites() {
+      if (!this.currentUser) return;
+      this.isLoadingActivities = true;
+      try {
+        const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
+        this.activities = userDoc.exists() ? userDoc.data().favouritesList || [] : [];
+
+        this.calendar.getEvents().forEach(event => {
+          if (event.extendedProps.isActivity) {
+            event.remove();
+          }
+        });
+
+        this.activities.forEach((activity) => {
+          const startDate = this.parseActivityDate(activity.date);
+          this.calendar.addEvent({
+            id: activity.id,
+            title: activity.title,
+            start: startDate,
+            allDay: true,
+            backgroundColor: "#FFD700",
+            borderColor: "#FFD700",
+            textColor: "#000080",
+            extendedProps: {
+              isActivity: true,
+              image: activity.image,
+              location: activity.location,
+              time: activity.date.split('•')[1]?.trim() || "",
+              price: activity.price,
+              duration: activity.duration,
+            },
+          });
+        });
+      } catch (error) {
+        console.error("Error loading favourites:", error);
+      } finally {
+        this.isLoadingActivities = false;
+      }
     },
 
     // NEW: Placeholder div for the Panorama (add this to your template later)
