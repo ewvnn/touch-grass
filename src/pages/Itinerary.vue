@@ -10,7 +10,8 @@
         <!-- NEW: Empty State Prompt (show if no dates are set) -->
         <div v-if="Object.keys(dailyItinerary).length === 0" class="empty-state-prompt p-5 text-center">
           <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
-          <button @click="showDateSelectionModal = true" class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
+          <button @click="showDateSelectionModal = true"
+            class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
             <i class="fas fa-calendar-alt me-2"></i> Add trip dates
           </button>
         </div>
@@ -23,7 +24,7 @@
             </button>
             {{ dateRangeDisplay }}
           </div>
-          
+
           <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
             <h3 @click="toggleDay(date)" class="day-header">
               {{ formatDay(date) }}
@@ -33,64 +34,49 @@
             <!-- Content is shown/hidden based on isExpanded -->
             <div v-show="dailyItinerary[date].isExpanded" class="place-list">
 
-              <!-- STANDARD V-FOR FOR PLACES -->
-              <div v-for="(place, index) in dailyItinerary[date].places" :key="place.place_id"
-                class="list-group-item d-flex align-items-start mb-3 p-3 itinerary-item shadow-sm">
-                <div class="index-circle">{{ index + 1 }}</div>
+              <draggable v-model="dailyItinerary[date].places" group="itinerary" @end="onDragEnd"
+                @add="onActivityAdded($event, date)" item-key="place_id" class="daily-itinerary-draggable">
+                <template #item="{ element, index }">
+                  <div class="list-group-item d-flex align-items-start mb-3 p-3 itinerary-item shadow-sm">
+                    <div class="index-circle">{{ index + 1 }}</div>
 
-                <div class="place-details flex-grow-1 ms-3">
-                  <h5 class="mb-1">{{ place.name }}</h5>
+                    <div class="place-details flex-grow-1 ms-3">
+                      <h5 class="mb-1" style="cursor: grab;">{{ element.name }}</h5>
 
-                  <!-- Detailed Place Information -->
-                  <div class="d-flex align-items-center mb-2">
-                    <img :src="place.photoUrl" class="place-thumbnail me-2" :alt="place.name" />
-                    <div>
-                      <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ place.address
-                      }}</small>
-                      <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ place.rating }} ({{
-                        place.user_ratings_total }})</small>
-                      <a :href="place.website" target="_blank" class="website-link d-block"><i class="fas fa-link"></i>
-                        Website: {{ place.name }}</a>
+                      <div class="d-flex align-items-center mb-2">
+                        <img :src="element.photoUrl" class="place-thumbnail me-2" :alt="element.name" />
+                        <div>
+                          <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
+                            }}</small>
+                          <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ element.rating }}
+                            ({{ element.user_ratings_total }})</small>
+                          <a :href="element.website" target="_blank" class="website-link d-block"><i
+                              class="fas fa-link"></i>
+                            Website: {{ element.name }}</a>
+                        </div>
+                      </div>
+
+                      <p class="description-text mb-2">{{ element.description }}</p>
+
+                      <div v-if="index > 0 && element.distance"
+                        class="route-info d-flex align-items-center mt-2 pt-2 border-top">
+                        <span class="distance-text me-3"><i class="fas fa-route"></i> {{ element.distance }} ({{
+                          element.duration }})</span>
+                        <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], element)" target="_blank"
+                          class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
+                      </div>
+                    </div>
+
+                    <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
+                      <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
+                        title="Remove place">
+                        <i class="fas fa-trash"></i>
+                      </button>
                     </div>
                   </div>
+                </template>
+              </draggable>
 
-                  <p class="description-text mb-2">{{ place.description }}</p>
-
-                  <!-- UPDATED: Route info showing distance and duration from previous stop -->
-                  <div v-if="index > 0 && place.distance"
-                    class="route-info d-flex align-items-center mt-2 pt-2 border-top">
-                    <span class="distance-text me-3"><i class="fas fa-route"></i> {{ place.distance }} ({{
-                      place.duration }})</span>
-                    <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], place)" target="_blank"
-                      class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
-                  </div>
-                </div>
-
-                <!-- UPDATED: Compact Horizontal Control Group (Fix for visibility) -->
-                <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
-
-                  <!-- Move Up Button (Disabled if it's the first item) -->
-                  <button @click="movePlaceUp(date, index)" :disabled="index === 0"
-                    class="btn btn-sm btn-light p-1 me-1 move-btn" title="Move up">
-                    <i class="fas fa-arrow-up"></i>
-                  </button>
-
-                  <!-- Move Down Button (Disabled if it's the last item) -->
-                  <button @click="movePlaceDown(date, index)"
-                    :disabled="index === dailyItinerary[date].places.length - 1"
-                    class="btn btn-sm btn-light p-1 me-1 move-btn" title="Move down">
-                    <i class="fas fa-arrow-down"></i>
-                  </button>
-
-                  <!-- Remove Button -->
-                  <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
-                    title="Remove place">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Add Place Button -->
               <button @click="addPlacePrompt = true; selectedDate = date"
                 class="btn btn-block btn-outline-secondary mt-3 add-place-btn">
                 <i class="fas fa-plus"></i> Add a place
@@ -99,7 +85,7 @@
             <hr />
           </div>
         </div>
-<!-- Saved Activities -->
+        <!-- Saved Activities -->
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Saved Activities</h5>
@@ -118,26 +104,27 @@
               No saved activities
             </div>
             <div v-else class="list-group list-group-flush">
-              <div
-                v-for="activity in activities"
-                :key="activity.id"
-                class="list-group-item"
-              >
-                <strong>{{ activity.title }}</strong>
-                <small class="d-block text-muted">{{ activity.location }}</small>
-                <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
-                <small class="d-block mt-1">
-                  <span class="badge bg-info">{{ activity.category }}</span>
-                  <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
-                </small>
-              </div>
+              <draggable v-model="activities" :group="{ name: 'itinerary', pull: 'clone', put: false }"
+                :clone="cloneActivity" item-key="id" class="saved-activities-draggable">
+                <template #item="{ element }">
+                  <div class="list-group-item" style="cursor: grab;">
+                    <strong>{{ element.title }}</strong>
+                    <small class="d-block text-muted">{{ element.location }}</small>
+                    <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
+                    <small class="d-block mt-1">
+                      <span class="badge bg-info">{{ element.category }}</span>
+                      <span v-if="element.badge" class="badge bg-warning ms-1">{{ element.badge }}</span>
+                    </small>
+                  </div>
+                </template>
+              </draggable>
             </div>
           </div>
         </div>
 
       </div>
 
-      
+
 
       <!-- Map Container (Always 60% of width now) -->
       <div class="map-container">
@@ -165,7 +152,8 @@
               <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
 
               <!-- Website hyperlink text -->
-              <a :href="selectedPlace.website" target="_blank" class="website-link"><i class="fas fa-link"></i> Website:
+              <a :href="selectedPlace.website" target="_blank" class="website-link"><i class="fas fa-link"></i>
+                Website:
                 {{ selectedPlace.name }}</a>
 
               <div class="d-flex mt-2">
@@ -244,9 +232,16 @@
 
 <script>
 import { nextTick } from 'vue';
+import { auth, db } from "../firebase.js"; // Adjust path if needed
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import draggable from 'vuedraggable';
 
 export default {
   name: 'ItineraryPlanner',
+  components: {
+    draggable,
+  },
   data() {
     return {
       // Itinerary Data Structure
@@ -261,6 +256,8 @@ export default {
 
       //favourite list
       activities: [],
+      currentUser: null,
+      isLoadingActivities: false,
 
       // Map/Search State
       map: null,
@@ -289,6 +286,14 @@ export default {
   },
   mounted() {
     this.loadGoogleMapsScript();
+    onAuthStateChanged(auth, async (user) => {
+      this.currentUser = user;
+      if (user) {
+        await this.loadFavourites(); // Call the function once we have a user
+      } else {
+        this.activities = []; // Clear activities if no user
+      }
+    });
   },
 
   computed: {
@@ -315,6 +320,86 @@ export default {
       document.head.appendChild(script);
     },
 
+    // handleDragStart(event, activity) {
+    //   // Set the drag data to the full activity object
+    //   event.dataTransfer.setData("application/json", JSON.stringify(activity));
+    //   event.dataTransfer.effectAllowed = "move";
+    // },
+
+
+    // This function must be 'async'
+    // async handleDrop(event, date) {
+    //   event.preventDefault();
+    //   const activity = JSON.parse(event.dataTransfer.getData("application/json"));
+
+    //   let finalLat;
+    //   let finalLng;
+    //   let placeAddress = activity.location || activity.address;
+
+    //   // 1. CHECK FOR EXISTING COORDS (BEST CASE)
+    //   if (activity.lat && activity.lng) {
+    //     finalLat = activity.lat; // Just a number
+    //     finalLng = activity.lng; // Just a number
+    //     console.log("Using existing coords");
+
+    //     // 2. FALLBACK: USE GEOCODER
+    //   } else if (placeAddress) {
+    //     console.log("Geocoding address:", placeAddress);
+    //     try {
+    //       if (!this.geocoder) { throw new Error("Geocoder is not initialized."); }
+
+    //       const geocodeResult = await this.geocoder.geocode({ 'address': placeAddress });
+
+    //       if (geocodeResult.results && geocodeResult.results.length > 0) {
+    //         const location = geocodeResult.results[0].geometry.location;
+    //         finalLat = location.lat(); // Get the number
+    //         finalLng = location.lng(); // Get the number
+    //       } else {
+    //         throw new Error("Geocoding failed: No results found for " + placeAddress);
+    //       }
+    //     } catch (e) {
+    //       console.error("Error during geocoding:", e);
+    //       alert("Error: Could not find that location on the map. " + e.message);
+    //       return;
+    //     }
+    //   } else {
+    //     alert("This activity has no location data to add to the map.");
+    //     return;
+    //   }
+
+    //   console.log("Successfully found location:", finalLat, finalLng);
+
+    //   // 3. CREATE THE NEW PLACE (NOW ALWAYS USES NUMBERS)
+    //   const newPlace = {
+    //     place_id: activity.id || new Date().getTime(),
+    //     name: activity.title,
+    //     address: placeAddress,
+    //     lat: finalLat, // ✅ Always a valid number
+    //     lng: finalLng, // ✅ Always a valid number
+    //     website: activity.website || '#',
+    //     rating: activity.rating || 'N/A',
+    //     user_ratings_total: activity.user_ratings_total || 0,
+    //     description: activity.description || 'Saved activity.',
+    //     photoUrl: activity.image || 'https://placehold.co/200x100',
+    //     distance: null,
+    //     duration: null,
+    //   };
+
+    //   // 4. ADD TO ITINERARY AND RERENDER
+    //   const updatedPlaces = [...this.dailyItinerary[date].places, newPlace];
+    //   this.dailyItinerary = {
+    //     ...this.dailyItinerary,
+    //     [date]: {
+    //       ...this.dailyItinerary[date],
+    //       places: updatedPlaces
+    //     }
+    //   };
+
+    //   this.updateItineraryList();
+    //   this.$nextTick(() => {
+    //     this.renderRoute(); // This will now be called successfully
+    //   });
+    // },
     async loadFavourites() {
       if (!this.currentUser) return;
       this.isLoadingActivities = true;
@@ -322,34 +407,12 @@ export default {
         const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
         this.activities = userDoc.exists() ? userDoc.data().favouritesList || [] : [];
 
-        this.calendar.getEvents().forEach(event => {
-          if (event.extendedProps.isActivity) {
-            event.remove();
-          }
-        });
+        // That's it! We just get the data.
+        // All the code related to 'this.calendar.addEvent' is removed.
 
-        this.activities.forEach((activity) => {
-          const startDate = this.parseActivityDate(activity.date);
-          this.calendar.addEvent({
-            id: activity.id,
-            title: activity.title,
-            start: startDate,
-            allDay: true,
-            backgroundColor: "#FFD700",
-            borderColor: "#FFD700",
-            textColor: "#000080",
-            extendedProps: {
-              isActivity: true,
-              image: activity.image,
-              location: activity.location,
-              time: activity.date.split('•')[1]?.trim() || "",
-              price: activity.price,
-              duration: activity.duration,
-            },
-          });
-        });
       } catch (error) {
         console.error("Error loading favourites:", error);
+        this.activities = []; // Clear on error
       } finally {
         this.isLoadingActivities = false;
       }
@@ -426,7 +489,7 @@ export default {
         scaledSize: new google.maps.Size(60, 60),
         anchor: new google.maps.Point(30, 60)
       };
-      
+
       const iconWalk = {
         url: 'https://media0.giphy.com/media/2UvBsxeB6nlONSJYoh/giphy.gif?cid=a267dfa31en1q4aae9wvv4d6dolxml8twhj83ch5h39ws2v1&rid=giphy.gif',
         scaledSize: new google.maps.Size(80, 80),
@@ -452,7 +515,7 @@ export default {
       this.characterMarker.addListener('dragend', (event) => {
         this.characterMarker.setIcon(iconStand);
         // This is your existing dragend logic
-        this.onCharacterDragEnd(event); 
+        this.onCharacterDragEnd(event);
       });
 
       // this.characterMarker.addListener('dragend', this.onCharacterDragEnd);
@@ -662,39 +725,39 @@ export default {
       }
     },
 
-    // --- Place Reordering Methods ---
+    // // --- Place Reordering Methods ---
 
-    movePlace(date, fromIndex, toIndex) {
-      if (toIndex < 0 || toIndex >= this.dailyItinerary[date].places.length) {
-        return;
-      }
+    // movePlace(date, fromIndex, toIndex) {
+    //   if (toIndex < 0 || toIndex >= this.dailyItinerary[date].places.length) {
+    //     return;
+    //   }
 
-      const places = [...this.dailyItinerary[date].places];
-      const [movedPlace] = places.splice(fromIndex, 1);
-      places.splice(toIndex, 0, movedPlace);
+    //   const places = [...this.dailyItinerary[date].places];
+    //   const [movedPlace] = places.splice(fromIndex, 1);
+    //   places.splice(toIndex, 0, movedPlace);
 
-      this.dailyItinerary = {
-        ...this.dailyItinerary,
-        [date]: {
-          ...this.dailyItinerary[date],
-          places: places
-        }
-      };
+    //   this.dailyItinerary = {
+    //     ...this.dailyItinerary,
+    //     [date]: {
+    //       ...this.dailyItinerary[date],
+    //       places: places
+    //     }
+    //   };
 
-      this.renderRoute(); // Rerender route after reordering
-    },
+    //   this.renderRoute(); // Rerender route after reordering
+    // },
 
-    movePlaceUp(date, index) {
-      if (index > 0) {
-        this.movePlace(date, index, index - 1);
-      }
-    },
+    // movePlaceUp(date, index) {
+    //   if (index > 0) {
+    //     this.movePlace(date, index, index - 1);
+    //   }
+    // },
 
-    movePlaceDown(date, index) {
-      if (index < this.dailyItinerary[date].places.length - 1) {
-        this.movePlace(date, index, index + 1);
-      }
-    },
+    // movePlaceDown(date, index) {
+    //   if (index < this.dailyItinerary[date].places.length - 1) {
+    //     this.movePlace(date, index, index + 1);
+    //   }
+    // },
 
     // --- End Reordering Methods ---
 
@@ -718,6 +781,78 @@ export default {
     //     this.renderRoute();
     //   });
     // },
+    cloneActivity(activity) {
+      // Create the new object. Note: NO lat/lng yet.
+      return {
+        place_id: activity.id || new Date().getTime(),
+        name: activity.title,
+        address: activity.location, // or activity.address
+        description: activity.description || 'Saved activity.',
+        photoUrl: activity.image || 'https://placehold.co/200x100',
+        website: activity.website || '#',
+        rating: activity.rating || 'N/A',
+        user_ratings_total: activity.user_ratings_total || 0,
+        lat: null, // Will be filled by geocoder
+        lng: null, // Will be filled by geocoder
+        isGeocoding: true // Flag to show it's new
+      };
+    },
+
+    /**
+     * (Asynchronous) Called by Vue.Draggable AFTER a new item
+     * is dropped into an itinerary list.
+     * We find this new item and geocode it.
+     */
+    async onActivityAdded(event, date) {
+      // Get the index of the newly added item
+      const newIndex = event.newIndex;
+
+      // Find the item in our data array
+      const place = this.dailyItinerary[date].places[newIndex];
+
+      // Check if it's the one we need to geocode
+      if (place && place.isGeocoding && place.address) {
+        console.log("Geocoding new item:", place.name);
+        try {
+          if (!this.geocoder) { throw new Error("Geocoder not ready."); }
+
+          const geocodeResult = await this.geocoder.geocode({ 'address': place.address });
+          if (geocodeResult.results && geocodeResult.results.length > 0) {
+            const location = geocodeResult.results[0].geometry.location;
+
+            // --- THIS IS THE KEY ---
+            // We mutate the object directly in the array
+            place.lat = location.lat();
+            place.lng = location.lng();
+            place.isGeocoding = false; // Mark as done
+
+            console.log("Geocoding complete:", place.lat, place.lng);
+          } else {
+            throw new Error("Geocoding failed: No results found.");
+          }
+        } catch (e) {
+          console.error("Failed to geocode dropped item:", e);
+          alert(`Could not find location for ${place.name}. Please remove it.`);
+          // Optionally remove the item if geocoding fails
+          // this.removePlace(date, newIndex);
+        }
+
+        // We already called renderRoute via the @end event,
+        // but we can call it again just to be safe.
+        this.renderRoute();
+      }
+    },
+
+    /**
+     * Called by Vue.Draggable at the END of any drag operation
+     * (reordering OR adding). We just update the map.
+     */
+    onDragEnd() {
+      // Update the map with new order and new items
+      this.$nextTick(() => {
+        this.renderRoute();
+      });
+    },
 
     removePlace(date, index) {
       const updatedPlaces = this.dailyItinerary[date].places.filter((_, i) => i !== index);
@@ -765,53 +900,78 @@ export default {
     // --- NEW: Route Visualization Methods ---
 
     // This renders markers and calls the Directions API to draw the route
+    // This renders markers and calls the Directions API to draw the route
     renderRoute() {
+      // 1. --- CLEAR THE MAP ---
 
-      if (this.marker) { // <--- ADD THIS CHECK
+      // Clear the single 'search' marker if it exists
+      if (this.marker) {
         this.marker.setMap(null);
         this.marker = null;
       }
-      if (!this.map || !this.directionsRenderer || !this.directionsService) return;
 
-
-
-
-      // 1. Clear previous markers and route
-
-      console.log('Before clear:', this.currentMarkers.length);
+      // Clear all itinerary markers from the map
+      console.log('Clearing ' + this.currentMarkers.length + ' old markers');
       this.currentMarkers.forEach(m => m.setMap(null));
-      this.currentMarkers = [];
-      console.log('After clear:', this.currentMarkers.length);
+      this.currentMarkers = []; // Reset the array
+
+      // Clear the route line
       this.directionsRenderer.setDirections({ routes: [] });
 
-      // Find the first expanded day with places to render the route for
-      const dateKeys = Object.keys(this.dailyItinerary).filter(date => this.dailyItinerary[date].places.length > 0 && this.dailyItinerary[date].isExpanded);
-      if (dateKeys.length === 0 || this.dailyItinerary[dateKeys[0]].places.length < 1) { return; }
 
-      const date = dateKeys[0];
-      const places = this.dailyItinerary[date].places;
+      // 2. --- FIND ALL PLACES TO DRAW ---
 
-      // Render Markers
-      places.forEach((place, index) => {
-        const marker = new google.maps.Marker({
-          position: { lat: place.lat, lng: place.lng },
-          map: this.map,
-          label: {
-            text: `${index + 1}`,
-            color: 'white',
-            fontWeight: 'bold'
-          },
-          title: place.name,
+      // Get ALL expanded days that have places
+      const expandedDays = Object.keys(this.dailyItinerary).filter(date =>
+        this.dailyItinerary[date].isExpanded &&
+        this.dailyItinerary[date].places.length > 0
+      );
+
+      // If there are no expanded days with places, we're done. The map is clean.
+      if (expandedDays.length === 0) {
+        console.log('No expanded places to render. Map is clean.');
+        return;
+      }
+
+
+      // 3. --- DRAW ALL PINS FOR ALL EXPANDED DAYS ---
+
+      // Loop through EACH expanded day and draw its markers
+      expandedDays.forEach(date => {
+        const places = this.dailyItinerary[date].places;
+
+        places.forEach((place, index) => {
+          const marker = new google.maps.Marker({
+            position: { lat: place.lat, lng: place.lng },
+            map: this.map,
+            label: {
+              text: `${index + 1}`,
+              color: 'white',
+              fontWeight: 'bold'
+            },
+            title: place.name,
+          });
+          // Add the new marker to our array so it can be cleared next time
+          this.currentMarkers.push(marker);
         });
-        this.currentMarkers.push(marker);
       });
 
-      if (places.length < 2) return;
 
-      // 2. Prepare Directions Request
-      const origin = places[0];
-      const destination = places[places.length - 1];
-      const waypoints = places.slice(1, -1).map(p => ({
+      // 4. --- DRAW THE ROUTE FOR THE FIRST DAY ---
+
+      // We only draw a route line for the *first* day in the list.
+      const routeDay = expandedDays[0];
+      const routePlaces = this.dailyItinerary[routeDay].places;
+
+      // Only draw a route if there are 2 or more places
+      if (routePlaces.length < 2) {
+        return;
+      }
+
+      // Prepare Directions Request
+      const origin = routePlaces[0];
+      const destination = routePlaces[routePlaces.length - 1];
+      const waypoints = routePlaces.slice(1, -1).map(p => ({
         location: { lat: p.lat, lng: p.lng },
         stopover: true
       }));
@@ -825,15 +985,11 @@ export default {
       }, (response, status) => {
         if (status === 'OK') {
           this.directionsRenderer.setDirections(response);
-          this.updateRouteInfo(response.routes[0].legs, date);
-
-          // Fit map to the route bounding box
+          this.updateRouteInfo(response.routes[0].legs, routeDay);
           this.map.fitBounds(response.routes[0].bounds);
-
         } else {
           console.error('Directions request failed due to ' + status);
-          // Fallback: Clear previous route data if request failed
-          this.clearRouteInfo(date, places);
+          this.clearRouteInfo(routeDay, routePlaces);
         }
       });
     },
@@ -901,6 +1057,9 @@ export default {
       return `${day_s}/${month_s} - ${day_e}/${month_e}`;
     }
   },
+
+
+
   watch: {
     // Watch for the modal opening to initialize Autocomplete
     addPlacePrompt(isOpen) {
@@ -910,7 +1069,7 @@ export default {
         });
       }
     }
-  }
+  },
 };
 </script>
 
