@@ -157,6 +157,7 @@ import {
   EmailAuthProvider, 
   updatePassword 
 } from "firebase/auth";
+import { toTitleCase } from "@/lib/strings";
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
@@ -203,7 +204,7 @@ onMounted(() => {
         if (docSnap.exists()) {
           hasFirestoreDoc.value = true;
           const data = docSnap.data();
-          displayName.value = data.displayName || user.displayName || '';
+          displayName.value = toTitleCase(data.displayName || user.displayName || '');
           email.value = data.email || user.email || '';
           bio.value = data.bio || '';
           if (data.createdAt) {
@@ -266,7 +267,7 @@ async function isUnique(field, value, excludeUid) {
 async function saveDisplayName() {
   error.value = null; successMessage.value='';
   if (!currentUser) { error.value='User not logged in.'; return; }
-  const newDisplayName = editDisplayName.value.trim();
+  const newDisplayName = toTitleCase(editDisplayName.value.trim());
   if (!newDisplayName) { error.value='Display name cannot be empty.'; return; }
   try {
     const nameUnique = await isUnique('displayName', newDisplayName, currentUser.uid);

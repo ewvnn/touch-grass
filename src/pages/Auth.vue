@@ -8,6 +8,7 @@ import {
     resetPassword,
     resendVerificationEmail,
 } from '@/services/auth.js'
+import { toTitleCase } from "@/lib/strings"
 
 const MIN_PASSWORD_LENGTH = 8
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -127,7 +128,7 @@ async function submit() {
             const redirect = (route.query.redirect || '/').toString()
             router.replace(redirect)
         } else if (mode.value === 'register') {
-            await signUpWithEmail(cleanEmail, password.value, (displayName.value || '').trim())
+            await signUpWithEmail(cleanEmail, password.value, toTitleCase(displayName.value || '').trim())
             toast.success('Account created! Check your email to verify.')
             await switchMode('login')
         } else {

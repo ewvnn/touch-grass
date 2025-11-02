@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { signOutUser } from '@/services/auth'
 import { toast } from '@/lib/toast'
+import { toTitleCase } from '@/lib/strings'
 
 const router = useRouter()
 
@@ -14,9 +15,10 @@ let unsub
 onMounted(() => { unsub = onAuthStateChanged(auth, u => (user.value = u)) })
 onBeforeUnmount(() => { unsub && unsub() })
 
-const displayName = computed(
-  () => user.value?.displayName || user.value?.email || ''
-)
+const displayName = computed(() => {
+  const raw = user.value?.displayName || user.value?.email || ''
+  return raw && raw.includes('@') ? raw : toTitleCase(raw)
+})
 
 function closeMobile() {
   const el = document.getElementById('tgNav')
