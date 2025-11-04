@@ -26,10 +26,11 @@
           </div>
 
           <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
-            <h3 @click="toggleDay(date)" class="day-header">
+            <h3 @click="setActiveDay(date)" class="day-header" :class="{ 'active-day': date === activeDate }">
               {{ formatDay(date) }}
               <!-- Dropdown indicator based on isExpanded -->
-              <i :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              <i @click.stop="toggleDay(date)"
+                :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
             </h3>
             <!-- Content is shown/hidden based on isExpanded -->
             <div v-show="dailyItinerary[date].isExpanded" class="place-list">
@@ -47,7 +48,7 @@
                         <img :src="element.photoUrl" class="place-thumbnail me-2" :alt="element.name" />
                         <div>
                           <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
-                            }}</small>
+                          }}</small>
                           <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ element.rating }}
                             ({{ element.user_ratings_total }})</small>
                           <a :href="element.website" target="_blank" class="website-link d-block"><i
@@ -246,7 +247,8 @@ export default {
     return {
       // Itinerary Data Structure
       itinerary: [], // The main list for quick check of emptiness
-      dailyItinerary: {}, // **INITIALIZED AS EMPTY OBJECT**
+      dailyItinerary: {},
+      activeDate: null, // **INITIALIZED AS EMPTY OBJECT**
 
       // State for Date Selection Flow
       showDateSelectionModal: false,
@@ -318,6 +320,61 @@ export default {
       script.defer = true;
       script.onload = this.initMap;
       document.head.appendChild(script);
+    },
+
+
+    // In your 'methods: { ... }' object
+
+    setActiveDay(date) {
+      // 1. Set the active date
+      this.activeDate = date;
+
+      // 2. Loop through all days to collapse/expand
+      Object.keys(this.dailyItinerary).forEach(dayKey => {
+
+        if (dayKey === date) {
+          // This is the active day, expand it
+          this.dailyItinerary[dayKey].isExpanded = true;
+        } else {
+          // This is an inactive day, collapse it
+          this.dailyItinerary[dayKey].isExpanded = false;
+        }
+
+      });
+
+      // 3. Render the route
+      this.renderRoute();
+    },
+    getActivityDateString(dateStr) {
+      // dateStr is "Sun, 19 Nov • 7:30 PM"
+      try {
+        let datePart = dateStr.split('•')[0].trim(); // "Sun, 19 Nov"
+        datePart = datePart.replace(/^\w+,\s*/, '');  // "19 Nov"
+
+        // Get the year from the itinerary.
+        let year;
+        if (Object.keys(this.dailyItinerary).length > 0) {
+          // Get the year from the itinerary date (e.g., "2025-11-19")
+          year = Object.keys(this.dailyItinerary)[0].split('-')[0];
+        } else {
+          year = new Date().getFullYear(); // Fallback
+        }
+
+        // --- THIS IS THE FIX ---
+        // We force the date to be parsed as UTC by appending "00:00:00 UTC"
+        // This makes it "19 Nov 2025 00:00:00 UTC"
+        const dateObj = new Date(`${datePart} ${year} 00:00:00 UTC`);
+
+        if (isNaN(dateObj)) return null;
+
+        // .toISOString() will now be correct, as the date is already in UTC
+        // e.g., "2025-11-19T00:00:00Z"
+        return dateObj.toISOString().split('T')[0]; // Returns "2025-11-19"
+
+      } catch (e) {
+        console.error("Error parsing activity date:", e);
+        return null;
+      }
     },
 
     // handleDragStart(event, activity) {
@@ -630,6 +687,11 @@ export default {
 
       this.dailyItinerary = finalDailyItinerary;
 
+
+      if (finalDateStrings.length > 0) {
+        this.setActiveDay(finalDateStrings[0]);
+      }
+
       if (finalDateStrings.length) {
         this.dateRangeDisplay = this.formatDateRangeDisplay(finalDateStrings[0], finalDateStrings[finalDateStrings.length - 1]);
       } else {
@@ -638,7 +700,7 @@ export default {
 
       this.showDateSelectionModal = false;
       this.updateItineraryList();
-      this.renderRoute(); // Call renderRoute after any change to dates/structure
+      // this.renderRoute(); // Call renderRoute after any change to dates/structure
     },
 
     onPlaceSelected() {
@@ -786,7 +848,8 @@ export default {
       return {
         place_id: activity.id || new Date().getTime(),
         name: activity.title,
-        address: activity.location, // or activity.address
+        address: activity.location || activity.address, // or activity.address
+        originalDateStr: activity.date,
         description: activity.description || 'Saved activity.',
         photoUrl: activity.image || 'https://placehold.co/200x100',
         website: activity.website || '#',
@@ -804,13 +867,42 @@ export default {
      * We find this new item and geocode it.
      */
     async onActivityAdded(event, date) {
-      // Get the index of the newly added item
+      // Get the index and the item that was just added
       const newIndex = event.newIndex;
+      const newPlace = this.dailyItinerary[date].places[newIndex];
 
-      // Find the item in our data array
-      const place = this.dailyItinerary[date].places[newIndex];
 
-      // Check if it's the one we need to geocode
+      // --- 1. DATE CHECK (NEW) ---
+      const activityDate = this.getActivityDateString(newPlace.originalDateStr);
+      const itineraryDate = date; // This is already "YYYY-MM-DD"
+
+      // Check if we have a valid activity date AND if it matches the itinerary day
+      if (activityDate && activityDate !== itineraryDate) {
+        alert(`This activity is for ${activityDate}, but you are trying to add it to ${itineraryDate}.`);
+        // Remove the item
+        this.dailyItinerary[date].places.splice(newIndex, 1);
+        return; // Stop the function
+      }
+      // --- END DATE CHECK ---
+
+      // --- 1. DUPLICATE CHECK ---
+      // Look through the list to see if any OTHER item
+      // has the same place_id.
+      const isDuplicate = this.dailyItinerary[date].places.some(
+        (place, index) => {
+          return place.place_id === newPlace.place_id && index !== newIndex;
+        }
+      );
+
+      if (isDuplicate) {
+        alert("This item is already in your itinerary for this day.");
+        // If it's a duplicate, remove the item that was just added
+        this.dailyItinerary[date].places.splice(newIndex, 1);
+        return; // Stop the function
+      }
+      // Get the index of the newly added item
+      const place = newPlace; // just for clarity
+
       if (place && place.isGeocoding && place.address) {
         console.log("Geocoding new item:", place.name);
         try {
@@ -820,8 +912,7 @@ export default {
           if (geocodeResult.results && geocodeResult.results.length > 0) {
             const location = geocodeResult.results[0].geometry.location;
 
-            // --- THIS IS THE KEY ---
-            // We mutate the object directly in the array
+            // Mutate the object in the array
             place.lat = location.lat();
             place.lng = location.lng();
             place.isGeocoding = false; // Mark as done
@@ -833,12 +924,9 @@ export default {
         } catch (e) {
           console.error("Failed to geocode dropped item:", e);
           alert(`Could not find location for ${place.name}. Please remove it.`);
-          // Optionally remove the item if geocoding fails
-          // this.removePlace(date, newIndex);
         }
 
-        // We already called renderRoute via the @end event,
-        // but we can call it again just to be safe.
+        // Call renderRoute to update the map
         this.renderRoute();
       }
     },
@@ -873,25 +961,33 @@ export default {
     },
 
     toggleDay(date) {
-      // Toggle expansion state
-      const isExpanded = !this.dailyItinerary[date].isExpanded;
+      // This function ONLY toggles the list.
+      // It no longer calls renderRoute().
+      this.dailyItinerary[date].isExpanded = !this.dailyItinerary[date].isExpanded;
 
-      this.dailyItinerary = {
-        ...this.dailyItinerary,
-        [date]: {
-          ...this.dailyItinerary[date],
-          isExpanded: isExpanded
-        }
-      };
-
-      // If expanding a day, render its route; if collapsing, rendering handles itself on the next check
-      if (isExpanded) {
-        this.renderRoute();
-      } else {
-        // If collapsed, force rerender to check for other expanded days
-        this.renderRoute();
-      }
+      // (We've removed the renderRoute() call from here)
     },
+
+    // toggleDay(date) {
+    //   // Toggle expansion state
+    //   const isExpanded = !this.dailyItinerary[date].isExpanded;
+
+    //   this.dailyItinerary = {
+    //     ...this.dailyItinerary,
+    //     [date]: {
+    //       ...this.dailyItinerary[date],
+    //       isExpanded: isExpanded
+    //     }
+    //   };
+
+    //   // If expanding a day, render its route; if collapsing, rendering handles itself on the next check
+    //   if (isExpanded) {
+    //     this.renderRoute();
+    //   } else {
+    //     // If collapsed, force rerender to check for other expanded days
+    //     this.renderRoute();
+    //   }
+    // },
 
     updateItineraryList() {
       this.itinerary = Object.values(this.dailyItinerary).flatMap(day => day.places);
@@ -901,81 +997,157 @@ export default {
 
     // This renders markers and calls the Directions API to draw the route
     // This renders markers and calls the Directions API to draw the route
+    // renderRoute() {
+    //   // 1. --- CLEAR THE MAP ---
+
+    //   // Clear the single 'search' marker if it exists
+    //   if (this.marker) {
+    //     this.marker.setMap(null);
+    //     this.marker = null;
+    //   }
+
+    //   // Clear all itinerary markers from the map
+    //   console.log('Clearing ' + this.currentMarkers.length + ' old markers');
+    //   this.currentMarkers.forEach(m => m.setMap(null));
+    //   this.currentMarkers = []; // Reset the array
+
+    //   // Clear the route line
+    //   this.directionsRenderer.setDirections({ routes: [] });
+
+
+    //   // 2. --- FIND ALL PLACES TO DRAW ---
+
+    //   // Get ALL expanded days that have places
+    //   const expandedDays = Object.keys(this.dailyItinerary).filter(date =>
+    //     this.dailyItinerary[date].isExpanded &&
+    //     this.dailyItinerary[date].places.length > 0
+    //   );
+
+    //   // If there are no expanded days with places, we're done. The map is clean.
+    //   if (expandedDays.length === 0) {
+    //     console.log('No expanded places to render. Map is clean.');
+    //     return;
+    //   }
+
+
+    //   // 3. --- DRAW ALL PINS FOR ALL EXPANDED DAYS ---
+
+    //   // Loop through EACH expanded day and draw its markers
+    //   expandedDays.forEach(date => {
+    //     const places = this.dailyItinerary[date].places;
+
+    //     places.forEach((place, index) => {
+    //       const marker = new google.maps.Marker({
+    //         position: { lat: place.lat, lng: place.lng },
+    //         map: this.map,
+    //         label: {
+    //           text: `${index + 1}`,
+    //           color: 'white',
+    //           fontWeight: 'bold'
+    //         },
+    //         title: place.name,
+    //       });
+    //       // Add the new marker to our array so it can be cleared next time
+    //       this.currentMarkers.push(marker);
+    //     });
+    //   });
+
+
+    //   // 4. --- DRAW THE ROUTE FOR THE FIRST DAY ---
+
+    //   // We only draw a route line for the *first* day in the list.
+    //   const routeDay = expandedDays[0];
+    //   const routePlaces = this.dailyItinerary[routeDay].places;
+
+    //   // Only draw a route if there are 2 or more places
+    //   if (routePlaces.length < 2) {
+    //     return;
+    //   }
+
+    //   // Prepare Directions Request
+    //   const origin = routePlaces[0];
+    //   const destination = routePlaces[routePlaces.length - 1];
+    //   const waypoints = routePlaces.slice(1, -1).map(p => ({
+    //     location: { lat: p.lat, lng: p.lng },
+    //     stopover: true
+    //   }));
+
+    //   this.directionsService.route({
+    //     origin: { lat: origin.lat, lng: origin.lng },
+    //     destination: { lat: destination.lat, lng: destination.lng },
+    //     waypoints: waypoints,
+    //     optimizeWaypoints: false,
+    //     travelMode: google.maps.TravelMode.DRIVING
+    //   }, (response, status) => {
+    //     if (status === 'OK') {
+    //       this.directionsRenderer.setDirections(response);
+    //       this.updateRouteInfo(response.routes[0].legs, routeDay);
+    //       this.map.fitBounds(response.routes[0].bounds);
+    //     } else {
+    //       console.error('Directions request failed due to ' + status);
+    //       this.clearRouteInfo(routeDay, routePlaces);
+    //     }
+    //   });
+    // },
+
+    // REPLACE your entire renderRoute function with this one:
     renderRoute() {
       // 1. --- CLEAR THE MAP ---
-
-      // Clear the single 'search' marker if it exists
       if (this.marker) {
         this.marker.setMap(null);
         this.marker = null;
       }
-
-      // Clear all itinerary markers from the map
-      console.log('Clearing ' + this.currentMarkers.length + ' old markers');
       this.currentMarkers.forEach(m => m.setMap(null));
-      this.currentMarkers = []; // Reset the array
-
-      // Clear the route line
+      this.currentMarkers = [];
       this.directionsRenderer.setDirections({ routes: [] });
 
-
-      // 2. --- FIND ALL PLACES TO DRAW ---
-
-      // Get ALL expanded days that have places
-      const expandedDays = Object.keys(this.dailyItinerary).filter(date =>
-        this.dailyItinerary[date].isExpanded &&
-        this.dailyItinerary[date].places.length > 0
-      );
-
-      // If there are no expanded days with places, we're done. The map is clean.
-      if (expandedDays.length === 0) {
-        console.log('No expanded places to render. Map is clean.');
+      // 2. --- FIND THE *ACTIVE* DAY ---
+      if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
+        console.log('No active day to render. Map is clean.');
         return;
       }
 
+      const date = this.activeDate;
+      const places = this.dailyItinerary[date].places;
 
-      // 3. --- DRAW ALL PINS FOR ALL EXPANDED DAYS ---
+      if (places.length === 0) {
+        console.log('Active day has no places. Map is clean.');
+        return;
+      }
 
-      // Loop through EACH expanded day and draw its markers
-      expandedDays.forEach(date => {
-        const places = this.dailyItinerary[date].places;
+      // 3. --- DRAW ALL PINS FOR THE ACTIVE DAY ---
+      places.forEach((place, index) => {
+        // Check if place has valid coordinates
+        if (!place.lat || !place.lng) {
+          console.warn(`Skipping marker for "${place.name}" - missing coordinates.`);
+          return; // Skip this pin
+        }
 
-        places.forEach((place, index) => {
-          const marker = new google.maps.Marker({
-            position: { lat: place.lat, lng: place.lng },
-            map: this.map,
-            label: {
-              text: `${index + 1}`,
-              color: 'white',
-              fontWeight: 'bold'
-            },
-            title: place.name,
-          });
-          // Add the new marker to our array so it can be cleared next time
-          this.currentMarkers.push(marker);
+        const marker = new google.maps.Marker({
+          position: { lat: place.lat, lng: place.lng },
+          map: this.map,
+          // ✅ This is the corrected label object
+          label: {
+            text: `${index + 1}`,
+            color: 'white',
+            fontWeight: 'bold'
+          },
+          title: place.name,
         });
+        this.currentMarkers.push(marker);
       });
 
+      // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
+      if (places.length < 2) return;
 
-      // 4. --- DRAW THE ROUTE FOR THE FIRST DAY ---
-
-      // We only draw a route line for the *first* day in the list.
-      const routeDay = expandedDays[0];
-      const routePlaces = this.dailyItinerary[routeDay].places;
-
-      // Only draw a route if there are 2 or more places
-      if (routePlaces.length < 2) {
-        return;
-      }
-
-      // Prepare Directions Request
-      const origin = routePlaces[0];
-      const destination = routePlaces[routePlaces.length - 1];
-      const waypoints = routePlaces.slice(1, -1).map(p => ({
+      const origin = places[0];
+      const destination = places[places.length - 1];
+      const waypoints = places.slice(1, -1).map(p => ({
         location: { lat: p.lat, lng: p.lng },
         stopover: true
       }));
 
+      // ✅ This is the missing directionsService call
       this.directionsService.route({
         origin: { lat: origin.lat, lng: origin.lng },
         destination: { lat: destination.lat, lng: destination.lng },
@@ -985,14 +1157,60 @@ export default {
       }, (response, status) => {
         if (status === 'OK') {
           this.directionsRenderer.setDirections(response);
-          this.updateRouteInfo(response.routes[0].legs, routeDay);
+          this.updateRouteInfo(response.routes[0].legs, date);
           this.map.fitBounds(response.routes[0].bounds);
         } else {
           console.error('Directions request failed due to ' + status);
-          this.clearRouteInfo(routeDay, routePlaces);
+          this.clearRouteInfo(date, places);
         }
       });
     },
+    // renderRoute() {
+    //   // 1. --- CLEAR THE MAP ---
+    //   if (this.marker) {
+    //     this.marker.setMap(null);
+    //     this.marker = null;
+    //   }
+    //   this.currentMarkers.forEach(m => m.setMap(null));
+    //   this.currentMarkers = [];
+    //   this.directionsRenderer.setDirections({ routes: [] });
+
+    //   // 2. --- FIND THE *ACTIVE* DAY ---
+
+    //   // This is the key change. We check this.activeDate,
+    //   // not a list of expanded days.
+    //   if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
+    //     console.log('No active day to render. Map is clean.');
+    //     return;
+    //   }
+
+    //   const date = this.activeDate;
+    //   const places = this.dailyItinerary[date].places;
+
+    //   if (places.length === 0) {
+    //     console.log('Active day has no places. Map is clean.');
+    //     return;
+    //   }
+
+    //   // 3. --- DRAW ALL PINS FOR THE ACTIVE DAY ---
+    //   places.forEach((place, index) => {
+    //     const marker = new google.maps.Marker({
+    //       position: { lat: place.lat, lng: place.lng },
+    //       map: this.map,
+    //       label: { /* ... */ },
+    //       title: place.name,
+    //     });
+    //     this.currentMarkers.push(marker);
+    //   });
+
+    //   // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
+    //   if (places.length < 2) return;
+
+    //   const origin = places[0];
+    //   const destination = places[places.length - 1];
+    //   // ... (rest of your existing directionsService.route() call) ...
+    //   // ... (this logic remains the same) ...
+    // },
 
     // Updates the distance and duration in the itinerary list
     updateRouteInfo(legs, date) {
@@ -1077,6 +1295,24 @@ export default {
 /* Note: Tailwind CSS is not loaded, relying on standard Bootstrap-like utility classes and custom CSS */
 
 /* --- Layout --- */
+
+
+/* Add this to your <style scoped> */
+.day-header.active-day {
+  background-color: #e3f2fd;
+  /* A light blue background */
+  border-left: 4px solid #3f51b5;
+  /* A strong accent border */
+  color: #3f51b5;
+}
+
+.day-header i {
+  /* Make the chevron clickable without the whole header */
+  padding: 10px;
+  margin-right: -10px;
+  cursor: pointer;
+}
+
 #itinerary-planner {
   min-height: 100vh;
   display: flex;
