@@ -57,13 +57,25 @@
                 :key="activity.id"
                 class="list-group-item"
               >
-                <strong>{{ activity.title }}</strong>
-                <small class="d-block text-muted">{{ activity.location }}</small>
-                <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
-                <small class="d-block mt-1">
-                  <span class="badge bg-info">{{ activity.category }}</span>
-                  <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
-                </small>
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <strong>{{ activity.title }}</strong>
+                    <small class="d-block text-muted">{{ activity.location }}</small>
+                    <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
+                    <small class="d-block mt-1">
+                      <span class="badge bg-info">{{ activity.category }}</span>
+                      <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
+                    </small>
+                  </div>
+                  <button 
+                    @click="toggleActivityOnCalendar(activity.id)"
+                    class="btn btn-sm ms-2"
+                    :class="isActivityOnCalendar(activity.id) ? 'btn-danger' : 'btn-success'"
+                    :title="isActivityOnCalendar(activity.id) ? 'Remove from calendar' : 'Add to calendar'"
+                  >
+                    {{ isActivityOnCalendar(activity.id) ? '−' : '+' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -149,6 +161,7 @@ export default {
       userAvailabilities: [],
       friends: [],
       activities: [],
+      activitiesOnCalendar: new Set(), // Track which activities are currently on calendar
       isLoadingActivities: false,
       loadingFriends: false,
       currentUser: null,
@@ -252,37 +265,70 @@ export default {
         const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
         this.activities = userDoc.exists() ? userDoc.data().favouritesList || [] : [];
 
+        // Clear all activity events from calendar
         this.calendar.getEvents().forEach(event => {
           if (event.extendedProps.isActivity) {
             event.remove();
           }
         });
 
+        // Reset the tracking set
+        this.activitiesOnCalendar.clear();
+
+        // Add all activities to calendar by default
         this.activities.forEach((activity) => {
-          const startDate = this.parseActivityDate(activity.date);
-          this.calendar.addEvent({
-            id: activity.id,
-            title: activity.title,
-            start: startDate,
-            allDay: true,
-            backgroundColor: "#FFD700",
-            borderColor: "#FFD700",
-            textColor: "#000080",
-            extendedProps: {
-              isActivity: true,
-              image: activity.image,
-              location: activity.location,
-              time: activity.date.split('•')[1]?.trim() || "",
-              price: activity.price,
-              duration: activity.duration,
-            },
-          });
+          this.addActivityToCalendar(activity);
         });
       } catch (error) {
         console.error("Error loading favourites:", error);
       } finally {
         this.isLoadingActivities = false;
       }
+    },
+
+    addActivityToCalendar(activity) {
+      const startDate = this.parseActivityDate(activity.date);
+      this.calendar.addEvent({
+        id: activity.id,
+        title: activity.title,
+        start: startDate,
+        allDay: true,
+        backgroundColor: "#FFD700",
+        borderColor: "#FFD700",
+        textColor: "#000080",
+        extendedProps: {
+          isActivity: true,
+          image: activity.image,
+          location: activity.location,
+          time: activity.date.split('•')[1]?.trim() || "",
+          price: activity.price,
+          duration: activity.duration,
+        },
+      });
+      this.activitiesOnCalendar.add(activity.id);
+    },
+
+    removeActivityFromCalendar(activityId) {
+      const event = this.calendar.getEventById(activityId);
+      if (event) {
+        event.remove();
+        this.activitiesOnCalendar.delete(activityId);
+      }
+    },
+
+    toggleActivityOnCalendar(activityId) {
+      if (this.isActivityOnCalendar(activityId)) {
+        this.removeActivityFromCalendar(activityId);
+      } else {
+        const activity = this.activities.find(a => a.id === activityId);
+        if (activity) {
+          this.addActivityToCalendar(activity);
+        }
+      }
+    },
+
+    isActivityOnCalendar(activityId) {
+      return this.activitiesOnCalendar.has(activityId);
     },
 
     parseActivityDate(dateStr) {

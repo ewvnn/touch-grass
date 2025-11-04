@@ -79,7 +79,7 @@
             <p class="mb-2"><strong>Time:</strong> {{ selectedEvent.duration }}</p>
             <div class="price-row mb-2" aria-label="Price and benefits">
               <p class="mb-0">
-                <strong>Price:</strong>
+                <strong>Price: </strong>
                 <span class="price">{{ selectedEvent.price }}</span>
               </p>
               <div class="benefit-chips">
