@@ -6,9 +6,8 @@
       @mouseleave="startAutoScroll">
 
       <!-- Previous Button -->
-      <button class="btn btn-light position-absolute top-50 start-0 translate-middle-y shadow-sm"
-        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;" @click="scrollPrev"
-        :disabled="currentIndex === 0">
+      <button class="btn btn-light nav-btn start" @click="scrollPrev" :disabled="currentIndex === 0"
+        aria-label="Previous">
         <span aria-hidden="true">&lsaquo;</span>
       </button>
 
@@ -18,12 +17,15 @@
           :style="{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }"
           style="transition: transform 0.3s ease;">
           <div v-for="event in displayEvents" :key="event.id" class="flex-shrink-0 px-2 carousel-item-wrapper">
-            <div class="card h-100 shadow-sm cursor-pointer" @click="openModal(event)" style="cursor: pointer;">
-              <img :src="event.image" class="card-img-top" :alt="event.title"
-                style="height: 200px; object-fit: cover;" />
+            <div class="card h-100 shadow-sm cursor-pointer" @click="openModal(event)">
+              <div class="img-wrap">
+                <img :src="event.image" class="card-img-top" :alt="event.title" />
+              </div>
               <div class="card-body">
-                <span class="badge bg-success mb-2">{{ event.badge }}</span>
-                <span class="badge bg-success ms-2">{{ event.category }}</span>
+                <div class="modal-tags mb-2">
+                  <EventChip v-for="chip in chipsForPrimary(event)" :key="chip.kind + '-' + chip.label"
+                    :label="chip.label" :kind="chip.kind" dense />
+                </div>
                 <h5 class="card-title mb-2">{{ event.title }}</h5>
                 <p class="card-text text-muted mb-1">
                   <small>{{ event.location }}</small>
@@ -31,19 +33,27 @@
                 <p class="card-text text-muted mb-1">
                   <small>{{ event.date }}</small>
                 </p>
-                <p class="card-text fw-bold">{{ event.price }}</p>
+                <p class="card-text text-muted mb-1">
+                  <small>{{ event.duration }}</small>
+                </p>
+                <div class="price-row" aria-label="Price and benefits">
+                  <p class="card-text price mb-0">{{ event.price }}</p>
+                  <div class="benefit-chips">
+                    <EventChip v-for="chip in chipsForBenefits(event)" :key="chip.kind + '-' + chip.label"
+                      :label="chip.label" :kind="chip.kind" dense />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Next Button -->
-      <button class="btn btn-light position-absolute top-50 end-0 translate-middle-y shadow-sm"
-        style="z-index: 10; border-radius: 50%; width: 40px; height: 40px;" @click="scrollNext"
-        :disabled="currentIndex >= endIndex">
-        <span aria-hidden="true">&rsaquo;</span>
-      </button>
+        <!-- Next Button -->
+        <button class="btn btn-light nav-btn end" @click="scrollNext" :disabled="currentIndex >= endIndex"
+          aria-label="Next">
+          <span aria-hidden="true">&rsaquo;</span>
+        </button>
+      </div>
     </div>
 
     <!-- Modal -->
@@ -59,18 +69,23 @@
             <!-- Fixed-size modal image -->
             <img :src="selectedEvent.image" class="img-fluid rounded mb-3" :alt="selectedEvent.title"
               style="width: 100%; height: 300px; object-fit: cover;" />
-            <div class="mb-2">
-              <span class="badge bg-success">{{ selectedEvent.badge }}</span>
-              <span class="badge bg-success ms-2">{{ selectedEvent.category }}</span>
+            <div class="mb-2 modal-tags">
+              <EventChip v-for="chip in chipsForPrimary(selectedEvent)" :key="chip.kind + '-' + chip.label"
+                :label="chip.label" :kind="chip.kind" />
             </div>
             <p class="mb-2"><strong>Location:</strong> {{ selectedEvent.location }}</p>
             <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
-            <p class="mb-2"><strong>Timing:</strong> {{ selectedEvent.duration }}</p>
-            <p class="mb-2"><strong>Price:</strong> {{ selectedEvent.price }}</p>
 
-            <div class="modal-tags">
-              <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
-              <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
+            <p class="mb-2"><strong>Time:</strong> {{ selectedEvent.duration }}</p>
+            <div class="price-row mb-2" aria-label="Price and benefits">
+              <p class="mb-0">
+                <strong>Price:</strong>
+                <span class="price">{{ selectedEvent.price }}</span>
+              </p>
+              <div class="benefit-chips">
+                <EventChip v-for="chip in chipsForBenefits(selectedEvent)" :key="chip.kind + '-' + chip.label"
+                  :label="chip.label" :kind="chip.kind" />
+              </div>
             </div>
           </div>
 
@@ -89,11 +104,13 @@
 <script>
 import { loadEvents } from '@/services/events';
 import { auth, db } from '../firebase.js';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import EventChip from '@/components/EventChip.vue'
 
 export default {
   name: 'EventCarousel',
+  components: { EventChip },
   data() {
     return {
       events: [],
@@ -156,6 +173,13 @@ export default {
     async toggleFavourite() {
       if (!this.currentUser) {
         alert('Please log in to save favourites');
+        this.closeModal?.();
+        const redirect = this.$route?.fullPath || '/';
+        if (this.$router) {
+          await this.$router.push({ path: '/login', query: { redirect } });
+        } else {
+          window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
+        }
         return;
       }
 
@@ -164,6 +188,11 @@ export default {
       this.savingFavourite = true;
 
       try {
+        const existing = await getDoc(userRef);
+        if (!existing.exists()) {
+          await setDoc(userRef, { favouritesList: [] }, { merge: true });
+        }
+
         if (this.isFavourite(eventId)) {
           const userDoc = await getDoc(userRef);
           const currentFavourites = userDoc.data().favouritesList || [];
@@ -236,13 +265,30 @@ export default {
     openModal(event) {
       this.selectedEvent = event;
       this.showModal = true;
+      document.body.style.overflow = 'hidden';
       this.stopAutoScroll();
     },
 
     closeModal() {
       this.showModal = false;
       this.selectedEvent = null;
+      document.body.style.overflow = 'auto';
       this.startAutoScroll();
+    },
+
+    chipsForPrimary(evt) {
+      if (!evt) return [];
+      const chips = [];
+      if (evt.badge) chips.push({ label: evt.badge, kind: 'badge' }); // e.g., Dance, Sustainable (colour-coded)
+      if (evt.category) chips.push({ label: evt.category, kind: 'tag' }); // e.g., Workshop, Music
+      return chips;
+    },
+    chipsForBenefits(evt) {
+      if (!evt) return [];
+      const chips = [];
+      if (evt.cdc) chips.push({ label: 'CDC Vouchers', kind: 'tag' });
+      if (evt.culturepass) chips.push({ label: 'Culture Pass', kind: 'tag' });
+      return chips;
     }
   },
   watch: {
@@ -261,6 +307,77 @@ export default {
   font-weight: 800;
   color: #1f2937;
   padding-left: 0.5rem;
+}
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+}
+
+.nav-btn.start {
+  left: 0;
+}
+
+.nav-btn.end {
+  right: 0;
+}
+
+.img-wrap {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  border-top-left-radius: .5rem;
+  border-top-right-radius: .5rem;
+}
+
+.img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.modal-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-weight: 700;
+  color: #10b981;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.benefit-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease;
 }
 
 .cursor-pointer:hover {
@@ -283,21 +400,5 @@ export default {
   .carousel-item-wrapper {
     width: 33.333%;
   }
-}
-
-.modal-tags {
-  display: flex;
-  gap: 8px;
-  margin: 20px;
-  flex-wrap: wrap;
-}
-
-.tag {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
 }
 </style>
