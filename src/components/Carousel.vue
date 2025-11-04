@@ -61,9 +61,17 @@
       style="background-color: rgba(0,0,0,0.5);" @click.self="closeModal">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" v-if="selectedEvent">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ selectedEvent.title }}</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+          <div class="modal-header justify-content-between align-items-center">
+            <h5 class="modal-title mb-0">{{ selectedEvent.title }}</h5>
+            <div class="d-flex align-items-center gap-2">
+              <button v-if="selectedEvent" class="btn p-0 fav-btn" :aria-pressed="isFavourite(selectedEvent.id)"
+                :title="isFavourite(selectedEvent.id) ? 'Remove from favourites' : 'Save to favourites'"
+                :disabled="savingFavourite" @click.stop="toggleFavourite">
+                <i :class="['bi', isFavourite(selectedEvent.id) ? 'bi-heart-fill' : 'bi-heart']"></i>
+              </button>
+
+              <button type="button" class="btn-close" @click="closeModal"></button>
+            </div>
           </div>
           <div class="modal-body">
             <!-- Fixed-size modal image -->
@@ -227,6 +235,11 @@ export default {
       }
     },
 
+    toggleFavouriteFromCard(event) {
+      this.selectedEvent = event;
+      this.toggleFavourite();
+    },
+
     isFavourite(id) {
       return this.favourites.includes(id);
     },
@@ -367,10 +380,51 @@ export default {
   z-index: 2;
 }
 
+.fav-btn {
+  border: none;
+  background: transparent;
+  padding: 6px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 9999px;
+  color: #085702;
+  /* margin-bottom: 10px; */
+}
+
+.fav-btn i {
+  font-size: 22px;
+}
+
+.fav-btn:hover {
+  background: #f3f4f6;
+}
+
+.fav-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
 .modal-tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.modal-dialog {
+  max-width: 640px;
+  margin: 20px auto;
+}
+
+.modal-content {
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .price {

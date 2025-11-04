@@ -642,6 +642,7 @@ export default {
   cursor: pointer;
   border-radius: 9999px;
   color: #085702;
+  margin-bottom: 10px;
 }
 
 .fav-btn i {
