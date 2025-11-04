@@ -18,8 +18,8 @@
 
         <!-- Existing Itinerary Content (show only if dates are set) -->
         <div v-else>
-          <div class="date-range mb-4 fw-bold text-end text-primary">
-            <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-primary me-2">
+          <div class="date-range mb-4 fw-bold text-end text-success">
+            <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-success me-2">
               <i class="fas fa-calendar-edit"></i> Edit Dates
             </button>
             {{ dateRangeDisplay }}
@@ -45,12 +45,13 @@
                       <h5 class="mb-1" style="cursor: grab;">{{ element.name }}</h5>
 
                       <div class="d-flex align-items-center mb-2">
+                        <img src="../../photos/draggable-icon.png" class="drag-icon" alt="">
                         <img :src="element.photoUrl" class="place-thumbnail me-2" :alt="element.name" />
                         <div>
                           <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
                           }}</small>
-                          <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ element.rating }}
-                            ({{ element.user_ratings_total }})</small>
+                          <!-- <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ element.rating }}
+                            ({{ element.user_ratings_total }})</small> -->
                           <a :href="element.website" target="_blank" class="website-link d-block"><i
                               class="fas fa-link"></i>
                             Website: {{ element.name }}</a>
@@ -209,7 +210,7 @@
             class="btn btn-secondary me-2">Cancel</button>
           <!-- The button is enabled if both dates are set and there is no error -->
           <button @click="handleDateSelection" :disabled="!startDateInput || !endDateInput || !!dateError"
-            class="btn btn-primary">
+            class="btn btn-success">
             Start Planning
           </button>
         </div>
@@ -1406,6 +1407,13 @@ export default {
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.drag-icon {
+  width: 20px;
+  height: 20px;
+  align-self: center;
+  object-fit: contain;
 }
 
 .description-text {
