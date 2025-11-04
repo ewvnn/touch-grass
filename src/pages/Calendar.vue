@@ -447,6 +447,9 @@ export default {
         this.availabilityCalendar = new Calendar(calEl, {
           plugins: [dayGridPlugin, interactionPlugin],
           initialView: "dayGridMonth",
+          validRange: {
+            start: new Date().toISOString().split('T')[0] // Allow selection from today onwards
+          },
           dateClick: (info) => {
             this.toggleUserAvailability(info.dateStr);
             this.updateAvailabilityCalendarDisplay();
