@@ -37,15 +37,17 @@
         </div>
       </div>
 
-      <div class="filter-group checkbox-group">
-        <label class="checkbox">
-          <input type="checkbox" v-model="filterCDC" />
-          <span>CDC</span>
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" v-model="filterCulturePass" />
-          <span>CulturePass</span>
-        </label>
+      <div class="filter-group">
+        <label>Vouchers:</label>
+          <div class="select-wrapper">
+            <select v-model="selectedVoucher" class="filter-select" @change="handleVoucherChange">
+              <option value="all">All Vouchers</option>
+              <option value="cdc">CDC Only</option>
+              <option value="culturepass">CulturePass Only</option>
+              <option value="both">Both CDC & CulturePass</option>
+            </select>
+          <div class="select-arrow" aria-hidden="true">▼</div>
+        </div>
       </div>
     </div>
 
@@ -97,7 +99,7 @@
           <div class="modal-info">
             <p><strong>Location:</strong> {{ selectedEvent.location }}</p>
             <p><strong>Date:</strong> {{ selectedEvent.date }}</p>
-            <p><strong>Duration:</strong> {{ selectedEvent.duration }}</p>
+            <p><strong>Timing:</strong> {{ selectedEvent.duration }}</p>
             <p><strong>Price:</strong> {{ selectedEvent.price }}</p>
             <p><strong>Category:</strong> {{ selectedEvent.category }}</p>
           </div>
@@ -136,6 +138,7 @@ export default {
       categories: [],
       filterCDC: false,
       filterCulturePass: false,
+      selectedVoucher: 'all',
       currentUser: null,
       favourites: [],
       savingFavourite: false
@@ -153,11 +156,12 @@ export default {
         const matchesBudget = this.selectedBudget === 'all' ||
           this.checkBudget(event.price);
 
-        const matchesCDC = !this.filterCDC || !!event.cdc;
+        const matchesVoucher = this.selectedVoucher === 'all' ||
+        (this.selectedVoucher === 'cdc' && event.cdc) ||
+        (this.selectedVoucher === 'culturepass' && event.culturepass) ||
+        (this.selectedVoucher === 'both' && event.cdc && event.culturepass);
 
-        const matchesCulture = !this.filterCulturePass || !!event.culturepass;
-
-        return matchesSearch && matchesCategory && matchesBudget && matchesCDC && matchesCulture;
+      return matchesSearch && matchesCategory && matchesBudget && matchesVoucher;
       });
     }
   },
@@ -183,6 +187,27 @@ export default {
     });
   },
   methods: {
+    handleVoucherChange() {
+    // Update checkboxes based on dropdown selection (for potential future use)
+    switch(this.selectedVoucher) {
+      case 'all':
+        this.filterCDC = false;
+        this.filterCulturePass = false;
+        break;
+      case 'cdc':
+        this.filterCDC = true;
+        this.filterCulturePass = false;
+        break;
+      case 'culturepass':
+        this.filterCDC = false;
+        this.filterCulturePass = true;
+        break;
+      case 'both':
+        this.filterCDC = true;
+        this.filterCulturePass = true;
+        break;
+    }
+  },
     async loadFavourites() {
       if (!this.currentUser) return;
 
@@ -355,6 +380,7 @@ export default {
   margin-bottom: 30px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
 }
 
 .filter-group {
@@ -419,22 +445,6 @@ export default {
   pointer-events: none;
   font-size: 12px;
   color: #374151;
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-}
-
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #333;
 }
 
 .events-grid {

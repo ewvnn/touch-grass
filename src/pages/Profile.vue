@@ -410,9 +410,9 @@ async function changePassword() {
 .avatar { width: 300px; height: 300px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd; background: #f3f4f6; margin-bottom: 1rem; }
 .upload-input { display: none; }
 .avatar-buttons { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; }
-.btn-upload-pic { padding: 0.5rem 1rem; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 38px; }
+.btn-upload-pic { padding: 0.5rem 1rem; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px;}
 .btn-upload-pic:hover { background: #16a34a; }
-.btn-delete-pic { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 38px; }
+.btn-delete-pic { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px; }
 .btn-delete-pic:hover:not(:disabled) { background: #dc2626; }
 .btn-delete-pic:disabled { background: #9ca3af; cursor: not-allowed; }
 .info-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
@@ -425,7 +425,7 @@ async function changePassword() {
 .btn-cancel-field:hover { background: #d1d5db; }
 .btn-change-password {
   padding: 0.5rem 1rem;
-  background: #16a34a;
+  background: #22c55e;
   color: white;
   border: none;
   border-radius: 6px;
@@ -434,7 +434,7 @@ async function changePassword() {
   transition: background 0.2s;
   font-size: 0.95rem;
   min-width: 140px;
-  height: 38px;
+  height: 40px;
 }
 
 .btn-change-password:hover {

@@ -531,4 +531,25 @@ export default {
   margin-bottom: 6px;
   color: #000080;
 }
+
+/* Capitalize first letter of FullCalendar buttons */
+:deep(.fc-button) {
+  text-transform: capitalize !important;
+}
+
+/* Event styling overrides for yellow bars with dark blue text */
+:deep(.fc-event) {
+  border-radius: 3px !important;
+  font-weight: normal !important;
+  padding: 2px 6px !important;
+  cursor: default !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.fc-day-other) {
+  visibility: hidden !important;
+}
+
 </style>

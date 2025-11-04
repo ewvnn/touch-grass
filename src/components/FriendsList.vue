@@ -459,6 +459,8 @@ async function confirmRemoveFriend() {
   font-weight: 500;
   color: #374151;
   flex: 1;
+  text-align:left;
+  margin-left: 4px;
 }
 
 .btn-remove-friend {

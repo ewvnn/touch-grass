@@ -65,7 +65,7 @@
             </div>
             <p class="mb-2"><strong>Location:</strong> {{ selectedEvent.location }}</p>
             <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
-            <p class="mb-2"><strong>Duration:</strong> {{ selectedEvent.duration }}</p>
+            <p class="mb-2"><strong>Timing:</strong> {{ selectedEvent.duration }}</p>
             <p class="mb-2"><strong>Price:</strong> {{ selectedEvent.price }}</p>
 
             <div class="modal-tags">
