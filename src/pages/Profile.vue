@@ -97,9 +97,6 @@
         <div class="change-password-section">
           <button class="btn-change-password bg-success" @click="openPasswordModal">Change Password</button>
         </div>
-
-        <p v-if="successMessage" class="success">{{ successMessage }}</p>
-        <p v-if="error" class="error">Error: {{ error }}</p>
       </div>
     </div>
 
@@ -134,6 +131,88 @@
         </div>
       </div>
     </div>
+
+    <!-- Crop Modal -->
+    <div v-if="showCropModal" class="crop-modal-overlay">
+      <div class="crop-modal">
+        <h2>Adjust Your Profile Picture</h2>
+        
+        <div
+          ref="cropContainer"
+          class="crop-container"
+          @mousedown="handleCropMouseDown"
+          @mousemove="handleCropMouseMove"
+          @mouseup="handleCropMouseUp"
+          @mouseleave="handleCropMouseUp"
+          @touchstart="handleCropTouchStart"
+          @touchmove="handleCropTouchMove"
+          @touchend="handleCropMouseUp"
+        >
+          <img
+            v-if="cropImageSrc"
+            ref="cropImage"
+            :src="cropImageSrc"
+            alt="Preview"
+            class="crop-image"
+            :style="{
+              left: cropPosition.x + 'px',
+              top: cropPosition.y + 'px',
+              width: imageDisplayWidth + 'px',
+              height: imageDisplayHeight + 'px',
+            }"
+            draggable="false"
+          />
+          
+          <svg class="crop-overlay">
+            <defs>
+              <mask id="circleMask">
+                <rect width="100%" height="100%" fill="white" />
+                <circle cx="50%" cy="50%" r="150" fill="black" />
+              </mask>
+            </defs>
+            <rect
+              width="100%"
+              height="100%"
+              fill="rgba(0, 0, 0, 0.5)"
+              mask="url(#circleMask)"
+            />
+            <circle
+              cx="50%"
+              cy="50%"
+              r="150"
+              fill="none"
+              stroke="white"
+              stroke-width="3"
+              stroke-dasharray="10,5"
+            />
+          </svg>
+        </div>
+
+        <div class="zoom-control">
+          <label>Zoom: {{ cropZoom.toFixed(2) }}x</label>
+          <input
+            type="range"
+            :min="minZoom"
+            :max="maxZoom"
+            step="0.01"
+            v-model.number="cropZoom"
+            class="zoom-slider"
+          />
+        </div>
+
+        <div class="crop-modal-buttons">
+          <button @click="handleCropCancel" class="btn-cancel">Cancel</button>
+          <button @click="handleCropConfirm" class="btn-confirm">Crop & Upload</button>
+        </div>
+
+        <canvas ref="cropCanvas" style="display: none;"></canvas>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div v-if="showToast" :class="['toast', toastType]">
+      {{ toastMessage }}
+    </div>
   
     
     <div class="lists-container">
@@ -145,8 +224,9 @@
 </template>
 
 <script setup>
+
 import FriendsList from '../components/FriendsList.vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import { auth, db, storage } from '../firebase.js';
 import FavouritesList from '../components/FavouritesList.vue';
 import { 
@@ -181,6 +261,240 @@ const editDisplayName = ref('');
 const editEmail = ref('');
 
 const uploading = ref(false);
+
+const showCropModal = ref(false);
+const selectedImageFile = ref(null);
+const cropImageSrc = ref('');
+const cropZoom = ref(1);
+const cropPosition = ref({ x: 0, y: 0 });
+const cropIsDragging = ref(false);
+const cropDragStart = ref({ x: 0, y: 0 });
+const cropContainer = ref(null);
+const cropImage = ref(null);
+const cropCanvas = ref(null);
+
+// Toast notification state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success'); // 'success' or 'error'
+let toastTimeout = null;
+
+// Image dimensions
+const originalImageWidth = ref(0);
+const originalImageHeight = ref(0);
+const minZoom = ref(0.1);
+const maxZoom = ref(3);
+
+// Function to show toast notification
+function showToastNotification(message, type = 'success') {
+  // Clear any existing timeout
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
+  
+  toastMessage.value = message;
+  toastType.value = type;
+  showToast.value = true;
+  
+  // Auto-hide after 3 seconds
+  toastTimeout = setTimeout(() => {
+    showToast.value = false;
+  }, 3000);
+}
+
+// Computed display dimensions based on zoom
+const imageDisplayWidth = computed(() => originalImageWidth.value * cropZoom.value);
+const imageDisplayHeight = computed(() => originalImageHeight.value * cropZoom.value);
+
+const CROP_RADIUS = 150; // The radius of the crop circle
+
+// Calculate min zoom so the circle always fits within the image
+function calculateMinZoom() {
+  if (!cropContainer.value || !originalImageWidth.value || !originalImageHeight.value) {
+    return 0.1;
+  }
+  
+  const containerWidth = cropContainer.value.offsetWidth;
+  const containerHeight = cropContainer.value.offsetHeight;
+  
+  // The circle needs to fit entirely within the image
+  // So the image's scaled dimensions must be at least 2 * CROP_RADIUS (diameter)
+  const minZoomForWidth = (2 * CROP_RADIUS) / originalImageWidth.value;
+  const minZoomForHeight = (2 * CROP_RADIUS) / originalImageHeight.value;
+  
+  // Use the larger of the two to ensure circle fits in both dimensions
+  return Math.max(minZoomForWidth, minZoomForHeight);
+}
+
+// Constrain position so circle never goes outside image bounds
+function constrainPosition(pos) {
+  if (!cropContainer.value) return pos;
+  
+  const containerWidth = cropContainer.value.offsetWidth;
+  const containerHeight = cropContainer.value.offsetHeight;
+  const centerX = containerWidth / 2;
+  const centerY = containerHeight / 2;
+  
+  const scaledWidth = imageDisplayWidth.value;
+  const scaledHeight = imageDisplayHeight.value;
+  
+  let newX = pos.x;
+  let newY = pos.y;
+  
+  // Calculate the boundaries
+  // The circle center is at (centerX, centerY)
+  // The circle should not extend beyond the image edges
+  
+  // Left boundary: circle's left edge should not go past image's left edge
+  const minX = centerX - CROP_RADIUS;
+  if (newX > minX) newX = minX;
+  
+  // Right boundary: circle's right edge should not go past image's right edge
+  const maxX = centerX + CROP_RADIUS - scaledWidth;
+  if (newX < maxX) newX = maxX;
+  
+  // Top boundary: circle's top edge should not go past image's top edge
+  const minY = centerY - CROP_RADIUS;
+  if (newY > minY) newY = minY;
+  
+  // Bottom boundary: circle's bottom edge should not go past image's bottom edge
+  const maxY = centerY + CROP_RADIUS - scaledHeight;
+  if (newY < maxY) newY = maxY;
+  
+  return { x: newX, y: newY };
+}
+
+// Watch zoom changes and constrain position
+watch(cropZoom, () => {
+  cropPosition.value = constrainPosition(cropPosition.value);
+});
+
+// Watch for when a file is selected to load it
+watch(selectedImageFile, (file) => {
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        originalImageWidth.value = img.width;
+        originalImageHeight.value = img.height;
+        cropImageSrc.value = e.target.result;
+        
+        // Calculate and set min zoom
+        nextTick(() => {
+          minZoom.value = calculateMinZoom();
+          cropZoom.value = minZoom.value;
+          
+          // Center the image
+          if (cropContainer.value) {
+            const containerWidth = cropContainer.value.offsetWidth;
+            const containerHeight = cropContainer.value.offsetHeight;
+            const initialPos = {
+              x: (containerWidth - imageDisplayWidth.value) / 2,
+              y: (containerHeight - imageDisplayHeight.value) / 2
+            };
+            cropPosition.value = constrainPosition(initialPos);
+          }
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+function handleCropMouseDown(e) {
+  cropIsDragging.value = true;
+  cropDragStart.value = {
+    x: e.clientX - cropPosition.value.x,
+    y: e.clientY - cropPosition.value.y
+  };
+}
+
+function handleCropMouseMove(e) {
+  if (cropIsDragging.value) {
+    const newPos = {
+      x: e.clientX - cropDragStart.value.x,
+      y: e.clientY - cropDragStart.value.y
+    };
+    cropPosition.value = constrainPosition(newPos);
+  }
+}
+
+function handleCropMouseUp() {
+  cropIsDragging.value = false;
+}
+
+function handleCropTouchStart(e) {
+  const touch = e.touches[0];
+  cropIsDragging.value = true;
+  cropDragStart.value = {
+    x: touch.clientX - cropPosition.value.x,
+    y: touch.clientY - cropPosition.value.y
+  };
+}
+
+function handleCropTouchMove(e) {
+  if (cropIsDragging.value && e.touches[0]) {
+    const touch = e.touches[0];
+    const newPos = {
+      x: touch.clientX - cropDragStart.value.x,
+      y: touch.clientY - cropDragStart.value.y
+    };
+    cropPosition.value = constrainPosition(newPos);
+  }
+}
+
+async function handleCropConfirm() {
+  const canvas = cropCanvas.value;
+  const container = cropContainer.value;
+  const img = cropImage.value;
+
+  if (!canvas || !container || !img) return;
+
+  const cropSize = 300;
+  canvas.width = cropSize;
+  canvas.height = cropSize;
+  const ctx = canvas.getContext('2d');
+
+  const centerX = container.offsetWidth / 2;
+  const centerY = container.offsetHeight / 2;
+
+  // Calculate which part of the original image to crop
+  // The circle center in container coordinates is (centerX, centerY)
+  // Convert to image coordinates
+  const imgCenterX = (centerX - cropPosition.value.x) / cropZoom.value;
+  const imgCenterY = (centerY - cropPosition.value.y) / cropZoom.value;
+  
+  // Source coordinates in original image (top-left of crop area)
+  const sourceX = imgCenterX - (CROP_RADIUS / cropZoom.value);
+  const sourceY = imgCenterY - (CROP_RADIUS / cropZoom.value);
+  const sourceSize = (2 * CROP_RADIUS) / cropZoom.value;
+
+  // Draw the cropped circular image
+  ctx.beginPath();
+  ctx.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  ctx.drawImage(
+    img,
+    sourceX,
+    sourceY,
+    sourceSize,
+    sourceSize,
+    0,
+    0,
+    cropSize,
+    cropSize
+  );
+
+  canvas.toBlob((blob) => {
+    if (blob) {
+      handleCropComplete(blob);
+    }
+  }, 'image/jpeg', 0.95);
+}
 
 let currentUser = null;
 let unsubscribeAuth = null;
@@ -245,18 +559,14 @@ onUnmounted(() => {
 function startEditDisplayName() {
   editingDisplayName.value = true;
   editDisplayName.value = displayName.value;
-  successMessage.value = '';
-  error.value = null;
 }
-function cancelEditDisplayName() { editingDisplayName.value = false; successMessage.value=''; error.value=null; }
+function cancelEditDisplayName() { editingDisplayName.value = false; }
 
 function startEditEmail() {
   editingEmail.value = true;
   editEmail.value = email.value;
-  successMessage.value = '';
-  error.value = null;
 }
-function cancelEditEmail() { editingEmail.value = false; successMessage.value=''; error.value=null; }
+function cancelEditEmail() { editingEmail.value = false; }
 
 async function isUnique(field, value, excludeUid) {
   const q = query(collection(db, 'users'), where(field, '==', value));
@@ -265,13 +575,21 @@ async function isUnique(field, value, excludeUid) {
 }
 
 async function saveDisplayName() {
-  error.value = null; successMessage.value='';
-  if (!currentUser) { error.value='User not logged in.'; return; }
+  if (!currentUser) { 
+    showToastNotification('User not logged in.', 'error');
+    return; 
+  }
   const newDisplayName = toTitleCase(editDisplayName.value.trim());
-  if (!newDisplayName) { error.value='Display name cannot be empty.'; return; }
+  if (!newDisplayName) { 
+    showToastNotification('Display name cannot be empty.', 'error');
+    return; 
+  }
   try {
     const nameUnique = await isUnique('displayName', newDisplayName, currentUser.uid);
-    if (!nameUnique) { error.value='This display name is already taken.'; return; }
+    if (!nameUnique) { 
+      showToastNotification('This display name is already taken.', 'error');
+      return; 
+    }
     if (newDisplayName !== currentUser.displayName) {
       await updateProfile(currentUser, { displayName: newDisplayName });
     }
@@ -279,61 +597,139 @@ async function saveDisplayName() {
     await updateDoc(userRef, { displayName: newDisplayName });
     displayName.value = newDisplayName;
     editingDisplayName.value = false;
-    successMessage.value='Display name updated successfully!';
-  } catch (err) { console.error(err); error.value = err.message || String(err); }
+    showToastNotification('Display name updated successfully!');
+    
+    // Force reload to update navbar
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  } catch (err) { 
+    console.error(err); 
+    showToastNotification(err.message || String(err), 'error');
+  }
 }
 
 async function saveEmail() {
-  error.value=null; successMessage.value='';
-  if (!currentUser) { error.value='User not logged in.'; return; }
+  if (!currentUser) { 
+    showToastNotification('User not logged in.', 'error');
+    return; 
+  }
   const newEmail = editEmail.value.trim();
-  if (!newEmail) { error.value='Email cannot be empty.'; return; }
+  if (!newEmail) { 
+    showToastNotification('Email cannot be empty.', 'error');
+    return; 
+  }
+  
+  // Check if email actually changed
+  if (newEmail === currentUser.email) {
+    showToastNotification('This is already your current email.', 'error');
+    editingEmail.value = false;
+    return;
+  }
+  
   try {
     const emailUnique = await isUnique('email', newEmail, currentUser.uid);
-    if (!emailUnique) { error.value='This email is already in use.'; return; }
-    if (newEmail !== currentUser.email) { await updateEmail(currentUser,newEmail); }
-    const userRef = doc(db,'users',currentUser.uid);
-    await updateDoc(userRef,{email:newEmail});
-    email.value=newEmail; editingEmail.value=false;
-    successMessage.value='Email updated successfully!';
-  } catch(err){ console.error(err); error.value=err.message||String(err); }
+    if (!emailUnique) { 
+      showToastNotification('This email is already in use.', 'error');
+      return; 
+    }
+    
+    // Update Firebase Auth email first
+    await updateEmail(currentUser, newEmail);
+    
+    // Then update Firestore
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, { email: newEmail });
+    
+    email.value = newEmail; 
+    editingEmail.value = false;
+    showToastNotification('Email updated successfully!');
+  } catch(err) { 
+    console.error('Email update error:', err);
+    
+    // Provide more specific error messages
+    if (err.code === 'auth/requires-recent-login') {
+      showToastNotification('For security reasons, please log out and log back in before changing your email.', 'error');
+    } else if (err.code === 'auth/invalid-email') {
+      showToastNotification('Please enter a valid email address.', 'error');
+    } else if (err.code === 'auth/email-already-in-use') {
+      showToastNotification('This email is already in use by another account.', 'error');
+    } else {
+      showToastNotification(err.message || String(err), 'error');
+    }
+  }
 }
 
 // -------------------- PROFILE PICTURE --------------------
-async function handleProfilePicChange(event){
-  const file=event.target.files[0]; if(!file||!currentUser) return;
-  uploading.value='uploading'; successMessage.value=''; error.value=null;
-  try{
-    const fileRef=storageRef(storage, `profilePictures/${currentUser.uid}`);
-    await uploadBytes(fileRef,file);
-    const downloadURL=await getDownloadURL(fileRef);
-    await updateProfile(currentUser,{photoURL:downloadURL});
-    const userRef=doc(db,"users",currentUser.uid);
-    await updateDoc(userRef,{photoURL:downloadURL});
-    avatarUrl.value=downloadURL;
-    successMessage.value="Profile picture updated successfully!";
-  }catch(err){ console.error(err); error.value=err.code?`${err.code}: ${err.message}`:err.message||String(err); }
-  finally{ uploading.value=false; }
+async function handleProfilePicChange(event) {
+  const file = event.target.files[0];
+  if (!file || !currentUser) return;
+  
+  // Show the crop modal instead of uploading directly
+  selectedImageFile.value = file;
+  showCropModal.value = true;
+  
+  // Reset the input so the same file can be selected again
+  event.target.value = '';
 }
 
 async function deleteProfilePicture(){
-  if(!currentUser) return; const confirmDelete=confirm('Are you sure?'); if(!confirmDelete) return;
-  uploading.value='deleting'; error.value=''; successMessage.value='';
-  try{
-    const fileRef=storageRef(storage, `profilePictures/${currentUser.uid}`);
+  if (!currentUser) return; 
+  const confirmDelete = confirm('Are you sure?'); 
+  if (!confirmDelete) return;
+  
+  uploading.value = 'deleting';
+  
+  try {
+    const fileRef = storageRef(storage, `profilePictures/${currentUser.uid}`);
     await deleteObject(fileRef);
-    await updateProfile(currentUser,{photoURL:null});
-        const userRef=doc(db,"users",currentUser.uid);
-    await updateDoc(userRef,{photoURL: PLACEHOLDER_IMAGE});
+    await updateProfile(currentUser, { photoURL: null });
+    const userRef = doc(db, "users", currentUser.uid);
+    await updateDoc(userRef, { photoURL: PLACEHOLDER_IMAGE });
     avatarUrl.value = PLACEHOLDER_IMAGE;
-    successMessage.value = "Profile picture deleted successfully!";
-  } catch(err){
+    showToastNotification("Profile picture deleted successfully!");
+  } catch(err) {
     console.error("Error deleting profile picture:", err);
-    error.value = err.code ? `${err.code}: ${err.message}` : err.message || String(err);
+    showToastNotification(err.code ? `${err.code}: ${err.message}` : err.message || String(err), 'error');
   } finally {
     uploading.value = false;
   }
 }
+
+async function handleCropComplete(croppedBlob) {
+  if (!currentUser) return;
+  
+  uploading.value = 'uploading';
+  showCropModal.value = false;
+  
+  try {
+    const fileRef = storageRef(storage, `profilePictures/${currentUser.uid}`);
+    await uploadBytes(fileRef, croppedBlob);
+    const downloadURL = await getDownloadURL(fileRef);
+    await updateProfile(currentUser, { photoURL: downloadURL });
+    const userRef = doc(db, "users", currentUser.uid);
+    await updateDoc(userRef, { photoURL: downloadURL });
+    avatarUrl.value = downloadURL;
+    showToastNotification("Profile picture updated successfully!");
+  } catch (err) {
+    console.error(err);
+    showToastNotification(err.code ? `${err.code}: ${err.message}` : err.message || String(err), 'error');
+  } finally {
+    uploading.value = false;
+  }
+}
+
+function handleCropCancel() {
+  showCropModal.value = false;
+  selectedImageFile.value = null;
+  cropImageSrc.value = '';
+  cropZoom.value = 1;
+  cropPosition.value = { x: 0, y: 0 };
+  originalImageWidth.value = 0;
+  originalImageHeight.value = 0;
+}
+
+
 
 // -------------------- CHANGE PASSWORD --------------------
 const showPasswordModal = ref(false);
@@ -545,5 +941,138 @@ async function changePassword() {
   }
 }
 
+/* -------------------- CROP MODAL -------------------- */
+.crop-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.crop-modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border: 3px solid black;
+}
+
+.crop-modal h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.crop-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: move;
+  user-select: none;
+}
+
+.crop-image {
+  position: absolute;
+  transform-origin: top left;
+  pointer-events: none;
+  user-select: none;
+}
+
+.crop-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.zoom-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.zoom-control label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.zoom-slider {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #22c55e;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #22c55e;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.crop-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btn-cancel {
+  padding: 0.5rem 1rem;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-confirm {
+  padding: 0.5rem 1rem;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-confirm:hover {
+  background: #16a34a;
+}
 
 </style>
