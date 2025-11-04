@@ -37,7 +37,7 @@
                   <small>{{ event.duration }}</small>
                 </p>
                 <div class="price-row" aria-label="Price and benefits">
-                  <p class="card-text price mb-0">{{ event.price }}</p>
+                  <p class="card-text price mb-0">{{ event.displayPriceText }}</p>
                   <div class="benefit-chips">
                     <EventChip v-for="chip in chipsForBenefits(event)" :key="chip.kind + '-' + chip.label"
                       :label="chip.label" :kind="chip.kind" dense />
@@ -80,7 +80,7 @@
             <div class="price-row mb-2" aria-label="Price and benefits">
               <p class="mb-0">
                 <strong>Price: </strong>
-                <span class="price">{{ selectedEvent.price }}</span>
+                <span class="price">{{ selectedEvent.displayPriceText }}</span>
               </p>
               <div class="benefit-chips">
                 <EventChip v-for="chip in chipsForBenefits(selectedEvent)" :key="chip.kind + '-' + chip.label"
@@ -107,6 +107,7 @@ import { auth, db } from '../firebase.js';
 import { doc, getDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import EventChip from '@/components/EventChip.vue'
+import { canonicalTagLabel } from "@/lib/tagColors";
 
 export default {
   name: 'EventCarousel',
@@ -148,8 +149,23 @@ export default {
   },
 
   computed: {
+    normalised() {
+      const isFree = (price) => {
+        if (price == null) return false
+        const s = String(price).toLowerCase()
+        return s.includes('free') || parseFloat(s.replace(/[^0-9.]/g, '')) === 0
+      }
+      return (this.events || []).map(e => {
+        const free = isFree(e.price)
+        return {
+          ...e,
+          isFree: free,
+          displayPriceText: free ? 'Free' : String(e.price || '')
+        }
+      })
+    },
     displayEvents() {
-      return this.events.filter(e => e.featured === true);
+      return this.normalised.filter(e => e.featured === true);
     },
     endIndex() {
       return Math.max(0, this.displayEvents.length - this.itemsPerView);
@@ -286,8 +302,8 @@ export default {
     chipsForBenefits(evt) {
       if (!evt) return [];
       const chips = [];
-      if (evt.cdc) chips.push({ label: 'CDC Vouchers', kind: 'tag' });
-      if (evt.culturepass) chips.push({ label: 'Culture Pass', kind: 'tag' });
+      if (evt.cdc) chips.push({ label: canonicalTagLabel('CDC Vouchers'), kind: 'tag' });
+      if (evt.culturepass) chips.push({ label: canonicalTagLabel('Culture Pass'), kind: 'tag' });
       return chips;
     }
   },

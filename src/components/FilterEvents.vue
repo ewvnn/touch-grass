@@ -39,13 +39,13 @@
 
       <div class="filter-group">
         <label>Vouchers:</label>
-          <div class="select-wrapper">
-            <select v-model="selectedVoucher" class="filter-select" @change="handleVoucherChange">
-              <option value="all">All Vouchers</option>
-              <option value="cdc">CDC Only</option>
-              <option value="culturepass">CulturePass Only</option>
-              <option value="both">Both CDC & CulturePass</option>
-            </select>
+        <div class="select-wrapper">
+          <select v-model="selectedVoucher" class="filter-select" @change="handleVoucherChange">
+            <option value="all">All Vouchers</option>
+            <option value="cdc">CDC Vouchers Only</option>
+            <option value="culturepass">Culture Pass Only</option>
+            <option value="both">Both CDC Vouchers &amp; Culture Pass</option>
+          </select>
           <div class="select-arrow" aria-hidden="true">▼</div>
         </div>
       </div>
@@ -56,17 +56,22 @@
       <div v-for="event in filteredEvents" :key="event.id" class="event-card" @click="openModal(event)">
         <div class="event-image">
           <img :src="event.image" :alt="event.title" />
-          <span v-if="event.badge" class="badge">{{ event.badge }}</span>
+          <div class="chip-overlay" v-if="event.badge">
+            <EventChip :label="event.badge" kind="badge" />
+          </div>
         </div>
         <div class="event-content">
+          <div class="category-row" v-if="event.category">
+            <EventChip :label="event.category" kind="tag" dense />
+          </div>
           <h3>{{ event.title }}</h3>
           <p class="location">{{ event.location }}</p>
           <p class="date">{{ event.date }}</p>
           <div class="event-footer">
-            <span class="price">{{ event.price }}</span>
+            <span class="price">{{ event.displayPriceText }}</span>
             <div class="tags">
-              <span v-if="event.cdc" class="tag">CDC</span>
-              <span v-if="event.culturepass" class="tag">CulturePass</span>
+              <EventChip v-for="chip in chipsForBenefits(event)" :key="chip.kind + '-' + chip.label" :label="chip.label"
+                :kind="chip.kind" dense />
             </div>
           </div>
         </div>
@@ -99,21 +104,20 @@
           <div class="modal-info">
             <p><strong>Location:</strong> {{ selectedEvent.location }}</p>
             <p><strong>Date:</strong> {{ selectedEvent.date }}</p>
-            <p><strong>Timing:</strong> {{ selectedEvent.duration }}</p>
-            <p><strong>Price:</strong> {{ selectedEvent.price }}</p>
-            <p><strong>Category:</strong> {{ selectedEvent.category }}</p>
+            <p><strong>Time:</strong> {{ selectedEvent.duration }}</p>
+            <p><strong>Price:</strong> <span class="price">{{ selectedEvent.displayPriceText }}</span></p>
           </div>
 
           <div class="modal-tags">
-            <span v-if="selectedEvent.badge" class="badge">{{ selectedEvent.badge }}</span>
-            <span v-if="selectedEvent.cdc" class="tag">CDC Vouchers</span>
-            <span v-if="selectedEvent.culturepass" class="tag">CulturePass</span>
+            <EventChip v-if="selectedEvent.badge" :label="selectedEvent.badge" kind="badge" />
+            <EventChip v-if="selectedEvent.category" :label="selectedEvent.category" kind="tag" />
+            <EventChip v-for="chip in chipsForBenefits(selectedEvent)" :key="'benefit-' + chip.label"
+              :label="chip.label" :kind="chip.kind" />
           </div>
 
           <button class="save-btn btn btn-success" @click="toggleFavourite" :disabled="savingFavourite">
             {{ savingFavourite ? 'Saving...' : (isFavourite(selectedEvent.id) ? 'Remove from Favourites' : 'Save to Favourites') }}
           </button>
-
         </div>
       </div>
     </div>
@@ -123,11 +127,14 @@
 <script>
 import { loadEvents } from '@/services/events';
 import { auth, db } from '../firebase.js';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import EventChip from '@/components/EventChip.vue'
+import { canonicalTagLabel } from '@/lib/tagColors'
 
 export default {
   name: 'FilterEvents',
+  components: { EventChip },
   data() {
     return {
       events: [],
@@ -145,10 +152,11 @@ export default {
     };
   },
   computed: {
+    normaliseEvents() { return this.events.map(e => this.normaliseEvent(e)) },
     filteredEvents() {
-      return this.events.filter(event => {
-        const matchesSearch = event.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          event.location.toLowerCase().includes(this.searchQuery.toLowerCase());
+      return this.normaliseEvents.filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(this.searchQuery.toLowerCase().trim()) ||
+          event.location.toLowerCase().includes(this.searchQuery.toLowerCase().trim());
 
         const matchesCategory = this.selectedCategory === 'all' ||
           event.category === this.selectedCategory;
@@ -157,11 +165,11 @@ export default {
           this.checkBudget(event.price);
 
         const matchesVoucher = this.selectedVoucher === 'all' ||
-        (this.selectedVoucher === 'cdc' && event.cdc) ||
-        (this.selectedVoucher === 'culturepass' && event.culturepass) ||
-        (this.selectedVoucher === 'both' && event.cdc && event.culturepass);
+          (this.selectedVoucher === 'cdc' && !!event.cdc) ||
+          (this.selectedVoucher === 'culturepass' && !!event.culturepass) ||
+          (this.selectedVoucher === 'both' && !!event.cdc && !!event.culturepass);
 
-      return matchesSearch && matchesCategory && matchesBudget && matchesVoucher;
+        return matchesSearch && matchesCategory && matchesBudget && matchesVoucher;
       });
     }
   },
@@ -187,27 +195,49 @@ export default {
     });
   },
   methods: {
+    isFree(price) {
+      if (price == null) return false
+      const s = String(price).toLowerCase()
+      return s.includes('free') || parseFloat(s.replace(/[^0-9.]/g, '')) === 0
+    },
+
+    normaliseEvent(e) {
+      const free = this.isFree(e.price)
+      return {
+         ...e,  
+         isFree: free,
+         displayPriceText: free ? 'Free' : String(e.price || '')
+        };
+    },
+
+    chipsForBenefits(evt) {
+      const chips = []
+      if (evt?.cdc) chips.push({ label: canonicalTagLabel('CDC Vouchers'), kind: 'tag' })
+      if (evt?.culturepass) chips.push({ label: canonicalTagLabel('Culture Pass'), kind: 'tag' })
+      return chips
+    },
+
     handleVoucherChange() {
-    // Update checkboxes based on dropdown selection (for potential future use)
-    switch(this.selectedVoucher) {
-      case 'all':
-        this.filterCDC = false;
-        this.filterCulturePass = false;
-        break;
-      case 'cdc':
-        this.filterCDC = true;
-        this.filterCulturePass = false;
-        break;
-      case 'culturepass':
-        this.filterCDC = false;
-        this.filterCulturePass = true;
-        break;
-      case 'both':
-        this.filterCDC = true;
-        this.filterCulturePass = true;
-        break;
-    }
-  },
+      // Update checkboxes based on dropdown selection (for potential future use)
+      switch (this.selectedVoucher) {
+        case 'all':
+          this.filterCDC = false;
+          this.filterCulturePass = false;
+          break;
+        case 'cdc':
+          this.filterCDC = true;
+          this.filterCulturePass = false;
+          break;
+        case 'culturepass':
+          this.filterCDC = false;
+          this.filterCulturePass = true;
+          break;
+        case 'both':
+          this.filterCDC = true;
+          this.filterCulturePass = true;
+          break;
+      }
+    },
     async loadFavourites() {
       if (!this.currentUser) return;
 
@@ -226,6 +256,7 @@ export default {
     async toggleFavourite() {
       if (!this.currentUser) {
         alert('Please log in to save favourites');
+        this.closeModal();
 
         const redirect = this.$route?.fullPath || '/';
         if (this.$router) {
@@ -243,6 +274,10 @@ export default {
       this.savingFavourite = true;
 
       try {
+        const existing = await getDoc(userRef)
+        if (!existing.exists()) {
+          await setDoc(userRef, { favouritesList: [] }, { merge: true })
+        }
         if (this.isFavourite(eventId)) {
           // Remove from favourites
           const userDoc = await getDoc(userRef);
@@ -264,6 +299,7 @@ export default {
           // Update local state
           this.favourites.push(eventId);
         }
+        this.closeModal();
       } catch (error) {
         console.error('Error toggling favourite:', error);
         alert('Failed to update favourites. Error: ' + error.message);
@@ -314,7 +350,7 @@ export default {
       const modal = this.$route?.query?.modal;
       const eventId = this.$route?.query?.eventId;
       if (modal === 'event' && eventId && !this.selectedEvent) {
-        const ev = this.events.find(e => String(e.id) === String(eventId));
+        const ev = this.normaliseEvents.find(e => String(e.id) === String(eventId));
         if (ev) this.openModal(ev);
       }
     },
@@ -484,23 +520,15 @@ export default {
   object-fit: cover;
 }
 
-.badge {
-  top: 20px;
-  right: 20px;
-  background: #085702;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+.chip-overlay {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
 }
 
-.event-image .badge {
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  z-index: 2;
+.category-row {
+  margin-bottom: 8px;
 }
 
 .event-content {
@@ -535,18 +563,11 @@ export default {
   font-size: 16px;
 }
 
+.modal-tags,
 .tags {
   display: flex;
   gap: 6px;
-}
-
-.tag {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
+  flex-wrap: wrap;
 }
 
 .empty-state {
@@ -630,13 +651,6 @@ export default {
 .fav-btn:hover {
   background: #f3f4f6;
 }
-
-/* .fav-btn[aria-pressed="false"] i { 
-  color: #085702; 
-}
-.fav-btn[aria-pressed="true"]  i { 
-  color: #085702; 
-} */
 
 .fav-btn:disabled {
   opacity: .6;
@@ -741,23 +755,17 @@ export default {
 
 @media (min-width: 1200px) {
   .filter-events {
+    grid-template-columns: 1fr 1200px 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
+  .filter-events {
     grid-template-columns: 1fr 1280px 1fr;
   }
 }
 
-@media (max-width: 992px) {
-  .event-image .badge {
-    top: 22px;
-    right: 22px;
-  }
-}
-
 @media (max-width: 768px) {
-  .event-image .badge {
-    top: 24px !important;
-    right: 24px !important;
-  }
-
   .filters {
     flex-direction: row;
     gap: 12px;
