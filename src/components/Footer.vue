@@ -22,7 +22,7 @@
             <span class="fw-semibold fs-5">Touch Grass</span>
           </div>
           <p class="text-secondary small mb-3">
-            Event discovery for the outdoorsy in Singapore — parks, trails, markets, and community fests.
+            Your Event Finder Website - Discover and Plan for Events across Singapore with your friends!
           </p>
 
           <!-- [Chunk] Social icons -->
