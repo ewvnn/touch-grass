@@ -7,7 +7,7 @@
       <input 
         v-model="searchQuery" 
         type="text" 
-        placeholder="Search users by display name..." 
+        placeholder="Search users by username..." 
         class="search-input"
         @keyup.enter="searchUser"
       />

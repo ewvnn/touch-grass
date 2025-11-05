@@ -1,13 +1,13 @@
 <template>
   <div class="favourites-list-container">
-    <h2 class="section-title">Favourite Events</h2>
+    <h2 class="section-title">Saved Activities</h2>
 
     <!-- Favourites List -->
     <div class="favourites-list-wrapper">
-      <div v-if="loadingFavourites" class="loading">Loading favourites...</div>
+      <div v-if="loadingFavourites" class="loading">Loading...</div>
       
       <div v-else-if="favourites.length === 0" class="no-favourites">
-        No favourite events yet. Start exploring and add some!
+        No saved activities yet. Start exploring and add some!
       </div>
 
       <div v-else class="favourites-list">

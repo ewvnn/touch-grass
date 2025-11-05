@@ -41,7 +41,7 @@
       <div class="right">
         <div class="info-section">
           <div class="info-row">
-            <strong>Display Name:</strong>
+            <strong>Username:</strong>
             <div class="field-content">
               <template v-if="editingDisplayName">
                 <input v-model="editDisplayName" type="text" class="input" />
@@ -49,7 +49,7 @@
                 <button @click="cancelEditDisplayName" class="btn-cancel-field">Cancel</button>
               </template>
               <template v-else>
-                <span class="username">{{ displayName || 'No display name set' }}</span>
+                <span class="username">{{ displayName || 'No username set' }}</span>
                 <img 
                   src="/images/pencil-icon.png" 
                   alt="Edit" 
@@ -559,13 +559,13 @@ async function saveDisplayName() {
   }
   const newDisplayName = toTitleCase(editDisplayName.value.trim());
   if (!newDisplayName) { 
-    showToastNotification('Display name cannot be empty.', 'error');
+    showToastNotification('Username cannot be empty.', 'error');
     return; 
   }
   try {
     const nameUnique = await isUnique('displayName', newDisplayName, currentUser.uid);
     if (!nameUnique) { 
-      showToastNotification('This display name is already taken.', 'error');
+      showToastNotification('This username is already taken.', 'error');
       return; 
     }
     if (newDisplayName !== currentUser.displayName) {
@@ -575,7 +575,7 @@ async function saveDisplayName() {
     await updateDoc(userRef, { displayName: newDisplayName });
     displayName.value = newDisplayName;
     editingDisplayName.value = false;
-    showToastNotification('Display name updated successfully!');
+    showToastNotification('Username updated successfully!');
     
     // Force reload to update navbar
     setTimeout(() => {
@@ -724,24 +724,120 @@ async function changePassword() {
 
 <style scoped>
 /* -------------------- PROFILE PAGE STYLES -------------------- */
-.profile-page { max-width: 1000px; margin: 2rem auto; padding: 1rem; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; text-align: center; }
+.profile-page { 
+  max-width: 1000px; 
+  margin: 2rem auto; 
+  padding: 1rem; 
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+  text-align: center;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 0.5rem;
+    margin: 1rem auto;
+  }
+}
+
 .title { margin-bottom: 1.5rem; font-size: 2rem; font-weight: 600; }
 .status { margin-bottom: 1rem; color: #666; }
-.profile-card { display: grid; grid-template-columns: 1fr; gap: 1.5rem; border: 1px solid #e5e7eb; border-radius: 12px; padding: 2rem; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); align-items: stretch; margin: 0 auto; }
-@media (min-width: 768px) { .profile-card { grid-template-columns: repeat(10, 1fr); } .left { grid-column: span 4; display: flex; justify-content: center; align-items: center; } .right { grid-column: span 6; text-align: left; display: flex; flex-direction: column; justify-content: space-between; height: 100%; } }
+
+.profile-card { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 1.5rem; 
+  border: 1px solid #e5e7eb; 
+  border-radius: 12px; 
+  padding: 2rem; 
+  background: #fff; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+  align-items: stretch; 
+  margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .profile-card {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 768px) { 
+  .profile-card { grid-template-columns: repeat(10, 1fr); } 
+  .left { grid-column: span 4; display: flex; justify-content: center; align-items: center; } 
+  .right { grid-column: span 6; text-align: left; display: flex; flex-direction: column; justify-content: space-between; height: 100%; } 
+}
+
 .avatar-container { display: flex; flex-direction: column; align-items: center; }
-.avatar { width: 300px; height: 300px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd; background: #f3f4f6; margin-bottom: 1rem; }
+
+.avatar { 
+  width: 300px; 
+  height: 300px; 
+  object-fit: cover; 
+  border-radius: 50%; 
+  border: 1px solid #ddd; 
+  background: #f3f4f6; 
+  margin-bottom: 1rem;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .avatar {
+    width: 200px;
+    height: 200px;
+  }
+}
+
 .upload-input { display: none; }
-.avatar-buttons { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; }
+.avatar-buttons { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
+
 .btn-upload-pic { padding: 0.5rem 1rem; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px;}
 .btn-upload-pic:hover { background: #16a34a; }
 .btn-delete-pic { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px; }
 .btn-delete-pic:hover:not(:disabled) { background: #dc2626; }
 .btn-delete-pic:disabled { background: #9ca3af; cursor: not-allowed; }
 .info-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
-.info-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; font-size: 1.2rem; margin: 0; column-gap: 1rem; }
+
+.info-row { 
+  display: grid; 
+  grid-template-columns: 150px 1fr; 
+  align-items: center; 
+  font-size: 1.2rem; 
+  margin: 0; 
+  column-gap: 1rem;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .info-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    font-size: 1rem;
+  }
+}
+
 .field-content { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.input { flex: 1; min-width: 200px; padding: 0.4rem 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1.1rem; }
+
+.input { 
+  flex: 1; 
+  min-width: 200px; 
+  padding: 0.4rem 0.6rem; 
+  border: 1px solid #d1d5db; 
+  border-radius: 6px; 
+  font-size: 1.1rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .btn-save-field, .btn-change-password { padding: 0.4rem 0.8rem; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
 .btn-save-field:hover, .btn-change-password:hover { background: #15803d; }
 .btn-cancel-field { padding: 0.4rem 0.8rem; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
@@ -771,7 +867,7 @@ async function changePassword() {
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s;
-  vertical-align: middle; /* ensures it aligns nicely with text */
+  vertical-align: middle;
 }
 
 
@@ -780,38 +876,38 @@ async function changePassword() {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;    /* full viewport width */
-  height: 100vh;   /* full viewport height */
+  width: 100vw;
+  height: 100vh;
   background: rgba(0,0,0,0.5);
-
   display: flex;
-  justify-content: center; /* horizontal centering */
-  align-items: center;     /* vertical centering */
-
+  justify-content: center;
+  align-items: center;
   z-index: 1000;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .modal {
   background: #fff;
   padding: 2rem;
   border-radius: 12px;
-  /* width: auto; */
   max-width: 400px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  height: auto;       /* shrink to content */
-  max-height: 90vh;   /* prevent going off-screen */
+  max-height: 90vh;
   border: 3px solid black;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-
-
+@media (max-width: 768px) {
+  .modal {
+    padding: 1.5rem;
+  }
+}
 
 .modal input {
   padding: 0.4rem 0.6rem;
@@ -819,6 +915,7 @@ async function changePassword() {
   border-radius: 6px;
   font-size: 1rem;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-buttons {
@@ -826,6 +923,7 @@ async function changePassword() {
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .modal button {
@@ -859,12 +957,15 @@ async function changePassword() {
   gap: 2rem;
   max-width: 1000px;
   margin: 2rem auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Make it stack on smaller screens */
 @media (max-width: 968px) {
   .lists-container {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
   }
 }
 
@@ -880,6 +981,8 @@ async function changePassword() {
   justify-content: center;
   align-items: center;
   z-index: 1001;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .crop-modal {
@@ -887,18 +990,33 @@ async function changePassword() {
   padding: 2rem;
   border-radius: 12px;
   max-width: 600px;
-  width: 90%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   border: 3px solid black;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .crop-modal {
+    padding: 1rem;
+  }
 }
 
 .crop-modal h2 {
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .crop-modal h2 {
+    font-size: 1.25rem;
+  }
 }
 
 .crop-container {
@@ -910,6 +1028,12 @@ async function changePassword() {
   overflow: hidden;
   cursor: move;
   user-select: none;
+}
+
+@media (max-width: 768px) {
+  .crop-container {
+    height: 300px;
+  }
 }
 
 .crop-image {
@@ -970,6 +1094,7 @@ async function changePassword() {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .btn-cancel {
@@ -1001,5 +1126,4 @@ async function changePassword() {
 .btn-confirm:hover {
   background: #16a34a;
 }
-
 </style>
