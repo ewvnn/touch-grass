@@ -18,15 +18,17 @@
     <!-- Interactive Grass Patch -->
     <div class="grass-container">
       <svg ref="svgRef" class="grass-svg" :viewBox="'0 0 ' + vbWidth + ' 200'" preserveAspectRatio="xMidYMax slice"
-        xmlns="http://www.w3.org/2000/svg" @mousemove="onMouseMove" @mouseleave="onMouseLeave">
+        xmlns="http://www.w3.org/2000/svg" @pointerdown="onPointerDown" @pointermove="onPointerMove"
+        @pointerup="onPointerLeave" @pointercancel="onPointerLeave" @pointerleave="onPointerLeave"
+        :style="{ touchAction: 'none' }">
         <!-- Ground -->
         <rect x="0" y="150" :width="vbWidth" height="50" fill="#5a8f4a" opacity="0.3" />
 
         <!-- Grass Blades -->
         <g v-for="(blade, index) in grassBlades" :key="index">
           <path :d="blade.path" :fill="blade.color" :opacity="blade.opacity"
-            :transform="getBladeTransform(blade, index)"
-            :style="{ transformOrigin: `${blade.x}px 150px`, transition: blade.transition }" class="grass-blade" />
+            :style="{ transform: getBladeTransform(blade, index), transformOrigin: `${blade.x}px 150px`, transition: blade.transition }"
+            class="grass-blade" />
         </g>
       </svg>
     </div>
@@ -87,14 +89,19 @@ function resizeSvg() {
   grassBlades.value = makeBlades(w)
 }
 
-function onMouseMove(event) {
-  const svg = event.currentTarget
-  const rect = svg.getBoundingClientRect()
-  mouseX.value = event.clientX - rect.left
-  mouseY.value = event.clientY - rect.top
+function onPointerDown(e) {
+  e.currentTarget.setPointerCapture?.(e.pointerId)
+  onPointerMove(e) // react immediately on first touch
 }
 
-function onMouseLeave() {
+function onPointerMove(e) {
+  const svg = e.currentTarget
+  const rect = svg.getBoundingClientRect()
+  mouseX.value = e.clientX - rect.left
+  mouseY.value = e.clientY - rect.top
+}
+
+function onPointerLeave() {
   mouseX.value = -1000
   mouseY.value = -1000
 }
@@ -115,11 +122,11 @@ function getBladeTransform(blade, index) {
     const swayAmount = influence * 25
     const rotation = blade.baseRotation - Math.cos(angle) * swayAmount + ambientSway
 
-    return `rotate(${rotation})`
+    return `rotate(${rotation}deg)`
   }
 
   // Just ambient sway
-  return `rotate(${blade.baseRotation + ambientSway})`
+  return `rotate(${blade.baseRotation + ambientSway}deg)`
 }
 
 // Continuous animation for ambient sway
