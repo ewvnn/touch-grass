@@ -3,7 +3,7 @@
     <h2 class="section-title">Featured Events</h2>
     <!-- Carousel Container -->
     <div class="position-relative overflow-hidden" style="margin: 30px auto" @mouseenter="stopAutoScroll"
-      @mouseleave="startAutoScroll">
+      @mouseleave="startAutoScroll" @touchstart.passive="stopAutoScroll" @touchend.passive="startAutoScroll">
 
       <!-- Previous Button -->
       <button class="btn btn-light nav-btn start" @click="scrollPrev" :disabled="currentIndex === 0"
@@ -57,9 +57,10 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" :class="{ show: showModal, 'd-block': showModal }" tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);" @click.self="closeModal">
-      <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade"
+      :class="{ show: showModal, 'd-flex': showModal, 'align-items-center': showModal, 'justify-content-center': showModal }"
+      tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click.self="closeModal">
+      <div class="modal-dialog">
         <div class="modal-content" v-if="selectedEvent">
           <div class="modal-header justify-content-between align-items-center">
             <h5 class="modal-title mb-0">{{ selectedEvent.title }}</h5>
@@ -235,11 +236,6 @@ export default {
       }
     },
 
-    toggleFavouriteFromCard(event) {
-      this.selectedEvent = event;
-      this.toggleFavourite();
-    },
-
     isFavourite(id) {
       return this.favourites.includes(id);
     },
@@ -308,7 +304,7 @@ export default {
     chipsForPrimary(evt) {
       if (!evt) return [];
       const chips = [];
-      if (evt.badge) chips.push({ label: evt.badge, kind: 'badge' }); // e.g., Dance, Sustainable (colour-coded)
+      if (evt.badge) chips.push({ label: evt.badge, kind: 'badge' }); // e.g., Dance, Sustainable
       if (evt.category) chips.push({ label: evt.category, kind: 'tag' }); // e.g., Workshop, Music
       return chips;
     },
@@ -373,13 +369,6 @@ export default {
   object-fit: cover;
 }
 
-.img-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-}
-
 .fav-btn {
   border: none;
   background: transparent;
@@ -388,7 +377,6 @@ export default {
   cursor: pointer;
   border-radius: 9999px;
   color: #085702;
-  /* margin-bottom: 10px; */
 }
 
 .fav-btn i {
@@ -412,19 +400,20 @@ export default {
 
 .modal-dialog {
   max-width: 640px;
-  margin: 20px auto;
+  /* margin: 20px auto; */
+}
+
+.modal.d-flex {
+  min-height: 100dvh;
+}
+
+.modal.d-flex .modal-dialog {
+  margin: 0;
 }
 
 .modal-content {
-  max-height: calc(100vh - 40px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-body {
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  max-height: 90dvh;
+  border-radius: 12px;
 }
 
 .price {
@@ -458,7 +447,45 @@ export default {
 /* Responsive carousel item widths */
 .carousel-item-wrapper {
   width: 100%;
+  box-sizing: border-box;
 }
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    width: calc(100% - 32px);
+  }
+
+  .modal-header,
+  .modal-footer {
+    padding: 10px 12px;
+  }
+
+  .modal-title {
+    font-size: clamp(1rem, 3.8vw, 1.25rem);
+  }
+
+  .modal-body img {
+    height: clamp(140px, 36vh, 300px) !important;
+    width: 100%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .price-row {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: .6rem .9rem;
+    font-size: .95rem;
+  }
+}
+
 
 @media (min-width: 768px) {
   .carousel-item-wrapper {

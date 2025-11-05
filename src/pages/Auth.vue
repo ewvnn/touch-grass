@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { onMounted, onBeforeUnmount } from "vue";
 import { toast } from '@/lib/toast'
 import {
     signUpWithEmail,
@@ -167,12 +168,15 @@ async function resendVerification() {
     }
 }
 
-// Back-to-top button
-const toTop = () => {
-    if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
+function unlockBodyScroll() {
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
 }
+
+onMounted(unlockBodyScroll)
+onBeforeUnmount(unlockBodyScroll)
 </script>
 
 <template>
@@ -211,7 +215,7 @@ const toTop = () => {
                     </aside>
 
                     <!-- RIGHT -->
-                    <main class="col-lg-7 form-pane d-flex">
+                    <main class="col-lg-7 form-pane">
                         <div class="form-wrap">
                             <form @submit.prevent="submit" class="form-stack" novalidate :key="mode">
                                 <!-- Name (register only) -->
@@ -413,10 +417,9 @@ const toTop = () => {
 <style scoped>
 /* Page */
 .auth-shell {
-    min-height: 100svh;
-    display: grid;
-    place-items: center;
-    padding-block: clamp(16px, 4vw, 84px);
+    min-height: auto;
+    display: block;
+    padding-block: 16px;
     background: #eef3ef;
 }
 
@@ -426,12 +429,12 @@ const toTop = () => {
     max-width: 1100px;
     border: 1px solid rgba(15, 23, 42, .14);
     background: #fff;
-    overflow: hidden;
+    overflow: visible;
 }
 
 
 .device-frame>.row {
-    min-height: clamp(580px, 80vh, 760px);
+    min-height: unset;
 }
 
 /* LEFT panel */
@@ -442,7 +445,7 @@ const toTop = () => {
     background:
         radial-gradient(1100px 600px at 20% -10%, rgba(255, 255, 255, .18), transparent 60%),
         linear-gradient(135deg, #1b6d28 0%, #2f8a3e 50%, #66cc7a 115%);
-    padding: 28px;
+    padding: 56px 28px 28px;
     border-radius: 28px 0 0 28px;
 }
 
@@ -525,7 +528,9 @@ const toTop = () => {
 
 /* RIGHT panel */
 .form-wrap {
-    margin: auto;
+    margin: 0 auto;
+    margin-block: 0;
+    margin-inline: auto;
     width: min(560px, 92%);
     padding: clamp(12px, 2vw, 28px) 0;
 }
@@ -622,7 +627,17 @@ const toTop = () => {
     padding: .9rem 1rem;
 }
 
-@media (max-width: 992px) {
+@media (min-width:992px) {
+    .form-pane {
+        display: flex;
+    }
+
+    .form-wrap {
+        margin: auto;
+    }
+}
+
+@media (max-width: 1200px) {
     .brand-pane {
         padding: 20px 16px 24px;
         border-radius: 28px 28px 0 0;
@@ -670,6 +685,53 @@ const toTop = () => {
 
     .btn-brand {
         border-radius: 10px;
+    }
+
+    .brand-pane {
+        grid-template-rows: auto 1fr;
+        padding: 24px 16px;
+    }
+
+    .brand-nav {
+        position: static;
+        justify-self: start;
+        margin: 0 0 12px 0;
+        z-index: 1;
+    }
+
+    .auth-shell {
+        display: block;
+        min-height: auto;
+        padding-block: 16px;
+    }
+
+    .device-frame {
+        overflow: visible;
+    }
+
+    .device-frame>.row {
+        min-height: unset;
+    }
+
+    .form-wrap {
+        padding-bottom: 24px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .auth-shell {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding-block: clamp(16px, 4vw, 84px);
+    }
+
+    .device-frame>.row {
+        min-height: clamp(580px, 80vh, 760px);
+    }
+
+    .form-wrap {
+        margin: auto;
     }
 }
 </style>

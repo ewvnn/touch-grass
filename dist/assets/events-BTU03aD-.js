@@ -1,1 +1,0 @@
-let t;async function n(){if(t)return t;const e=await fetch("/data/events.json",{cache:"no-cache"});if(!e.ok)throw new Error(`Failed to load events: HTTP ${e.status}`);return t=await e.json(),t}export{n as l};
