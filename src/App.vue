@@ -18,6 +18,11 @@ const route = useRoute()
 </template>
 
 <style scoped>
+* {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 800;
+}
+
 header {
   line-height: 1.5;
 }
