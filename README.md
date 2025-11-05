@@ -27,7 +27,7 @@
 Nowadays, Singaporean youths are facing high stress levels and poor mental health
 > One in three reporting negative well-being (IMH, 2024). Key contributing factors include loneliness, social isolation, and excessive social media usage. 
 
-Research has shown that social connections play a pivotal role in supporting mental well-being—interacting with friends and family through face-to-face gatherings and shared activities can greatly enhance both mental and overall health (WHO, 2025).
+Research has shown that social connections play a pivotal role in supporting mental well-being. Interacting with friends and family through face-to-face gatherings and shared activities can greatly enhance both mental and overall health (WHO, 2025).
 
 In spite of this, youths still face many resisting factors that deter them from building and maintaining these relationships. 
 
@@ -82,9 +82,7 @@ Provide screenshots and captions showing how users interact with your app.
 
 3. **Itinerary Page**  
    <img src="screenshots/itinerary.png" width="600">  
-   - Plan your day with the routes
-
-> Save screenshots inside `/screenshots` with clear filenames.
+   - Plan your day with the routes generated with the map
 
 ---
 
@@ -195,12 +193,20 @@ Each member should contribute 2–3 sentences on their learning and project expe
 **Example Template:**  
 >*Boone:* I learnt Vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage.I also learned for the first time how to collaborate on a coding project as a group, and I now have a deeper understanding on what is an efficient workflow and method of delegating roles and resonsibilities among groupmates to minimise conflicts in code and streamlining dependencies between pages and components.
 
->*Ewen:* I learned about how implementing frameworks like Vue can build efficient websites that make web development easier. I learned how to apply HTML, CSS and Javascript to a functional website.
+>*Ewen:* I learned about how implementing frameworks like Vue can build efficient websites that make web development easier. I learned how to apply HTML, CSS and Javascript to a functional website. I have learned a lot on how each component interacts with each other to perform an action, but I still feel that there is still so much about web development that can be learned and implemented.
 
-> - *Chloe:* Improved UI/UX design workflow and collaboration using Figma.  
-> - *David:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
+>*Xiao Thong:* I learned to deploy Firebase and configure Firebase Authentication and Firestore from scratch, and integrate them with our website. Moreover, it is enlighted to know how Vue can speed up development while keeping the UI modular, maintainable, and easy to extend.
+
+> *Wasil:* Improved UI/UX design workflow and collaboration using Figma.
+ 
+> *Fazil:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.
+
+> *Jia Le:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
 
 As a team, reflect on:
-- Key takeaways from working with real-world frameworks  
-- Challenges faced and how they were resolved  
-- Insights on teamwork, project management, and problem-solving 
+- **Key takeaways from working with real-world frameworks:**
+We learned that using frameworks makes coding more efficient and simpler, especially for reusable content or components. 
+- **Challenges faced and how they were resolved:**
+None of us had the technical knowledge to build a website, but it was a fulfilling challenge to learn along the way. We felt that we had a better understanding of the architecture required to build a website and how each aspect fucntions. When we encountered issues with ideation and coding, we consulted the professors, TAs and other seniors for help and advice, and worked toward getting to the next checkpoint.
+- **Insights on teamwork, project management, and problem-solving:**
+We worked cohesively as a team, exchanging ideas and communicating well such that our ideas were adequately translated onto the website. Project Management could be better allocated, as we mainly did our parts during our own time. We feel that we did divide the workload equally.
