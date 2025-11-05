@@ -1,13 +1,11 @@
 <template>
   <div id="itinerary-planner">
 
-    <!-- Layout is now always the split view, regardless of itinerary length -->
     <div class="itinerary-split-view container-fluid">
 
       <div class="itinerary-sidebar">
         <h2>Itinerary</h2>
 
-        <!-- NEW: Empty State Prompt (show if no dates are set) -->
         <div v-if="Object.keys(dailyItinerary).length === 0" class="empty-state-prompt p-5 text-center">
           <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
           <button @click="showDateSelectionModal = true"
@@ -16,23 +14,39 @@
           </button>
         </div>
 
-        <!-- Existing Itinerary Content (show only if dates are set) -->
         <div v-else>
-          <div class="date-range mb-4 fw-bold text-end text-success">
-            <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-success me-2">
-              <i class="fas fa-calendar-edit"></i> Edit Dates
-            </button>
-            {{ dateRangeDisplay }}
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="fs-5 fw-bold text-success">{{ dateRangeDisplay }}</span>
+            <div>
+              <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
+                :disabled="!currentUser || !tripId || isSaving">
+                <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <i v-else class="fas fa-save me-1"></i>
+                Save
+              </button>
+              <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-calendar-edit"></i> Edit Dates
+              </button>
+            </div>
           </div>
 
           <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
+
             <h3 @click="setActiveDay(date)" class="day-header" :class="{ 'active-day': date === activeDate }">
               {{ formatDay(date) }}
-              <!-- Dropdown indicator based on isExpanded -->
-              <i @click.stop="toggleDay(date)"
-                :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+
+              <span class="day-header-controls">
+                <button @click.stop="showDeleteDayConfirm(date)" class="btn btn-sm btn-danger" title="Delete this day">
+                  Delete
+                </button>
+
+
+                <i @click.stop="toggleDay(date)"
+                  :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              </span>
             </h3>
-            <!-- Content is shown/hidden based on isExpanded -->
+
             <div v-show="dailyItinerary[date].isExpanded" class="place-list">
 
               <draggable v-model="dailyItinerary[date].places" group="itinerary" @end="onDragEnd"
@@ -50,8 +64,6 @@
                         <div>
                           <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
                           }}</small>
-                          <!-- <small class="text-warning fw-bold d-block"><i class="fas fa-star"></i> {{ element.rating }}
-                            ({{ element.user_ratings_total }})</small> -->
                           <a :href="element.website" target="_blank" class="website-link d-block"><i
                               class="fas fa-link"></i>
                             Website: {{ element.name }}</a>
@@ -87,7 +99,6 @@
             <hr />
           </div>
         </div>
-        <!-- Saved Activities -->
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Saved Activities</h5>
@@ -123,12 +134,23 @@
             </div>
           </div>
         </div>
+        <div class="sidebar-save-bar">
+          <button class="btn btn-success w-100" @click="saveItinerary" :disabled="!currentUser || !tripId || isSaving">
+            <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            Save itinerary
+          </button>
+          <small v-if="!tripId" class="text-muted d-block mt-2">
+            Choose dates first to create this trip.
+          </small>
+          <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
+            Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
+          </small>
+        </div>
 
       </div>
 
 
 
-      <!-- Map Container (Always 60% of width now) -->
       <div class="map-container">
         <div id="google-map"></div>
 
@@ -139,7 +161,6 @@
           </button>
         </div>
 
-        <!-- Place Info Pop-up (Shows when a place is selected on the map) -->
         <div v-if="selectedPlace" class="place-info-popup card shadow-lg p-3">
           <button class="close-btn" @click="selectedPlace = null">&times;</button>
           <div class="row g-0">
@@ -147,13 +168,11 @@
               <h5 class="card-title">{{ selectedPlace.name }}</h5>
               <p class="card-text description-text">{{ selectedPlace.description }}</p>
 
-              <!-- Added star icon -->
               <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i> {{ selectedPlace.rating }}
                 ({{ selectedPlace.user_ratings_total }})</p>
 
               <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
 
-              <!-- Website hyperlink text -->
               <a :href="selectedPlace.website" target="_blank" class="website-link"><i class="fas fa-link"></i>
                 Website:
                 {{ selectedPlace.name }}</a>
@@ -162,11 +181,9 @@
                 <select v-model="selectedDateToAdd" class="form-select form-select-sm me-2" aria-label="Select Date"
                   :disabled="!Object.keys(dailyItinerary).length">
                   <option disabled value="">Select Date</option>
-                  <!-- Populate date options from dailyItinerary keys -->
                   <option v-for="date in Object.keys(dailyItinerary)" :key="date" :value="date">{{ formatDay(date) }}
                   </option>
                 </select>
-                <!-- Add to Itinerary button now works with selectedDateToAdd -->
                 <button @click="addToItinerary" :disabled="!selectedDateToAdd || !Object.keys(dailyItinerary).length"
                   class="btn btn-sm btn-success">
                   <i class="fas fa-route"></i> Add to Itinerary
@@ -186,7 +203,6 @@
 
     <footer-component></footer-component>
 
-    <!-- Date Selection Modal with Start/End Date Inputs -->
     <div v-if="showDateSelectionModal" class="modal-overlay">
       <div class="modal-content p-4 shadow-xl">
         <h4 class="mb-3">Select Your Trip Dates</h4>
@@ -208,7 +224,6 @@
         <div class="d-flex justify-content-end">
           <button @click="showDateSelectionModal = false; startDateInput = ''; endDateInput = ''; dateError = ''"
             class="btn btn-secondary me-2">Cancel</button>
-          <!-- The button is enabled if both dates are set and there is no error -->
           <button @click="handleDateSelection" :disabled="!startDateInput || !endDateInput || !!dateError"
             class="btn btn-success">
             Start Planning
@@ -217,7 +232,6 @@
       </div>
     </div>
 
-    <!-- Existing Add Place Prompt Modal -->
     <div v-if="addPlacePrompt" class="modal-overlay">
       <div class="modal-content p-4 shadow-lg">
         <h4>Add a place on {{ formatDay(selectedDate) }}</h4>
@@ -229,13 +243,36 @@
       </div>
     </div>
 
+    <div v-if="showDeleteConfirmModal" class="modal-overlay">
+      <div class="modal-content p-4 shadow-xl">
+        <h4 class="mb-3">Delete Day</h4>
+        <p>Are you sure you want to delete <strong>{{ formatDay(dateToDelete) }}</strong> and all its planned
+          activities?
+        </p>
+        <p class="text-danger fw-bold">This action cannot be undone (until you save).</p>
+
+        <div class="d-flex justify-content-end mt-4">
+          <button @click="showDeleteConfirmModal = false; dateToDelete = null;" class="btn btn-secondary me-2">
+            Cancel
+          </button>
+          <button @click="deleteDay" class="btn btn-danger">
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import { nextTick } from 'vue';
 import { auth, db } from "../firebase.js"; // Adjust path if needed
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc, setDoc, getDoc, addDoc, collection, serverTimestamp, onSnapshot,
+  getDocs, query, orderBy, limit,updateDoc
+} from "firebase/firestore";
+
 import { onAuthStateChanged } from "firebase/auth";
 import draggable from 'vuedraggable';
 
@@ -250,6 +287,11 @@ export default {
       itinerary: [], // The main list for quick check of emptiness
       dailyItinerary: {},
       activeDate: null, // **INITIALIZED AS EMPTY OBJECT**
+      tripId: null,         // set this (route param, or create one)
+      isSaving: false,
+      // _saveTimer: null, // Removed for manual save
+      _unsubRealtime: null,
+      lastSavedAt: null,
 
       // State for Date Selection Flow
       showDateSelectionModal: false,
@@ -282,9 +324,12 @@ export default {
       currentMarkers: [],
       streetViewService: null,
       characterMarker: null, // NEW: Service to check for Street View data
-      panorama: null,          // NEW: The Street View viewer object
+      panorama: null,         // NEW: The Street View viewer object
       isStreetViewActive: false,
-      // To store and clear map markers
+
+      // *** NEW: DATA FOR DELETE DAY MODAL ***
+      showDeleteConfirmModal: false,
+      dateToDelete: null,
     };
   },
   mounted() {
@@ -292,12 +337,27 @@ export default {
     onAuthStateChanged(auth, async (user) => {
       this.currentUser = user;
       if (user) {
-        await this.loadFavourites(); // Call the function once we have a user
+        await this.loadFavourites();
+
+        // if you have a route param, prefer it:
+        const routeTripId = this.$route?.params?.tripId;
+        if (routeTripId) {
+          await this.loadItinerary(routeTripId);
+          this.startRealtime();
+        } else {
+          await this.loadLatestItinerary();   // <— new helper below
+        }
       } else {
-        this.activities = []; // Clear activities if no user
+        this.activities = [];
+        this.tripId = null;
       }
     });
   },
+
+  unmounted() {
+    if (this._unsubRealtime) this._unsubRealtime();
+  },
+
 
   computed: {
     todayDateString() {
@@ -305,6 +365,19 @@ export default {
       const today = new Date();
       // Using toISOString and slicing ensures the format is always correct
       return today.toISOString().split('T')[0];
+    },
+    // *** NEW: HELPER FOR ACTIVE DAY ***
+    sortedDatesActiveFirst() {
+      // This makes the active day jump to the top of the list when clicked
+      if (!this.activeDate) return Object.keys(this.dailyItinerary).sort();
+
+      return Object.keys(this.dailyItinerary).sort((a, b) => {
+        if (a === this.activeDate) return -1;
+        if (b === this.activeDate) return 1;
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      });
     }
   },
   methods: {
@@ -321,6 +394,305 @@ export default {
       script.defer = true;
       script.onload = this.initMap;
       document.head.appendChild(script);
+    },
+
+    async loadLatestItinerary() {
+      if (!this.currentUser) return; // Guard
+      const q = query(
+        collection(db, "users", this.currentUser.uid, "itineraries"),
+        orderBy("updatedAt", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        console.log("No itineraries found. Waiting for user to create one.");
+        return; // No itinerary to load
+      }
+
+      const docSnap = snap.docs[0];
+      const data = docSnap.data();
+      this.tripId = docSnap.id;
+      this.dailyItinerary = data.dailyItinerary || {};
+
+      const keys = Object.keys(this.dailyItinerary).sort();
+      if (keys.length) {
+        this.setActiveDay(keys[0]); // Set first day as active
+        this.startDateInput = data.startDate || keys[0];
+        this.endDateInput = data.endDate || keys[keys.length - 1];
+        this.dateRangeDisplay = this.formatDateRangeDisplay(keys[0], keys[keys.length - 1]);
+      } else {
+        // Has a tripId, but no dates (e.g., user deleted all)
+        this.dateRangeDisplay = 'No Dates Set';
+        this.startDateInput = data.startDate || "";
+        this.endDateInput = data.endDate || "";
+      }
+
+      this.updateItineraryList();
+      this.startRealtime(); // Start listening for live updates
+      this.$nextTick(() => this.renderRoute()); // Render map on load
+    },
+
+
+    startRealtime() {
+      if (!this.currentUser || !this.tripId) return;
+      if (this._unsubRealtime) this._unsubRealtime();
+
+      console.log(`Starting realtime listener for trip: ${this.tripId}`);
+      this._unsubRealtime = onSnapshot(
+        doc(db, "users", this.currentUser.uid, "itineraries", this.tripId),
+        (snap) => {
+
+          if (!snap.exists()) {
+            console.warn("Realtime: Trip doc deleted from under us!");
+            this.tripId = null;
+            this.dailyItinerary = {};
+            this.dateRangeDisplay = 'No Dates Set';
+            return;
+          };
+
+          const d = snap.data();
+
+          // This check is now a good backup
+          if (JSON.stringify(this.dailyItinerary) === JSON.stringify(d.dailyItinerary)) {
+            console.log("Realtime: No changes detected.");
+            return;
+          }
+          console.log("Realtime: Detected remote changes, updating local data.");
+
+          this.dailyItinerary = d.dailyItinerary || {};
+
+          const keys = Object.keys(this.dailyItinerary).sort();
+          if (keys.length > 0) {
+            this.dateRangeDisplay = this.formatDateRangeDisplay(keys[0], keys[keys.length - 1]);
+            this.ensureValidActiveDate();
+          } else {
+            this.dateRangeDisplay = 'No Dates Set';
+            this.activeDate = null;
+          }
+
+          this.updateItineraryList();
+          this.$nextTick(() => this.renderRoute());
+        }
+      );
+    },
+
+
+
+    // *** NEW: HELPER METHOD FOR DELETE/LOAD ***
+    ensureValidActiveDate() {
+      const keys = Object.keys(this.dailyItinerary);
+      if (keys.length === 0) {
+        this.activeDate = null;
+        return;
+      }
+      // If activeDate is no longer in the list, set a new one
+      if (!this.dailyItinerary[this.activeDate]) {
+        this.setActiveDay(keys.sort()[0]); // Set to first available day
+      }
+    },
+
+
+
+    async handleDateSelection() {
+      if (this.dateError) return;
+
+      const start = new Date(this.startDateInput + 'T00:00:00Z');
+      const end = new Date(this.endDateInput + 'T00:00:00Z');
+      const dayMs = 1000 * 60 * 60 * 24;
+
+      // --- THIS IS THE FIX ---
+      // Start with a *copy* of the existing itinerary, NOT a blank object.
+      const newDailyItinerary = { ...this.dailyItinerary };
+
+      // Loop through the *selected* date range
+      for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
+        const dateStr = new Date(t).toISOString().split('T')[0];
+        
+        // If the day *doesn't* exist in our copy, add it as a new empty day.
+        // If it *does* exist (like Nov 19), this check is skipped,
+        // and the existing data is preserved.
+        if (!newDailyItinerary[dateStr]) {
+          newDailyItinerary[dateStr] = {
+            isExpanded: true,
+            places: []
+          };
+        }
+      }
+      
+      // We no longer need the destructive "finalDailyItinerary" filtering logic.
+      // This new object *is* the final object.
+      this.dailyItinerary = newDailyItinerary;
+      
+      // --- END OF FIX ---
+
+      // Now, find the *true* first and last day from all keys
+      const allKeys = Object.keys(this.dailyItinerary).sort();
+      const firstDay = allKeys[0];
+      const lastDay = allKeys[allKeys.length - 1];
+
+      // Update the main inputs to reflect the *full* range
+      this.startDateInput = firstDay;
+      this.endDateInput = lastDay;
+      this.dateRangeDisplay = this.formatDateRangeDisplay(firstDay, lastDay);
+
+      this.showDateSelectionModal = false;
+      this.updateItineraryList();
+      this.ensureValidActiveDate(); // Make sure active date is correct
+
+      // ---- create or save to Firestore ----
+      if (!this.currentUser) return; // guard
+
+      if (!this.tripId) {
+        console.log("Creating new trip...");
+        const ref = await addDoc(
+          collection(db, "users", this.currentUser.uid, "itineraries"),
+          {
+            title: this.dateRangeDisplay || "Trip",
+            startDate: this.startDateInput,
+            endDate: this.endDateInput,
+            dailyItinerary: this.dailyItinerary,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }
+        );
+        this.tripId = ref.id;
+        this.startRealtime(); // Start listening
+      } else {
+        // Dates changed, save the (now correctly merged) itinerary
+        console.log("Dates changed, saving existing trip...");
+        this.saveItinerary();
+      }
+    },
+
+
+    // async handleDateSelection() {
+    //   if (this.dateError) return;
+
+    //   // ---- build dailyItinerary from dates ----
+    //   const start = new Date(this.startDateInput + 'T00:00:00Z');
+    //   const end = new Date(this.endDateInput + 'T00:00:00Z');
+    //   const dayMs = 1000 * 60 * 60 * 24;
+
+    //   const newDailyItinerary = {};
+    //   for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
+    //     const dateStr = new Date(t).toISOString().split('T')[0];
+    //     newDailyItinerary[dateStr] = this.dailyItinerary[dateStr] || {
+    //       isExpanded: true,
+    //       places: []
+    //     };
+    //   }
+
+    //   // Filter out days that are no longer in the range
+    //   const finalDailyItinerary = {};
+    //   Object.keys(newDailyItinerary).sort().forEach(dateStr => {
+    //     const date = new Date(dateStr + 'T00:00:00Z');
+    //     if (date.getTime() >= start.getTime() && date.getTime() <= end.getTime()) {
+    //       finalDailyItinerary[dateStr] = newDailyItinerary[dateStr];
+    //     }
+    //   });
+
+    //   this.dailyItinerary = finalDailyItinerary;
+
+    //   const keys = Object.keys(this.dailyItinerary);
+    //   if (keys.length > 0) this.setActiveDay(keys[0]);
+
+    //   this.dateRangeDisplay = keys.length
+    //     ? this.formatDateRangeDisplay(keys[0], keys[keys.length - 1])
+    //     : 'No Dates Set';
+
+    //   this.showDateSelectionModal = false;
+    //   this.updateItineraryList();
+    //   this.ensureValidActiveDate(); // Make sure active date is correct
+
+    //   // ---- create or save to Firestore ----
+    //   if (!this.currentUser) return; // guard
+
+    //   if (!this.tripId) {
+    //     console.log("Creating new trip...");
+    //     const ref = await addDoc(
+    //       collection(db, "users", this.currentUser.uid, "itineraries"),
+    //       {
+    //         title: this.dateRangeDisplay || "Trip",
+    //         startDate: this.startDateInput,
+    //         endDate: this.endDateInput,
+    //         dailyItinerary: this.dailyItinerary,
+    //         createdAt: serverTimestamp(),
+    //         updatedAt: serverTimestamp(),
+    //       }
+    //     );
+    //     this.tripId = ref.id;
+    //     this.startRealtime(); // Start listening
+    //   } else {
+    //     // If dates changed on an existing trip, save it
+    //     console.log("Dates changed, saving existing trip...");
+    //     this.saveItinerary();
+    //   }
+    // },
+
+
+    async saveItinerary() {
+      if (!this.currentUser || !this.tripId) return;
+      this.isSaving = true;
+
+      try {
+        // Use updateDoc instead of setDoc
+        await updateDoc( // <-- CHANGED
+          doc(db, "users", this.currentUser.uid, "itineraries", this.tripId),
+          {
+            // The data is the same
+            title: this.dateRangeDisplay || "Trip",
+            startDate: this.startDateInput,
+            endDate: this.endDateInput,
+            dailyItinerary: this.dailyItinerary,
+            updatedAt: serverTimestamp(),
+          }
+          // No { merge: true } needed!
+        );
+        this.lastSavedAt = Date.now();
+        console.log("Save successful!");
+      } catch (error) {
+        console.error("Error saving itinerary:", error);
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+
+
+
+    async loadItinerary(tripId) {
+      if (!this.currentUser) return;
+      console.log(`Loading itinerary for trip: ${tripId}`);
+      const snap = await getDoc(
+        doc(db, "users", this.currentUser.uid, "itineraries", tripId)
+      );
+      if (snap.exists()) {
+        const data = snap.data();
+        this.tripId = tripId;
+        this.startDateInput = data.startDate || "";
+        this.endDateInput = data.endDate || "";
+        this.dailyItinerary = data.dailyItinerary || {};
+
+        const keys = Object.keys(this.dailyItinerary).sort();
+        const first = keys[0];
+        const last = keys[keys.length - 1];
+
+        if (first) {
+          this.setActiveDay(first);
+          this.dateRangeDisplay = this.formatDateRangeDisplay(first, last);
+        } else {
+          this.dateRangeDisplay = 'No Dates Set';
+        }
+
+        this.updateItineraryList();
+        this.$nextTick(() => this.renderRoute());
+      } else {
+        console.error(`Itinerary with ID ${tripId} not found.`);
+        // Handle error: maybe redirect or load latest
+        this.tripId = null;
+        this.dailyItinerary = {};
+        await this.loadLatestItinerary(); // Try to load last one
+      }
     },
 
 
@@ -346,6 +718,146 @@ export default {
       // 3. Render the route
       this.renderRoute();
     },
+
+    // *** NEW: DELETE DAY METHODS ***
+    showDeleteDayConfirm(date) {
+      this.dateToDelete = date;
+      this.showDeleteConfirmModal = true;
+    },
+
+    // async deleteDay() {
+    //   if (!this.dateToDelete) return;
+
+    //   const date = this.dateToDelete;
+
+    //   // Create a new object *without* the deleted day's key
+    //   // This is the correct way to ensure Vue's reactivity
+    //   const newDailyItinerary = { ...this.dailyItinerary };
+    //   delete newDailyItinerary[date];
+
+    //   this.dailyItinerary = newDailyItinerary;
+
+    //   // Reset the modal
+    //   this.dateToDelete = null;
+    //   this.showDeleteConfirmModal = false;
+
+    //   // Update the helper list
+    //   this.updateItineraryList();
+
+    //   // Check if the active date was the one deleted, and if so, pick a new one
+    //   this.ensureValidActiveDate();
+
+    //   //
+    //   // --- THIS IS THE FIX ---
+    //   //
+    //   // Now, save this new state (with the day removed) to Firebase.
+    //   try {
+    //     await this.saveItinerary();
+    //     console.log("Day deleted and itinerary saved.");
+    //   } catch (error) {
+    //     console.error("Error saving after day deletion:", error);
+    //   }
+    // },
+
+    async deleteDay() {
+      if (!this.dateToDelete) return;
+
+      const date = this.dateToDelete;
+
+      // 1. Create a new object without the deleted day
+      const newDailyItinerary = { ...this.dailyItinerary };
+      delete newDailyItinerary[date];
+      
+      // 2. Set the local state
+      this.dailyItinerary = newDailyItinerary;
+
+      // 3. Reset the modal
+      this.dateToDelete = null;
+      this.showDeleteConfirmModal = false;
+
+      // 4. Update UI helpers
+      this.updateItineraryList();
+      this.ensureValidActiveDate();
+
+      // 5. Save this new state to Firebase
+      // (This will now work because saveItinerary uses updateDoc)
+      try {
+        await this.saveItinerary();
+        console.log("Day deleted and itinerary saved.");
+      } catch (error) {
+        console.error("Error saving after day deletion:", error);
+      }
+    },
+
+
+    // async deleteDay() {
+    //   if (!this.dateToDelete) return;
+      
+    //   this.isUpdatingLocally = true; // <-- SET FLAG: "Don't listen!"
+
+    //   try {
+    //     const date = this.dateToDelete;
+
+    //     // Create a new object *without* the deleted day's key
+    //     const newDailyItinerary = { ...this.dailyItinerary };
+    //     delete newDailyItinerary[date];
+        
+    //     this.dailyItinerary = newDailyItinerary;
+
+    //     // Reset the modal
+    //     this.dateToDelete = null;
+    //     this.showDeleteConfirmModal = false;
+
+    //     // Update the helper list
+    //     this.updateItineraryList();
+        
+    //     // Check if the active date was the one deleted
+    //     this.ensureValidActiveDate();
+
+    //     // Now, save this new state to Firebase.
+    //     await this.saveItinerary();
+    //     console.log("Day deleted and itinerary saved.");
+
+    //   } catch (error) {
+    //     console.error("Error saving after day deletion:", error);
+      
+    //   } finally {
+    //     // --- THIS IS CRITICAL ---
+    //     // No matter what happens, turn the listener back on
+    //     // after a tiny delay to let the final save come through.
+    //     setTimeout(() => {
+    //       this.isUpdatingLocally = false; // <-- UNSET FLAG: "Ok, listen again."
+    //     }, 100); 
+    //   }
+    // },
+
+
+    // deleteDay() {
+    //   if (!this.dateToDelete) return;
+
+      
+
+    //   const date = this.dateToDelete;
+
+    //   // Create a new object *without* the deleted day's key
+    //   // This is the correct way to ensure Vue's reactivity
+    //   const newDailyItinerary = { ...this.dailyItinerary };
+    //   delete newDailyItinerary[date];
+
+    //   this.dailyItinerary = newDailyItinerary;
+
+    //   // Reset the modal
+    //   this.dateToDelete = null;
+    //   this.showDeleteConfirmModal = false;
+
+    //   // Update the helper list
+    //   this.updateItineraryList();
+
+    //   // Check if the active date was the one deleted, and if so, pick a new one
+    //   this.ensureValidActiveDate();
+    // },
+
+
     getActivityDateString(dateStr) {
       // dateStr is "Sun, 19 Nov • 7:30 PM"
       try {
@@ -378,86 +890,6 @@ export default {
       }
     },
 
-    // handleDragStart(event, activity) {
-    //   // Set the drag data to the full activity object
-    //   event.dataTransfer.setData("application/json", JSON.stringify(activity));
-    //   event.dataTransfer.effectAllowed = "move";
-    // },
-
-
-    // This function must be 'async'
-    // async handleDrop(event, date) {
-    //   event.preventDefault();
-    //   const activity = JSON.parse(event.dataTransfer.getData("application/json"));
-
-    //   let finalLat;
-    //   let finalLng;
-    //   let placeAddress = activity.location || activity.address;
-
-    //   // 1. CHECK FOR EXISTING COORDS (BEST CASE)
-    //   if (activity.lat && activity.lng) {
-    //     finalLat = activity.lat; // Just a number
-    //     finalLng = activity.lng; // Just a number
-    //     console.log("Using existing coords");
-
-    //     // 2. FALLBACK: USE GEOCODER
-    //   } else if (placeAddress) {
-    //     console.log("Geocoding address:", placeAddress);
-    //     try {
-    //       if (!this.geocoder) { throw new Error("Geocoder is not initialized."); }
-
-    //       const geocodeResult = await this.geocoder.geocode({ 'address': placeAddress });
-
-    //       if (geocodeResult.results && geocodeResult.results.length > 0) {
-    //         const location = geocodeResult.results[0].geometry.location;
-    //         finalLat = location.lat(); // Get the number
-    //         finalLng = location.lng(); // Get the number
-    //       } else {
-    //         throw new Error("Geocoding failed: No results found for " + placeAddress);
-    //       }
-    //     } catch (e) {
-    //       console.error("Error during geocoding:", e);
-    //       alert("Error: Could not find that location on the map. " + e.message);
-    //       return;
-    //     }
-    //   } else {
-    //     alert("This activity has no location data to add to the map.");
-    //     return;
-    //   }
-
-    //   console.log("Successfully found location:", finalLat, finalLng);
-
-    //   // 3. CREATE THE NEW PLACE (NOW ALWAYS USES NUMBERS)
-    //   const newPlace = {
-    //     place_id: activity.id || new Date().getTime(),
-    //     name: activity.title,
-    //     address: placeAddress,
-    //     lat: finalLat, // ✅ Always a valid number
-    //     lng: finalLng, // ✅ Always a valid number
-    //     website: activity.website || '#',
-    //     rating: activity.rating || 'N/A',
-    //     user_ratings_total: activity.user_ratings_total || 0,
-    //     description: activity.description || 'Saved activity.',
-    //     photoUrl: activity.image || 'https://placehold.co/200x100',
-    //     distance: null,
-    //     duration: null,
-    //   };
-
-    //   // 4. ADD TO ITINERARY AND RERENDER
-    //   const updatedPlaces = [...this.dailyItinerary[date].places, newPlace];
-    //   this.dailyItinerary = {
-    //     ...this.dailyItinerary,
-    //     [date]: {
-    //       ...this.dailyItinerary[date],
-    //       places: updatedPlaces
-    //     }
-    //   };
-
-    //   this.updateItineraryList();
-    //   this.$nextTick(() => {
-    //     this.renderRoute(); // This will now be called successfully
-    //   });
-    // },
     async loadFavourites() {
       if (!this.currentUser) return;
       this.isLoadingActivities = true;
@@ -475,9 +907,6 @@ export default {
         this.isLoadingActivities = false;
       }
     },
-
-    // NEW: Placeholder div for the Panorama (add this to your template later)
-    // <div id="street-view-panorama" v-if="isStreetViewActive"></div>
 
     onCharacterDragEnd(event) {
       const droppedPosition = event.latLng;
@@ -531,8 +960,6 @@ export default {
       this.map.setStreetView(null); // Unlink panorama from the map
       this.characterMarker.setMap(this.map); // Show the marker again
     },
-
-    // In Itinerary.vue's methods section:
 
     // [NEW METHOD] Initializes the draggable character/Pegman marker
     initCharacterMarker() {
@@ -590,10 +1017,10 @@ export default {
 
         restriction: {
           latLngBounds: {
-            north: 1.5,      // Approximate NE latitude
-            south: 1.1,      // Approximate SW latitude
-            east: 104.1,     // Approximate NE longitude
-            west: 103.5      // Approximate SW longitude
+            north: 1.5,     // Approximate NE latitude
+            south: 1.1,     // Approximate SW latitude
+            east: 104.1,    // Approximate NE longitude
+            west: 103.5     // Approximate SW longitude
           },
           // Prevents panning outside the box
         },
@@ -650,58 +1077,6 @@ export default {
       } else {
         this.dateError = "";
       }
-    },
-
-    // Handles date range selection and initializes the daily itinerary structure
-    handleDateSelection() {
-      if (this.dateError) return;
-
-      const start = new Date(this.startDateInput + 'T00:00:00Z');
-      const end = new Date(this.endDateInput + 'T00:00:00Z');
-
-      let newDailyItinerary = {};
-      const dayMs = 1000 * 60 * 60 * 24;
-
-      for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
-        const currentDate = new Date(t);
-        const dateStr = currentDate.toISOString().split('T')[0];
-
-        if (!this.dailyItinerary[dateStr]) {
-          newDailyItinerary[dateStr] = {
-            isExpanded: true,
-            places: []
-          };
-        } else {
-          newDailyItinerary[dateStr] = this.dailyItinerary[dateStr];
-        }
-      }
-
-      const finalDateStrings = Object.keys(newDailyItinerary).filter(dateStr => {
-        const date = new Date(dateStr + 'T00:00:00Z');
-        return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
-      }).sort();
-
-      const finalDailyItinerary = {};
-      finalDateStrings.forEach(dateStr => {
-        finalDailyItinerary[dateStr] = newDailyItinerary[dateStr];
-      });
-
-      this.dailyItinerary = finalDailyItinerary;
-
-
-      if (finalDateStrings.length > 0) {
-        this.setActiveDay(finalDateStrings[0]);
-      }
-
-      if (finalDateStrings.length) {
-        this.dateRangeDisplay = this.formatDateRangeDisplay(finalDateStrings[0], finalDateStrings[finalDateStrings.length - 1]);
-      } else {
-        this.dateRangeDisplay = 'No Dates Set';
-      }
-
-      this.showDateSelectionModal = false;
-      this.updateItineraryList();
-      // this.renderRoute(); // Call renderRoute after any change to dates/structure
     },
 
     onPlaceSelected() {
@@ -784,66 +1159,11 @@ export default {
           this.marker = null;
         }
         this.updateItineraryList();
-        this.renderRoute(); // Call renderRoute after adding a place
+        this.renderRoute();
+        // this.scheduleSave(); // Removed for manual save
       }
     },
 
-    // // --- Place Reordering Methods ---
-
-    // movePlace(date, fromIndex, toIndex) {
-    //   if (toIndex < 0 || toIndex >= this.dailyItinerary[date].places.length) {
-    //     return;
-    //   }
-
-    //   const places = [...this.dailyItinerary[date].places];
-    //   const [movedPlace] = places.splice(fromIndex, 1);
-    //   places.splice(toIndex, 0, movedPlace);
-
-    //   this.dailyItinerary = {
-    //     ...this.dailyItinerary,
-    //     [date]: {
-    //       ...this.dailyItinerary[date],
-    //       places: places
-    //     }
-    //   };
-
-    //   this.renderRoute(); // Rerender route after reordering
-    // },
-
-    // movePlaceUp(date, index) {
-    //   if (index > 0) {
-    //     this.movePlace(date, index, index - 1);
-    //   }
-    // },
-
-    // movePlaceDown(date, index) {
-    //   if (index < this.dailyItinerary[date].places.length - 1) {
-    //     this.movePlace(date, index, index + 1);
-    //   }
-    // },
-
-    // --- End Reordering Methods ---
-
-    // removePlace(date, index) {
-    //   // 1. Create a deep copy of the entire dailyItinerary object
-    //   const newItinerary = JSON.parse(JSON.stringify(this.dailyItinerary));
-
-    //   // 2. Filter the places array within the copy
-    //   const updatedPlaces = newItinerary[date].places.filter((_, i) => i !== index);
-
-    //   // 3. Update the places array in the copied object
-    //   newItinerary[date].places = updatedPlaces;
-
-    //   // 4. Force Vue to replace the data property entirely
-    //   this.dailyItinerary = newItinerary;
-
-    //   this.updateItineraryList();
-
-    //   // 5. Use $nextTick for synchronization (which is still necessary)
-    //   this.$nextTick(() => {
-    //     this.renderRoute();
-    //   });
-    // },
     cloneActivity(activity) {
       // Create the new object. Note: NO lat/lng yet.
       return {
@@ -929,6 +1249,7 @@ export default {
 
         // Call renderRoute to update the map
         this.renderRoute();
+        // this.scheduleSave(); // Removed for manual save
       }
     },
 
@@ -937,13 +1258,14 @@ export default {
      * (reordering OR adding). We just update the map.
      */
     onDragEnd() {
-      // Update the map with new order and new items
       this.$nextTick(() => {
         this.renderRoute();
+        // this.scheduleSave(); // Removed for manual save
       });
     },
 
-    removePlace(date, index) {
+
+    async removePlace(date, index) {
       const updatedPlaces = this.dailyItinerary[date].places.filter((_, i) => i !== index);
 
       this.dailyItinerary = {
@@ -959,7 +1281,36 @@ export default {
         this.renderRoute();
       });
 
+      // --- THIS IS THE FIX ---
+      // Save the change to Firebase
+      try {
+        await this.saveItinerary();
+        console.log("Place removed and itinerary saved.");
+      } catch (error) {
+        console.error("Error saving after place removal:", error);
+      }
     },
+
+
+    // removePlace(date, index) {
+    //   const updatedPlaces = this.dailyItinerary[date].places.filter((_, i) => i !== index);
+
+    //   this.dailyItinerary = {
+    //     ...this.dailyItinerary,
+    //     [date]: {
+    //       ...this.dailyItinerary[date],
+    //       places: updatedPlaces
+    //     }
+    //   };
+
+    //   this.updateItineraryList();
+    //   this.$nextTick(() => {
+    //     this.renderRoute();
+    //   });
+
+    //   // this.scheduleSave(); // Removed for manual save
+
+    // },
 
     toggleDay(date) {
       // This function ONLY toggles the list.
@@ -969,127 +1320,9 @@ export default {
       // (We've removed the renderRoute() call from here)
     },
 
-    // toggleDay(date) {
-    //   // Toggle expansion state
-    //   const isExpanded = !this.dailyItinerary[date].isExpanded;
-
-    //   this.dailyItinerary = {
-    //     ...this.dailyItinerary,
-    //     [date]: {
-    //       ...this.dailyItinerary[date],
-    //       isExpanded: isExpanded
-    //     }
-    //   };
-
-    //   // If expanding a day, render its route; if collapsing, rendering handles itself on the next check
-    //   if (isExpanded) {
-    //     this.renderRoute();
-    //   } else {
-    //     // If collapsed, force rerender to check for other expanded days
-    //     this.renderRoute();
-    //   }
-    // },
-
     updateItineraryList() {
       this.itinerary = Object.values(this.dailyItinerary).flatMap(day => day.places);
     },
-
-    // --- NEW: Route Visualization Methods ---
-
-    // This renders markers and calls the Directions API to draw the route
-    // This renders markers and calls the Directions API to draw the route
-    // renderRoute() {
-    //   // 1. --- CLEAR THE MAP ---
-
-    //   // Clear the single 'search' marker if it exists
-    //   if (this.marker) {
-    //     this.marker.setMap(null);
-    //     this.marker = null;
-    //   }
-
-    //   // Clear all itinerary markers from the map
-    //   console.log('Clearing ' + this.currentMarkers.length + ' old markers');
-    //   this.currentMarkers.forEach(m => m.setMap(null));
-    //   this.currentMarkers = []; // Reset the array
-
-    //   // Clear the route line
-    //   this.directionsRenderer.setDirections({ routes: [] });
-
-
-    //   // 2. --- FIND ALL PLACES TO DRAW ---
-
-    //   // Get ALL expanded days that have places
-    //   const expandedDays = Object.keys(this.dailyItinerary).filter(date =>
-    //     this.dailyItinerary[date].isExpanded &&
-    //     this.dailyItinerary[date].places.length > 0
-    //   );
-
-    //   // If there are no expanded days with places, we're done. The map is clean.
-    //   if (expandedDays.length === 0) {
-    //     console.log('No expanded places to render. Map is clean.');
-    //     return;
-    //   }
-
-
-    //   // 3. --- DRAW ALL PINS FOR ALL EXPANDED DAYS ---
-
-    //   // Loop through EACH expanded day and draw its markers
-    //   expandedDays.forEach(date => {
-    //     const places = this.dailyItinerary[date].places;
-
-    //     places.forEach((place, index) => {
-    //       const marker = new google.maps.Marker({
-    //         position: { lat: place.lat, lng: place.lng },
-    //         map: this.map,
-    //         label: {
-    //           text: `${index + 1}`,
-    //           color: 'white',
-    //           fontWeight: 'bold'
-    //         },
-    //         title: place.name,
-    //       });
-    //       // Add the new marker to our array so it can be cleared next time
-    //       this.currentMarkers.push(marker);
-    //     });
-    //   });
-
-
-    //   // 4. --- DRAW THE ROUTE FOR THE FIRST DAY ---
-
-    //   // We only draw a route line for the *first* day in the list.
-    //   const routeDay = expandedDays[0];
-    //   const routePlaces = this.dailyItinerary[routeDay].places;
-
-    //   // Only draw a route if there are 2 or more places
-    //   if (routePlaces.length < 2) {
-    //     return;
-    //   }
-
-    //   // Prepare Directions Request
-    //   const origin = routePlaces[0];
-    //   const destination = routePlaces[routePlaces.length - 1];
-    //   const waypoints = routePlaces.slice(1, -1).map(p => ({
-    //     location: { lat: p.lat, lng: p.lng },
-    //     stopover: true
-    //   }));
-
-    //   this.directionsService.route({
-    //     origin: { lat: origin.lat, lng: origin.lng },
-    //     destination: { lat: destination.lat, lng: destination.lng },
-    //     waypoints: waypoints,
-    //     optimizeWaypoints: false,
-    //     travelMode: google.maps.TravelMode.DRIVING
-    //   }, (response, status) => {
-    //     if (status === 'OK') {
-    //       this.directionsRenderer.setDirections(response);
-    //       this.updateRouteInfo(response.routes[0].legs, routeDay);
-    //       this.map.fitBounds(response.routes[0].bounds);
-    //     } else {
-    //       console.error('Directions request failed due to ' + status);
-    //       this.clearRouteInfo(routeDay, routePlaces);
-    //     }
-    //   });
-    // },
 
     // REPLACE your entire renderRoute function with this one:
     renderRoute() {
@@ -1141,9 +1374,13 @@ export default {
       // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
       if (places.length < 2) return;
 
-      const origin = places[0];
-      const destination = places[places.length - 1];
-      const waypoints = places.slice(1, -1).map(p => ({
+      // Filter out any places that failed geocoding
+      const validPlaces = places.filter(p => p.lat && p.lng);
+      if (validPlaces.length < 2) return;
+
+      const origin = validPlaces[0];
+      const destination = validPlaces[validPlaces.length - 1];
+      const waypoints = validPlaces.slice(1, -1).map(p => ({
         location: { lat: p.lat, lng: p.lng },
         stopover: true
       }));
@@ -1158,76 +1395,47 @@ export default {
       }, (response, status) => {
         if (status === 'OK') {
           this.directionsRenderer.setDirections(response);
-          this.updateRouteInfo(response.routes[0].legs, date);
+          this.updateRouteInfo(response.routes[0].legs, date); // Pass 'date'
           this.map.fitBounds(response.routes[0].bounds);
         } else {
           console.error('Directions request failed due to ' + status);
-          this.clearRouteInfo(date, places);
+          this.clearRouteInfo(date, places); // Pass 'date'
         }
       });
     },
-    // renderRoute() {
-    //   // 1. --- CLEAR THE MAP ---
-    //   if (this.marker) {
-    //     this.marker.setMap(null);
-    //     this.marker = null;
-    //   }
-    //   this.currentMarkers.forEach(m => m.setMap(null));
-    //   this.currentMarkers = [];
-    //   this.directionsRenderer.setDirections({ routes: [] });
-
-    //   // 2. --- FIND THE *ACTIVE* DAY ---
-
-    //   // This is the key change. We check this.activeDate,
-    //   // not a list of expanded days.
-    //   if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
-    //     console.log('No active day to render. Map is clean.');
-    //     return;
-    //   }
-
-    //   const date = this.activeDate;
-    //   const places = this.dailyItinerary[date].places;
-
-    //   if (places.length === 0) {
-    //     console.log('Active day has no places. Map is clean.');
-    //     return;
-    //   }
-
-    //   // 3. --- DRAW ALL PINS FOR THE ACTIVE DAY ---
-    //   places.forEach((place, index) => {
-    //     const marker = new google.maps.Marker({
-    //       position: { lat: place.lat, lng: place.lng },
-    //       map: this.map,
-    //       label: { /* ... */ },
-    //       title: place.name,
-    //     });
-    //     this.currentMarkers.push(marker);
-    //   });
-
-    //   // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
-    //   if (places.length < 2) return;
-
-    //   const origin = places[0];
-    //   const destination = places[places.length - 1];
-    //   // ... (rest of your existing directionsService.route() call) ...
-    //   // ... (this logic remains the same) ...
-    // },
 
     // Updates the distance and duration in the itinerary list
     updateRouteInfo(legs, date) {
-      const updatedPlaces = [...this.dailyItinerary[date].places];
+      // Find a reference to the places array for the correct date
+      if (!this.dailyItinerary[date]) return;
+      const placesForDate = this.dailyItinerary[date].places;
+
+      // Create a new array from the places to avoid mutation issues
+      const updatedPlaces = [...placesForDate];
 
       // The first place has no distance/duration from previous, so we start at index 1
-      updatedPlaces[0].distance = null;
-      updatedPlaces[0].duration = null;
+      if (updatedPlaces.length > 0) {
+        updatedPlaces[0].distance = null;
+        updatedPlaces[0].duration = null;
+      }
 
-      legs.forEach((leg, index) => {
-        // leg index corresponds to the place index *after* the origin (0-indexed)
-        if (updatedPlaces[index + 1]) {
-          updatedPlaces[index + 1].distance = leg.distance.text;
-          updatedPlaces[index + 1].duration = leg.duration.text;
+      // We must account for places that were skipped by the directions service (if geocoding failed)
+      // We'll match by lat/lng
+      let legIndex = 0;
+      for (let i = 1; i < updatedPlaces.length; i++) {
+        const place = updatedPlaces[i];
+
+        // If this place has valid coords, it should correspond to the next leg
+        if (place.lat && place.lng && legs[legIndex]) {
+          place.distance = legs[legIndex].distance.text;
+          place.duration = legs[legIndex].duration.text;
+          legIndex++; // Move to the next leg
+        } else {
+          // This place was skipped (no coords), so it has no route info
+          place.distance = null;
+          place.duration = null;
         }
-      });
+      }
 
       // Ensure reactivity by replacing the day object
       this.dailyItinerary = {
@@ -1237,10 +1445,13 @@ export default {
           places: updatedPlaces
         }
       };
+      // this.scheduleSave(); // Removed for manual save
     },
 
     // Fallback to clear route info on error
     clearRouteInfo(date, places) {
+      if (!this.dailyItinerary[date]) return;
+
       const updatedPlaces = places.map(p => ({ ...p, distance: null, duration: null }));
       this.dailyItinerary = {
         ...this.dailyItinerary,
@@ -1254,29 +1465,41 @@ export default {
     getDirectionsUrl(origin, destination) {
       const originStr = `${origin.lat},${origin.lng}`;
       const destStr = `${destination.lat},${destination.lng}`;
-      return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+      return `http://googleusercontent.com/maps/google.com/0{originStr}&destination=${destStr}&travelmode=driving`;
     },
 
     // --- Formatting Helpers ---
     formatDay(dateStr) {
+      if (!dateStr) return "Invalid Date";
       const options = { weekday: 'long', month: 'long', day: 'numeric' };
       return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('en-US', options);
     },
 
+
     formatDateRangeDisplay(startStr, endStr) {
-      const d_start = new Date(startStr);
-      const d_end = new Date(endStr);
+      // guard
+      if (!startStr && !endStr) return 'No Dates Set';
+      const start = startStr || endStr;
+      const end = endStr || startStr;
 
-      const day_s = d_start.getDate();
-      const month_s = (d_start.getMonth() + 1);
+      const parse = (s) => new Date(s + 'T00:00:00Z'); // avoid TZ issues
+      const fmt = (s) => {
+        const d = parse(s);
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+      };
 
-      const day_e = d_end.getDate();
-      const month_e = (d_end.getMonth() + 1);
+      const dayMs = 24 * 60 * 60 * 1000;
+      const diff = Math.round((parse(end).getTime() - parse(start).getTime()) / dayMs);
 
-      return `${day_s}/${month_s} - ${day_e}/${month_e}`;
-    }
-  },
+      if (diff === 0) return fmt(start);
+      // Use toLocaleDateString for better formatting
+      const startFmt = parse(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endFmt = parse(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+      return `${startFmt} - ${endFmt}`;
+    },
+
+  }, // End of Methods
 
 
   watch: {
@@ -1289,6 +1512,7 @@ export default {
       }
     }
   },
+
 };
 </script>
 
@@ -1296,6 +1520,19 @@ export default {
 /* Note: Tailwind CSS is not loaded, relying on standard Bootstrap-like utility classes and custom CSS */
 
 /* --- Layout --- */
+
+.sidebar-save-bar {
+  position: sticky;
+  bottom: 0;
+  /* Make sure sidebar has padding-bottom > this height */
+  background: #f7f9fc;
+  padding: 12px 0;
+  border-top: 1px solid #e0e0e0;
+  margin: 0 -20px;
+  /* Stretch to edges of sidebar padding */
+  padding: 12px 20px;
+  /* Add padding back inside */
+}
 
 
 /* Add this to your <style scoped> */
@@ -1307,12 +1544,38 @@ export default {
   color: #3f51b5;
 }
 
+/* *** UPDATED/NEW STYLES FOR DELETE BUTTON *** */
 .day-header i {
   /* Make the chevron clickable without the whole header */
-  padding: 10px;
-  margin-right: -10px;
+  padding: 5px;
+  margin-right: 0;
+  /* Removed old margin */
   cursor: pointer;
 }
+
+.day-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Adds space between the delete button and chevron */
+}
+
+/* .btn-delete-day {
+  background: none;
+  border: none;
+  color: #dc3545; /* Bootstrap danger red 
+  /* padding: 5px; 
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1; /* Aligns icon 
+}
+
+.btn-delete-day:hover {
+  opacity: 1;
+} */
+/* *** END NEW STYLES *** */
+
 
 #itinerary-planner {
   min-height: 100vh;
@@ -1360,6 +1623,8 @@ export default {
   background-color: #f7f9fc;
   /* Light background for the sidebar */
   overflow-y: auto;
+  /* Add padding at bottom so save bar doesn't cover content */
+  padding-bottom: 100px;
 }
 
 .map-container {
