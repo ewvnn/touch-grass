@@ -317,7 +317,7 @@ export default {
 
       switch (this.selectedBudget) {
         case 'free': return amount === 0;
-        case 'low': return amount > 0 && amount < 10;
+        case 'low': return amount < 10;
         case 'medium': return amount >= 10 && amount <= 50;
         case 'high': return amount > 50;
         default: return true;
