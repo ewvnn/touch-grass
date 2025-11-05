@@ -192,9 +192,11 @@ npm run test
 
 Each member should contribute 2–3 sentences on their learning and project experience.
 
-> **Example Template:**  
-> - *Boone:* I learnt vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage
-> - *Ben:* Gained experience connecting frontend and backend APIs.  
+**Example Template:**  
+>*Boone:* I learnt vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage
+
+>*Ewen:* I learned about how implementing frameworks like Vue can build efficient websites that make web development easier. I learned how to apply HTML, CSS and Javascript to a functional website.
+
 > - *Chloe:* Improved UI/UX design workflow and collaboration using Figma.  
 > - *David:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
 
