@@ -201,7 +201,7 @@ Each member should contribute 2–3 sentences on their learning and project expe
  
 > *Fazil:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.
 
-> > *Fazil:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
+> *Jia Le:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
 
 As a team, reflect on:
 - **Key takeaways from working with real-world frameworks:**
