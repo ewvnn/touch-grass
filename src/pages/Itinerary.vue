@@ -1474,10 +1474,11 @@ export default {
     },
 
     getDirectionsUrl(origin, destination) {
-      const originStr = `${origin.lat},${origin.lng}`;
-      const destStr = `${destination.lat},${destination.lng}`;
-      return `http://googleusercontent.com/maps/google.com/0{originStr}&destination=${destStr}&travelmode=driving`;
-    },
+  const originStr = `${origin.lat},${origin.lng}`;
+  const destStr = `${destination.lat},${destination.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+},
+
 
     // --- Formatting Helpers ---
     formatDay(dateStr) {
