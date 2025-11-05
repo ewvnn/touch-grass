@@ -13,37 +13,37 @@
 | <img src="photos/ewen.jpg" width="80"> | Ewen Chai | Frontend Developer - Search & Filter UI |
 | <img src="photos/boone.jpeg" width="80"> | Richard Fritzgerald Boone | Backend Developer - API endpoints |
 | <img src="photos/xiaothong.png" width="80"> | Lai Xiao Thong | UI/UX Designer - Layout & Color Themes |
-| <img src="photos/member4.jpg" width="80"> | David Ong | Database & Auth - Firebase Integration |
+| <img src="photos/fazil.jpeg" width="80"> | Fazil Akram Dereinda | Database & Auth - Firebase Integration |
+| <img src="photos/wasil.jpeg" width="80"> | Mohamed Wasil Raseen | Database & Auth - Firebase Integration |
+| <img src="photos/jiale.jpeg" width="80"> | Lim Jia Le | Database & Auth - Firebase Integration |
 
-> Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
 
 ---
 
 ## Business Problem
 
-Describe the **real-world business or community problem** your project addresses.
+<!-- Describe the **real-world business or community problem** your project addresses. -->
 
-> *Example:*  
-> Small local businesses struggle to maintain an online presence, limiting visibility to customers.  
-> Our web application helps them list menus, accept feedback, and attract more customers.
-
+> Nowadays, Singaporean youths are facing high stress levels and poor mental health, wiht one in three reporting negative well-being (IMH, 2024). Key contributing factors include loneliness, social isolation, and excessive social media usage. 
+> Research has shown that social connections play a pivotal role in supporting mental well-being—interacting with friends and family through face-to-face gatherings and shared activities can greatly enhance both mental and overall health (WHO, 2025).
+> In spite of this, youths still face many resisting factors that deter them from building and maintaining these relationships. 
+> Common barriers include a lack of awareness about social events happening around Singapore, conflicting schedules among peers, differing activity preferences, and financial limitations. As a result, many young people struggle to find accessible and enjoyable opportunities for meaningful social engagement. 
 ---
 
 ## Web Solution Overview
 
-### �� Intended Users
-Identify your target user groups.  
-Examples: small-business owners, caregivers, students, pet adopters, etc.
+### Intended Users
+Singaporean Youths (aged 18-40 years old)
 
-### �� What Users Can Do & Benefits
+### What Users Can Do & Benefits
 Explain the core features and the benefit each provides.  
 
 | Feature | Description | User Benefit |
 |:--|:--|:--|
-| Register & Login | Secure authentication system | Personalized experience and data security |
-| Search & Filter | Find items by category or location | Saves time finding relevant results |
+| Register & Login | Secure authentication system | Customisable Profile | Find Friends |
+| Search & Filter | Find items by category or location | Saves time finding relevant results | Filter by CDC and Culture Pass |
 | Calendar | Plan out your schedule | Align availability with Friends | 
-| Itinerary | Plan routes for the day | |
+| Itinerary | Plan routes for their days out |
 
 ---
 
@@ -58,8 +58,6 @@ Explain the core features and the benefit each provides.
 | <img src="https://vuejs.org/images/logo.png" width="40"> | **Vue.js 3** | Component-based frontend framework |
 | <img src="https://firebase.google.com/downloads/brand-guidelines/PNG/logo-logomark.png" width="40"> | **Firebase** | Authentication and database services |
 
-> Add or remove technologies depending on your project stack (e.g., Express.js, Supabase, MongoDB Atlas, AWS S3).
-
 ---
 
 ## Use Case & User Journey
@@ -70,13 +68,17 @@ Provide screenshots and captions showing how users interact with your app.
    <img src="screenshots/landing.png" width="600">  
    - Displays the homepage with navigation options.
 
-2. **Search Feature**  
-   <img src="screenshots/search.png" width="600">  
-   - Users can browse and filter items by criteria.
+2. **Profile Page**  
+   <img src="screenshots/profile.png" width="600">  
+   - Users customise their profile name, email, upload profile picture, see saved activities, and add friends.
 
-3. **User Dashboard**  
-   <img src="screenshots/dashboard.png" width="600">  
-   - Shows saved data and recent activities.
+3. **Calendar Page**  
+   <img src="screenshots/calendar.png" width="600">  
+   - Shows your calendar, allows users to indicate their availabilities and see their friends availabilities.
+
+3. **Itinerary Page**  
+   <img src="screenshots/itinerary.png" width="600">  
+   - Plan your day with the routes
 
 > Save screenshots inside `/screenshots` with clear filenames.
 
@@ -97,8 +99,8 @@ Comprehensive steps to help other developers or evaluators run and test your pro
 
 ### 1) Download the Project
 ```bash
-git clone https://github.com/<org-or-user>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/ewvnn/touch-grass.git
+cd touch-grass
 npm install
 ```
 
