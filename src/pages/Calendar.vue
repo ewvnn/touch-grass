@@ -5,8 +5,15 @@
       <div class="col-md-3">
         <!-- Friends List -->
         <div class="card mb-3">
-          <div class="card-header">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Friends</h5>
+            <button 
+              class="btn btn-sm btn-outline-secondary" 
+              @click="clearSelectedFriends"
+              :disabled="!hasSelectedFriends"
+            >
+              Clear
+            </button>
           </div>
           <div class="card-body">
             <div v-if="loadingFriends" class="text-center py-3">
@@ -195,6 +202,11 @@ export default {
       if (newVal) this.initAvailabilityCalendar();
     },
   },
+  computed: {
+    hasSelectedFriends() {
+      return this.friends.some(f => f.selected);
+    }
+  },
   methods: {
     async loadUserAvailability() {
       if (!this.currentUser) return;
@@ -293,9 +305,9 @@ export default {
         title: activity.title,
         start: startDate,
         allDay: true,
-        backgroundColor: "#d3d3d3",
-        borderColor: "#eeeedd",
-        textColor: "#000000",
+        backgroundColor: "#FFD700",
+        borderColor: "#FFD700",
+        textColor: "#000080",
         extendedProps: {
           isActivity: true,
           image: activity.image,
@@ -416,6 +428,11 @@ export default {
       const friend = this.friends.find(f => f.id === friendId);
       if (!friend) return;
       friend.selected = !friend.selected;
+      this.updateCalendarHeatmap();
+    },
+
+    clearSelectedFriends() {
+      this.friends.forEach(f => f.selected = false);
       this.updateCalendarHeatmap();
     },
 
