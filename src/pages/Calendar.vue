@@ -305,9 +305,9 @@ export default {
         title: activity.title,
         start: startDate,
         allDay: true,
-        backgroundColor: "#FFD700",
-        borderColor: "#FFD700",
-        textColor: "#000080",
+        backgroundColor: "#d3d3d3",
+        borderColor: "#eeeedd",
+        textColor: "#000000",
         extendedProps: {
           isActivity: true,
           image: activity.image,

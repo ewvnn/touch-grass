@@ -10,12 +10,12 @@
 
 | Photo | Full Name | Role / Features Responsible For |
 |:--:|:--|:--|
-| <img src="photos/ewen.jpg" width="80"> | Ewen Chai | Frontend Developer - Search & Filter UI |
-| <img src="photos/boone.jpeg" width="80"> | Richard Fritzgerald Boone | Backend Developer - API endpoints |
-| <img src="photos/xiaothong.png" width="80"> | Lai Xiao Thong | UI/UX Designer - Layout & Color Themes |
-| <img src="photos/fazil.jpeg" width="80"> | Fazil Akram Dereinda | Database & Auth - Firebase Integration |
-| <img src="photos/wasil.jpeg" width="80"> | Mohamed Wasil Raseen | Database & Auth - Firebase Integration |
-| <img src="photos/jiale.jpeg" width="80"> | Lim Jia Le | Database & Auth - Firebase Integration |
+| <img src="photos/ewen.jpg" width="80"> | Ewen Chai | Calendar and Landing Page |
+| <img src="photos/boone.jpeg" width="80"> | Richard Fritzgerald Boone | Profile and Firebase Integration |
+| <img src="photos/xiaothong.png" width="80"> | Lai Xiao Thong | Landing Page and Firebase Authentication |
+| <img src="photos/fazil.jpeg" width="80"> | Fazil Akram Dereinda | Itinerary and API Integration |
+| <img src="photos/wasil.jpeg" width="80"> | Mohamed Wasil Raseen | Itinerary and API Integration |
+| <img src="photos/jiale.jpeg" width="80"> | Lim Jia Le | Calendar and Landing Page |
 
 
 ---
@@ -24,11 +24,15 @@
 
 <!-- Describe the **real-world business or community problem** your project addresses. -->
 
-> Nowadays, Singaporean youths are facing high stress levels and poor mental health, wiht one in three reporting negative well-being (IMH, 2024). Key contributing factors include loneliness, social isolation, and excessive social media usage. 
-> Research has shown that social connections play a pivotal role in supporting mental well-being—interacting with friends and family through face-to-face gatherings and shared activities can greatly enhance both mental and overall health (WHO, 2025).
-> In spite of this, youths still face many resisting factors that deter them from building and maintaining these relationships. 
-> Common barriers include a lack of awareness about social events happening around Singapore, conflicting schedules among peers, differing activity preferences, and financial limitations. As a result, many young people struggle to find accessible and enjoyable opportunities for meaningful social engagement. 
----
+Nowadays, Singaporean youths are facing high stress levels and poor mental health
+> One in three reporting negative well-being (IMH, 2024). Key contributing factors include loneliness, social isolation, and excessive social media usage. 
+
+Research has shown that social connections play a pivotal role in supporting mental well-being—interacting with friends and family through face-to-face gatherings and shared activities can greatly enhance both mental and overall health (WHO, 2025).
+
+In spite of this, youths still face many resisting factors that deter them from building and maintaining these relationships. 
+
+Common barriers include a lack of awareness about social events happening around Singapore, conflicting schedules among peers, differing activity preferences, and financial limitations. As a result, many young people struggle to find accessible and enjoyable opportunities for meaningful social engagement. 
+
 
 ## Web Solution Overview
 
@@ -40,10 +44,10 @@ Explain the core features and the benefit each provides.
 
 | Feature | Description | User Benefit |
 |:--|:--|:--|
-| Register & Login | Secure authentication system | Customisable Profile | Find Friends |
-| Search & Filter | Find items by category or location | Saves time finding relevant results | Filter by CDC and Culture Pass |
-| Calendar | Plan out your schedule | Align availability with Friends | 
-| Itinerary | Plan routes for their days out |
+| Register & Login | Secure authentication system | Customisable Profile, Find Friends |
+| Search & Filter | Find events by category or location | Saves time finding relevant results, Filter by CDC and Culture Pass |
+| Calendar | Plan out your schedule | Align availability with Friends to find a suitable date to meet up | 
+| Itinerary | A Map to plan routes for their days out | Easier for route finding for events | 
 
 ---
 
@@ -93,7 +97,6 @@ Comprehensive steps to help other developers or evaluators run and test your pro
 ### 0) Prerequisites
 - [Git](https://git-scm.com/) v2.4+  
 - [Node.js](https://nodejs.org/) v18+ and npm v9+  
-- Access to backend or cloud services used (Firebase, MongoDB Atlas, AWS S3, etc.)
 
 ---
 
@@ -134,21 +137,6 @@ VITE_FIREBASE_APP_ID=<your_app_id>
    - **Firestore Database** or **Realtime Database**
    - **Hosting (optional)** if you plan to deploy your web app
 4. Copy the Firebase configuration into your `.env` file.
-
-#### Optional: Express.js / MongoDB
-If your app includes a backend:
-1. Create a `/server` folder for backend code.
-2. Inside `/server`, create a `.env` file with:
-   ```bash
-   MONGO_URI=<your_mongodb_connection_string>
-   JWT_SECRET=<your_jwt_secret_key>
-   ```
-3. Start the backend:
-   ```bash
-   cd server
-   npm install
-   npm start
-   ```
 
 ---
 
@@ -205,7 +193,7 @@ npm run test
 Each member should contribute 2–3 sentences on their learning and project experience.
 
 > **Example Template:**  
-> - *Alice:* Learned to build reusable Vue components and manage state effectively.  
+> - *Boone:* I learnt vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage
 > - *Ben:* Gained experience connecting frontend and backend APIs.  
 > - *Chloe:* Improved UI/UX design workflow and collaboration using Figma.  
 > - *David:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
