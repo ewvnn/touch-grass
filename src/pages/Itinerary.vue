@@ -2,202 +2,213 @@
   <div id="itinerary-planner">
 
     <div class="itinerary-split-view container-fluid">
-
-      <div class="itinerary-sidebar">
-        <h2>Itinerary</h2>
-
-        <div v-if="Object.keys(dailyItinerary).length === 0" class="empty-state-prompt p-5 text-center">
-          <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
-          <button @click="showDateSelectionModal = true"
-            class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
-            <i class="fas fa-calendar-alt me-2"></i> Add trip dates
-          </button>
-        </div>
-
-        <div v-else>
-
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="fs-5 fw-bold text-success">{{ dateRangeDisplay }}</span>
-            <div>
-              <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
-                :disabled="!currentUser || !tripId || isSaving">
-                <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                <i v-else class="fas fa-save me-1"></i>
-                Save
-              </button>
-              <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-calendar-edit"></i> Edit Dates
+      <div class="row g-3 w-100">
+        
+        <!-- Saved Activities Column: Left on desktop (md+), Second on mobile -->
+       <div class="col-12 col-md-6 order-2 order-md-2">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Saved Activities</h5>
+              <button class="btn btn-sm btn-success" @click="loadFavourites" :disabled="isLoadingActivities">
+                <span v-if="isLoadingActivities">Loading...</span>
+                <span v-else>Refresh</span>
               </button>
             </div>
+            <div class="card-body activities-scrollable">
+              <div v-if="isLoadingActivities" class="text-center py-3">
+                <div class="spinner-border text-success" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+              <div v-else-if="activities.length === 0" class="text-center text-muted py-3">
+                No saved activities
+              </div>
+              <div v-else class="list-group list-group-flush">
+                <draggable v-model="activities" :group="{ name: 'itinerary', pull: 'clone', put: false }"
+                  :clone="cloneActivity" item-key="id" class="saved-activities-draggable">
+                  <template #item="{ element }">
+                    <div class="list-group-item" style="cursor: grab;">
+                      <strong>{{ element.title }}</strong>
+                      <small class="d-block text-muted">{{ element.location }}</small>
+                      <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
+                      <small class="d-block mt-1">
+                        <span class="badge bg-info">{{ element.category }}</span>
+                        <span v-if="element.badge" class="badge bg-warning ms-1">{{ element.badge }}</span>
+                      </small>
+                    </div>
+                  </template>
+                </draggable>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Itinerary Sidebar: Right on desktop (md+), First on mobile -->
+        <div class="col-12 col-md-6 order-1 order-md-1 itinerary-sidebar">
+          <h2>Itinerary</h2>
+
+          <div v-if="Object.keys(dailyItinerary).length === 0" class="empty-state-prompt p-5 text-center">
+            <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
+            <button @click="showDateSelectionModal = true"
+              class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
+              <i class="fas fa-calendar-alt me-2"></i> Add trip dates
+            </button>
           </div>
 
-          <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
+          <div v-else>
 
-            <h3 @click="setActiveDay(date)" class="day-header" :class="{ 'active-day': date === activeDate }">
-              {{ formatDay(date) }}
-
-              <span class="day-header-controls">
-                <button @click.stop="showDeleteDayConfirm(date)" class="btn btn-sm btn-danger" title="Delete this day">
-                  Delete
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <span class="fs-5 fw-bold text-success">{{ dateRangeDisplay }}</span>
+              <div>
+                <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
+                  :disabled="!currentUser || !tripId || isSaving">
+                  <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  <i v-else class="fas fa-save me-1"></i>
+                  Save
                 </button>
+                <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
+                  <i class="fas fa-calendar-edit"></i> Edit Dates
+                </button>
+              </div>
+            </div>
 
+            <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
 
-                <i @click.stop="toggleDay(date)"
-                  :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-              </span>
-            </h3>
+              <h3 @click="setActiveDay(date)" class="day-header" :class="{ 'active-day': date === activeDate }">
+                {{ formatDay(date) }}
 
-            <div v-show="dailyItinerary[date].isExpanded" class="place-list">
+                <span class="day-header-controls">
+                  <button @click.stop="showDeleteDayConfirm(date)" class="btn btn-sm btn-danger" title="Delete this day">
+                    Delete
+                  </button>
 
-              <draggable v-model="dailyItinerary[date].places" group="itinerary" @end="onDragEnd"
-                @add="onActivityAdded($event, date)" item-key="place_id" class="daily-itinerary-draggable">
-                <template #item="{ element, index }">
-                  <div class="list-group-item d-flex align-items-start mb-3 p-3 itinerary-item shadow-sm">
-                    <div class="index-circle">{{ index + 1 }}</div>
+                  <i @click.stop="toggleDay(date)"
+                    :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+                </span>
+              </h3>
 
-                    <div class="place-details flex-grow-1 ms-3">
-                      <h5 class="mb-1" style="cursor: grab;">{{ element.name }}</h5>
+              <div v-show="dailyItinerary[date].isExpanded" class="place-list">
 
-                      <div class="d-flex align-items-center mb-2">
-                        <img src="../../photos/draggable-icon.png" class="drag-icon" alt="">
-                        <img :src="element.photoUrl" class="place-thumbnail me-2" :alt="element.name" />
-                        <div>
-                          <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
-                          }}</small>
-                          <a :href="element.website" target="_blank" class="website-link d-block"><i
-                              class="fas fa-link"></i>
-                            Website: {{ element.name }}</a>
+                <draggable v-model="dailyItinerary[date].places" group="itinerary" @end="onDragEnd"
+                  @add="onActivityAdded($event, date)" item-key="place_id" class="daily-itinerary-draggable">
+                  <template #item="{ element, index }">
+                    <div class="list-group-item d-flex align-items-start mb-3 p-3 itinerary-item shadow-sm">
+                      <div class="index-circle">{{ index + 1 }}</div>
+
+                      <div class="place-details flex-grow-1 ms-3">
+                        <h5 class="mb-1" style="cursor: grab;">{{ element.name }}</h5>
+
+                        <div class="d-flex align-items-center mb-2">
+                          <img src="../../photos/draggable-icon.png" class="drag-icon" alt="">
+                          <img :src="element.photoUrl" class="place-thumbnail me-2" :alt="element.name" />
+                          <div>
+                            <small class="text-muted d-block"><i class="fas fa-map-marker-alt"></i> {{ element.address
+                            }}</small>
+                            <a :href="element.website" target="_blank" class="website-link d-block"><i
+                                class="fas fa-link"></i>
+                              Website: {{ element.name }}</a>
+                          </div>
+                        </div>
+
+                        <p class="description-text mb-2">{{ element.description }}</p>
+
+                        <div v-if="index > 0 && element.distance"
+                          class="route-info d-flex align-items-center mt-2 pt-2 border-top">
+                          <span class="distance-text me-3"><i class="fas fa-route"></i> {{ element.distance }} ({{
+                            element.duration }})</span>
+                          <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], element)" target="_blank"
+                            class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
                         </div>
                       </div>
 
-                      <p class="description-text mb-2">{{ element.description }}</p>
-
-                      <div v-if="index > 0 && element.distance"
-                        class="route-info d-flex align-items-center mt-2 pt-2 border-top">
-                        <span class="distance-text me-3"><i class="fas fa-route"></i> {{ element.distance }} ({{
-                          element.duration }})</span>
-                        <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], element)" target="_blank"
-                          class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
+                      <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
+                        <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
+                          title="Remove place">
+                          <i class="fas fa-trash"></i>
+                        </button>
                       </div>
                     </div>
+                  </template>
+                </draggable>
 
-                    <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
-                      <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
-                        title="Remove place">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                </template>
-              </draggable>
-
-              <button @click="addPlacePrompt = true; selectedDate = date"
-                class="btn btn-block btn-outline-secondary mt-3 add-place-btn">
-                <i class="fas fa-plus"></i> Add a place
-              </button>
-            </div>
-            <hr />
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Saved Activities</h5>
-            <button class="btn btn-sm btn-success" @click="loadFavourites" :disabled="isLoadingActivities">
-              <span v-if="isLoadingActivities">Loading...</span>
-              <span v-else>Refresh</span>
-            </button>
-          </div>
-          <div class="card-body activities-scrollable">
-            <div v-if="isLoadingActivities" class="text-center py-3">
-              <div class="spinner-border text-success" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-            <div v-else-if="activities.length === 0" class="text-center text-muted py-3">
-              No saved activities
-            </div>
-            <div v-else class="list-group list-group-flush">
-              <draggable v-model="activities" :group="{ name: 'itinerary', pull: 'clone', put: false }"
-                :clone="cloneActivity" item-key="id" class="saved-activities-draggable">
-                <template #item="{ element }">
-                  <div class="list-group-item" style="cursor: grab;">
-                    <strong>{{ element.title }}</strong>
-                    <small class="d-block text-muted">{{ element.location }}</small>
-                    <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
-                    <small class="d-block mt-1">
-                      <span class="badge bg-info">{{ element.category }}</span>
-                      <span v-if="element.badge" class="badge bg-warning ms-1">{{ element.badge }}</span>
-                    </small>
-                  </div>
-                </template>
-              </draggable>
-            </div>
-          </div>
-        </div>
-        <div class="sidebar-save-bar">
-          <button class="btn btn-success w-100" @click="saveItinerary" :disabled="!currentUser || !tripId || isSaving">
-            <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-            Save itinerary
-          </button>
-          <small v-if="!tripId" class="text-muted d-block mt-2">
-            Choose dates first to create this trip.
-          </small>
-          <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
-            Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
-          </small>
-        </div>
-
-      </div>
-
-
-
-      <div class="map-container">
-        <div id="google-map"></div>
-
-        <div v-if="isStreetViewActive" id="street-view-overlay">
-          <div id="street-view-panorama"></div>
-          <button @click="exitStreetView" class="btn btn-secondary exit-pano-btn">
-            <i class="fas fa-times"></i> Exit Street View
-          </button>
-        </div>
-
-        <div v-if="selectedPlace" class="place-info-popup card shadow-lg p-3">
-          <button class="close-btn" @click="selectedPlace = null">&times;</button>
-          <div class="row g-0">
-            <div class="col-md-8">
-              <h5 class="card-title">{{ selectedPlace.name }}</h5>
-              <p class="card-text description-text">{{ selectedPlace.description }}</p>
-
-              <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i> {{ selectedPlace.rating }}
-                ({{ selectedPlace.user_ratings_total }})</p>
-
-              <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
-
-              <a :href="selectedPlace.website" target="_blank" class="website-link"><i class="fas fa-link"></i>
-                Website:
-                {{ selectedPlace.name }}</a>
-
-              <div class="d-flex mt-2">
-                <select v-model="selectedDateToAdd" class="form-select form-select-sm me-2" aria-label="Select Date"
-                  :disabled="!Object.keys(dailyItinerary).length">
-                  <option disabled value="">Select Date</option>
-                  <option v-for="date in Object.keys(dailyItinerary)" :key="date" :value="date">{{ formatDay(date) }}
-                  </option>
-                </select>
-                <button @click="addToItinerary" :disabled="!selectedDateToAdd || !Object.keys(dailyItinerary).length"
-                  class="btn btn-sm btn-success">
-                  <i class="fas fa-route"></i> Add to Itinerary
+                <button @click="addPlacePrompt = true; selectedDate = date"
+                  class="btn btn-block btn-outline-secondary mt-3 add-place-btn">
+                  <i class="fas fa-plus"></i> Add a place
                 </button>
               </div>
-              <small v-if="!Object.keys(dailyItinerary).length" class="text-danger mt-2">Please set trip dates
-                first.</small>
-            </div>
-            <div class="col-md-4 text-center">
-              <img :src="selectedPlace.photoUrl" class="img-fluid rounded-start place-photo" :alt="selectedPlace.name">
+              <small v-if="!tripId" class="text-muted d-block mt-2">
+              Choose dates first to create this trip.
+            </small>
+            <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
+              Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
+            </small>
+              <hr />
             </div>
           </div>
+          
+
+            <!-- <button class="btn btn-success w-100" @click="saveItinerary" :disabled="!currentUser || !tripId || isSaving">
+              <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+              Save itinerary
+            </button> -->
+            <!-- <small v-if="!tripId" class="text-muted d-block mt-2">
+              Choose dates first to create this trip.
+            </small>
+            <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
+              Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
+            </small> -->
+
         </div>
 
+        <!-- Map Container: Always at the bottom, full width, Third on mobile -->
+        <div class="col-12 order-3 map-container">
+          <div id="google-map"></div>
+
+          <div v-if="isStreetViewActive" id="street-view-overlay">
+            <div id="street-view-panorama"></div>
+            <button @click="exitStreetView" class="btn btn-secondary exit-pano-btn">
+              <i class="fas fa-times"></i> Exit Street View
+            </button>
+          </div>
+
+          <div v-if="selectedPlace" class="place-info-popup card shadow-lg p-3">
+            <button class="close-btn" @click="selectedPlace = null">&times;</button>
+            <div class="row g-0">
+              <div class="col-md-8">
+                <h5 class="card-title">{{ selectedPlace.name }}</h5>
+                <p class="card-text description-text">{{ selectedPlace.description }}</p>
+
+                <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i> {{ selectedPlace.rating }}
+                  ({{ selectedPlace.user_ratings_total }})</p>
+
+                <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
+
+                <a :href="selectedPlace.website" target="_blank" class="website-link"><i class="fas fa-link"></i>
+                  Website:
+                  {{ selectedPlace.name }}</a>
+
+                <div class="d-flex mt-2">
+                  <select v-model="selectedDateToAdd" class="form-select form-select-sm me-2" aria-label="Select Date"
+                    :disabled="!Object.keys(dailyItinerary).length">
+                    <option disabled value="">Select Date</option>
+                    <option v-for="date in Object.keys(dailyItinerary)" :key="date" :value="date">{{ formatDay(date) }}
+                    </option>
+                  </select>
+                  <button @click="addToItinerary" :disabled="!selectedDateToAdd || !Object.keys(dailyItinerary).length"
+                    class="btn btn-sm btn-success">
+                    <i class="fas fa-route"></i> Add to Itinerary
+                  </button>
+                </div>
+                <small v-if="!Object.keys(dailyItinerary).length" class="text-danger mt-2">Please set trip dates
+                  first.</small>
+              </div>
+              <div class="col-md-4 text-center">
+                <img :src="selectedPlace.photoUrl" class="img-fluid rounded-start place-photo" :alt="selectedPlace.name">
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -1607,31 +1618,154 @@ export default {
   /* Above the panorama itself */
 }
 
+/* --- Layout --- */
+
 .itinerary-split-view {
   display: flex;
-  flex-grow: 1;
+  flex-direction: column;
   width: 100%;
   min-height: calc(100vh - 60px);
-  /* Adjust based on header height */
 }
 
 .itinerary-sidebar {
-  flex: 0 0 40%;
-  /* 40% width */
   padding: 20px;
-  border-right: 1px solid #e0e0e0;
-  background-color: #f7f9fc;
-  /* Light background for the sidebar */
+  background-color: #fff;
   overflow-y: auto;
-  /* Add padding at bottom so save bar doesn't cover content */
   padding-bottom: 100px;
+  position: relative;
+}
+
+/* On medium screens and up, remove bottom padding and make cards equal height */
+@media (min-width: 768px) {
+  .itinerary-sidebar {
+    padding-bottom: 100px;
+    max-height: 70vh;
+  }
+  
+  .activities-scrollable {
+    max-height: calc(70vh - 120px);
+    overflow-y: auto;
+  }
+  /* Saved Activities Card - Pop-up window styling */
+.col-12.col-md-6.order-2{
+  background-color: #fff;
+}
+.col-12.col-md-6.order-2 .card {
+  margin: 20px;
+  max-height: 70vh;
+  /* height: 500px; */
+  
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+}
+
+@media (min-width: 768px) {
+  .col-12.col-md-6.order-2 .card {
+    position: static;
+    top: 20px;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .col-12.col-md-6.order-2 .card {
+    margin: 10px;
+  }
+}
+}
+
+/* On small screens, make sidebars scrollable but not too tall */
+@media (max-width: 767px) {
+  .itinerary-sidebar {
+    max-height: 60vh;
+  }
+  
+  .activities-scrollable {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
 }
 
 .map-container {
   position: relative;
-  flex-grow: 1;
-  flex: 0 0 60%;
-  /* 60% width */
+  width: 100%;
+  min-height: 500px;
+  height: 100%;
+}
+
+/* On medium screens and up, map takes remaining vertical space */
+@media (min-width: 768px) {
+  .map-container {
+    height: 30vh;
+    min-height: 400px;
+  }
+}
+
+/* On small screens, map gets a fixed comfortable height */
+@media (max-width: 767px) {
+  .map-container {
+    height: 50vh;
+    min-height: 300px;
+  }
+}
+
+.sidebar-save-bar {
+  position: sticky;
+  bottom: 0;
+  background: #f7f9fc;
+  padding: 12px 0;
+  border-top: 1px solid #e0e0e0;
+  margin: 0 -20px;
+  padding: 12px 20px;
+  z-index: 5;
+}
+
+.day-header.active-day {
+  background-color: #e3f2fd;
+  border-left: 4px solid #3f51b5;
+  color: #3f51b5;
+}
+
+.day-header i {
+  padding: 5px;
+  margin-right: 0;
+  cursor: pointer;
+}
+
+.day-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#itinerary-planner {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#street-view-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+}
+
+#street-view-panorama {
+  width: 100%;
+  height: 100%;
+}
+
+.exit-pano-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 101;
 }
 
 #google-map {
