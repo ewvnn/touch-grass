@@ -193,7 +193,7 @@ npm run test
 Each member should contribute 2–3 sentences on their learning and project experience.
 
 **Example Template:**  
->*Boone:* I learnt vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage
+>*Boone:* I learnt Vue components and how to make websites modular by categorising reusable elements on each page into their own separate individual parts to form a cohesive webpage.I also learned for the first time how to collaborate on a coding project as a group, and I now have a deeper understanding on what is an efficient workflow and method of delegating roles and resonsibilities among groupmates to minimise conflicts in code and streamlining dependencies between pages and components.
 
 >*Ewen:* I learned about how implementing frameworks like Vue can build efficient websites that make web development easier. I learned how to apply HTML, CSS and Javascript to a functional website.
 
