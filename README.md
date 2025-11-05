@@ -1,4 +1,4 @@
-# �� IS216 Web Application Development II
+# IS216 Web Application Development II
 
 ---
 
@@ -11,8 +11,8 @@
 | Photo | Full Name | Role / Features Responsible For |
 |:--:|:--|:--|
 | <img src="photos/ewen.jpg" width="80"> | Ewen Chai | Frontend Developer - Search & Filter UI |
-| <img src="photos/member2.jpg" width="80"> | Ben Lee | Backend Developer - API endpoints |
-| <img src="photos/member3.jpg" width="80"> | Chloe Lim | UI/UX Designer - Layout & Color Themes |
+| <img src="photos/boone.jpeg" width="80"> | Richard Fritzgerald Boone | Backend Developer - API endpoints |
+| <img src="photos/xiaothong.png" width="80"> | Lai Xiao Thong | UI/UX Designer - Layout & Color Themes |
 | <img src="photos/member4.jpg" width="80"> | David Ong | Database & Auth - Firebase Integration |
 
 > Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
