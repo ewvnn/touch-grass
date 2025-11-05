@@ -63,20 +63,7 @@
           <div class="info-row">
             <strong>Email:</strong>
             <div class="field-content">
-              <template v-if="editingEmail">
-                <input v-model="editEmail" type="email" class="input" />
-                <button @click="saveEmail" class="btn-save-field">Save</button>
-                <button @click="cancelEditEmail" class="btn-cancel-field">Cancel</button>
-              </template>
-              <template v-else>
-                <span>{{ email || 'No email available' }}</span>
-                <img 
-                  src="/images/pencil-icon.png" 
-                  alt="Edit" 
-                  class="edit-icon"
-                  @click="startEditEmail"
-                />
-              </template>
+              <span>{{ email || 'No email available' }}</span>
             </div>
           </div>
 
@@ -89,7 +76,7 @@
 
           <p v-if="bio" class="bio">{{ bio }}</p>
           <p v-if="!hasFirestoreDoc" class="note">
-            (Profile document not found — showing auth data where available.)
+            (Profile document not found – showing auth data where available.)
           </p>
         </div>
 
@@ -231,7 +218,6 @@ import { auth, db, storage } from '../firebase.js';
 import FavouritesList from '../components/FavouritesList.vue';
 import { 
   onAuthStateChanged, 
-  updateEmail, 
   updateProfile, 
   reauthenticateWithCredential, 
   EmailAuthProvider, 
@@ -256,9 +242,7 @@ const dateJoined = ref('');
 const PLACEHOLDER_IMAGE = '/images/placeholder-avatar.png';
 
 const editingDisplayName = ref(false);
-const editingEmail = ref(false);
 const editDisplayName = ref('');
-const editEmail = ref('');
 
 const uploading = ref(false);
 
@@ -562,12 +546,6 @@ function startEditDisplayName() {
 }
 function cancelEditDisplayName() { editingDisplayName.value = false; }
 
-function startEditEmail() {
-  editingEmail.value = true;
-  editEmail.value = email.value;
-}
-function cancelEditEmail() { editingEmail.value = false; }
-
 async function isUnique(field, value, excludeUid) {
   const q = query(collection(db, 'users'), where(field, '==', value));
   const snapshot = await getDocs(q);
@@ -606,57 +584,6 @@ async function saveDisplayName() {
   } catch (err) { 
     console.error(err); 
     showToastNotification(err.message || String(err), 'error');
-  }
-}
-
-async function saveEmail() {
-  if (!currentUser) { 
-    showToastNotification('User not logged in.', 'error');
-    return; 
-  }
-  const newEmail = editEmail.value.trim();
-  if (!newEmail) { 
-    showToastNotification('Email cannot be empty.', 'error');
-    return; 
-  }
-  
-  // Check if email actually changed
-  if (newEmail === currentUser.email) {
-    showToastNotification('This is already your current email.', 'error');
-    editingEmail.value = false;
-    return;
-  }
-  
-  try {
-    const emailUnique = await isUnique('email', newEmail, currentUser.uid);
-    if (!emailUnique) { 
-      showToastNotification('This email is already in use.', 'error');
-      return; 
-    }
-    
-    // Update Firebase Auth email first
-    await updateEmail(currentUser, newEmail);
-    
-    // Then update Firestore
-    const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, { email: newEmail });
-    
-    email.value = newEmail; 
-    editingEmail.value = false;
-    showToastNotification('Email updated successfully!');
-  } catch(err) { 
-    console.error('Email update error:', err);
-    
-    // Provide more specific error messages
-    if (err.code === 'auth/requires-recent-login') {
-      showToastNotification('For security reasons, please log out and log back in before changing your email.', 'error');
-    } else if (err.code === 'auth/invalid-email') {
-      showToastNotification('Please enter a valid email address.', 'error');
-    } else if (err.code === 'auth/email-already-in-use') {
-      showToastNotification('This email is already in use by another account.', 'error');
-    } else {
-      showToastNotification(err.message || String(err), 'error');
-    }
   }
 }
 
