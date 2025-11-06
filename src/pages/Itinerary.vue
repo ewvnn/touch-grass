@@ -183,7 +183,7 @@
 
         </div>
 
-        <!-- Map Container: Always at the bottom, full width, Third on mobile -->
+        <!-- Map Container: Always at the bottom!, full width, Third on mobile -->
         <div class="col-12 order-3 map-container">
           <div id="google-map"></div>
 
