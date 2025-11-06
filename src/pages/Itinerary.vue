@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <!-- Itinerary Sidebar: Right on desktop (md+), First on mobile -->
+        <!-- Itinerary Sidebar: Left on desktop (md+), First on mobile -->
         <div class="col-12 col-md-6 order-1 order-md-1 itinerary-sidebar">
           <h2>Itinerary</h2>
 
@@ -81,6 +81,7 @@
                 </button>
               </div>
             </div>
+            <h5>Drag from your saved activity to your planned date or add a new place!</h5>
 
             <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
 
@@ -200,7 +201,7 @@
                 <h5 class="card-title">{{ selectedPlace.name }}</h5>
                 <p class="card-text description-text">{{ selectedPlace.description }}</p>
 
-                <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i> {{ selectedPlace.rating }}
+                <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i>{{ selectedPlace.rating }} ⭐️
                   ({{ selectedPlace.user_ratings_total }})</p>
 
                 <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
@@ -1165,7 +1166,7 @@ export default {
         website: place.website || '#',
         rating: place.rating || 'N/A',
         user_ratings_total: place.user_ratings_total || 0,
-        description: 'A brief description of this location (e.g., historical site, restaurant, park).',
+        description: '',
         photoUrl: place.photos && place.photos.length > 0
           ? place.photos[0].getUrl({ maxWidth: 200, maxHeight: 100 })
           : 'https://placehold.co/200x100/A0A0A0/FFFFFF?text=No+Image',
