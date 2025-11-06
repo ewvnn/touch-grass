@@ -30,27 +30,20 @@
                     <div class="list-group-item" style="cursor: grab;">
                       <strong>{{ element.title }}</strong>
                       <small class="d-block text-muted">{{ element.location }}</small>
-                      <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
+                      <small class="d-block text-muted mt-1">{{ element.date }}</small>
                       <small class="d-block mt-1">
-                        <span 
-                        class="badge" 
-                        :style="{ 
-                          backgroundColor: tagStyles(element.category).bg, 
-                          color: tagStyles(element.category).fg 
-                        }"
-                      >
-                        {{ element.category }}
-                      </span>
-                      <span 
-                        v-if="element.badge" 
-                        class="badge ms-1"
-                        :style="{ 
-                          backgroundColor: badgeStyles(element.badge).bg, 
-                          color: badgeStyles(element.badge).fg 
-                        }"
-                      >
-                        {{ element.badge }}
-                      </span>
+                        <span class="badge" :style="{
+                          backgroundColor: tagStyles(element.category).bg,
+                          color: tagStyles(element.category).fg
+                        }">
+                          {{ element.category }}
+                        </span>
+                        <span v-if="element.badge" class="badge ms-1" :style="{
+                          backgroundColor: badgeStyles(element.badge).bg,
+                          color: badgeStyles(element.badge).fg
+                        }">
+                          {{ element.badge }}
+                        </span>
                       </small>
                     </div>
                   </template>
@@ -60,7 +53,7 @@
           </div>
         </div>
 
-        <!-- Itinerary Sidebar: Right on desktop (md+), First on mobile -->
+        <!-- Itinerary Sidebar: Left on desktop (md+), First on mobile -->
         <div class="col-12 col-md-6 order-1 order-md-1 itinerary-sidebar">
           <h2>Itinerary</h2>
 
@@ -68,7 +61,7 @@
             <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
             <button @click="showDateSelectionModal = true"
               class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
-              <span class="me-2">📅</span> Add trip dates
+              <span class="me-2"></span> Add trip dates
             </button>
           </div>
 
@@ -77,10 +70,10 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
               <span class="fs-5 fw-bold text-success">{{ dateRangeDisplay }}</span>
               <div>
-                <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
+                <button class="btn btn-sm btn-success me-2" @click="saveAndReload" 
                   :disabled="!currentUser || !tripId || isSaving">
                   <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                  <span v-else class="me-1">💾</span>
+                  <!-- <span v-else class="me-1">💾</span> -->
                   Save
                 </button>
                 <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
@@ -88,6 +81,7 @@
                 </button>
               </div>
             </div>
+            <h5>Drag from your saved activity to your planned date or add a new place!</h5>
 
             <div v-for="date in Object.keys(dailyItinerary)" :key="date" class="itinerary-day-section">
 
@@ -139,12 +133,21 @@
                           <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], element)" target="_blank"
                             class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
                         </div>
+
+                        <div v-if="index === 0"
+                          class="route-info d-flex align-items-center mt-2 pt-2 border-top">
+                          <span class="distance-text me-3">Start your journey here:</span>
+                          <a :href="getStartDirectionsUrl(element)" target="_blank"
+                            class="btn btn-sm btn-link p-0 directions-btn">
+                            <i class="fas fa-car me-1"></i> Route from my location
+                          </a>
+                        </div>
                       </div>
 
                       <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
-                        <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
+                        <button @click="removePlace(date, index)" class="btn btn-sm p-1"
                           title="Remove place">
-                          <span>🗑️</span>
+                          <span> <img class="remove-icon" src="../../public/images/remove-icon.png" alt=""></span>
                         </button>
                       </div>
                     </div>
@@ -198,7 +201,7 @@
                 <h5 class="card-title">{{ selectedPlace.name }}</h5>
                 <p class="card-text description-text">{{ selectedPlace.description }}</p>
 
-                <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i> {{ selectedPlace.rating }}
+                <p class="rating-text fw-bold"><i class="fas fa-star text-warning me-1"></i>{{ selectedPlace.rating }} ⭐️
                   ({{ selectedPlace.user_ratings_total }})</p>
 
                 <p class="address-text"><i class="fas fa-map-marker-alt"></i> {{ selectedPlace.address }}</p>
@@ -692,6 +695,21 @@ export default {
       }
     },
 
+    // Add this new method
+    async saveAndReload() {
+      try {
+        // Wait for the save to complete
+        await this.saveItinerary();
+        
+        // NOW, force the page to reload
+        location.reload();
+        
+      } catch (error) {
+        // If the save fails, log it and DON'T reload
+        console.error("Save failed, not reloading:", error);
+      }
+    },
+
 
 
 
@@ -734,25 +752,25 @@ export default {
     // In your 'methods: { ... }' object
 
     setActiveDay(date) {
-  // 1. Set the active date
-  this.activeDate = date;
+      // 1. Set the active date
+      this.activeDate = date;
 
-  // 2. Loop through all days to collapse/expand
-  Object.keys(this.dailyItinerary).forEach(dayKey => {
-    if (dayKey === date) {
-      // This is the active day, expand it
-      this.dailyItinerary[dayKey].isExpanded = true;
-    } else {
-      // This is an inactive day, collapse it
-      this.dailyItinerary[dayKey].isExpanded = false;
-    }
-  });
+      // 2. Loop through all days to collapse/expand
+      Object.keys(this.dailyItinerary).forEach(dayKey => {
+        if (dayKey === date) {
+          // This is the active day, expand it
+          this.dailyItinerary[dayKey].isExpanded = true;
+        } else {
+          // This is an inactive day, collapse it
+          this.dailyItinerary[dayKey].isExpanded = false;
+        }
+      });
 
-  // 3. Clear the map and render the route for the active day
-  this.$nextTick(() => {
-    this.renderRoute();
-  });
-},
+      // 3. Clear the map and render the route for the active day
+      this.$nextTick(() => {
+        this.renderRoute();
+      });
+    },
 
     // *** NEW: DELETE DAY METHODS ***
     showDeleteDayConfirm(date) {
@@ -1148,7 +1166,7 @@ export default {
         website: place.website || '#',
         rating: place.rating || 'N/A',
         user_ratings_total: place.user_ratings_total || 0,
-        description: 'A brief description of this location (e.g., historical site, restaurant, park).',
+        description: '',
         photoUrl: place.photos && place.photos.length > 0
           ? place.photos[0].getUrl({ maxWidth: 200, maxHeight: 100 })
           : 'https://placehold.co/200x100/A0A0A0/FFFFFF?text=No+Image',
@@ -1293,16 +1311,16 @@ export default {
      * (reordering OR adding). We just update the map.
      */
     onDragEnd() {
-  // Force re-render after drag to update pin numbers
-  this.$nextTick(() => {
-    // Clear existing markers first
-    this.currentMarkers.forEach(m => m.setMap(null));
-    this.currentMarkers = [];
-    
-    // Then render the route with new order
-    this.renderRoute();
-  });
-},
+      // Force re-render after drag to update pin numbers
+      this.$nextTick(() => {
+        // Clear existing markers first
+        this.currentMarkers.forEach(m => m.setMap(null));
+        this.currentMarkers = [];
+
+        // Then render the route with new order
+        this.renderRoute();
+      });
+    },
 
 
     async removePlace(date, index) {
@@ -1352,70 +1370,70 @@ export default {
 
     // },
 
-   toggleDay(date) {
-  const wasExpanded = this.dailyItinerary[date].isExpanded;
-  
-  // Toggle the expansion state
-  this.dailyItinerary[date].isExpanded = !wasExpanded;
+    toggleDay(date) {
+      const wasExpanded = this.dailyItinerary[date].isExpanded;
 
-  // If we just expanded this day, make it the active day and render its route
-  if (!wasExpanded) {
-    this.activeDate = date;
-    // Collapse all other days
-    Object.keys(this.dailyItinerary).forEach(dayKey => {
-      if (dayKey !== date) {
-        this.dailyItinerary[dayKey].isExpanded = false;
+      // Toggle the expansion state
+      this.dailyItinerary[date].isExpanded = !wasExpanded;
+
+      // If we just expanded this day, make it the active day and render its route
+      if (!wasExpanded) {
+        this.activeDate = date;
+        // Collapse all other days
+        Object.keys(this.dailyItinerary).forEach(dayKey => {
+          if (dayKey !== date) {
+            this.dailyItinerary[dayKey].isExpanded = false;
+          }
+        });
+        this.$nextTick(() => {
+          this.renderRoute();
+        });
+      } else {
+        // If we just collapsed this day, clear the map completely
+        this.activeDate = null;
+
+        // Use the dedicated clear method
+        this.clearMapCompletely();
       }
-    });
-    this.$nextTick(() => {
-      this.renderRoute();
-    });
-  } else {
-    // If we just collapsed this day, clear the map completely
-    this.activeDate = null;
-    
-    // Use the dedicated clear method
-    this.clearMapCompletely();
-  }
-},
-clearMapCompletely() {
-  console.log('clearMapCompletely called');
-  
-  // Clear all numbered location markers
-  if (this.currentMarkers && this.currentMarkers.length > 0) {
-    console.log('Clearing', this.currentMarkers.length, 'markers');
-    this.currentMarkers.forEach((marker, index) => {
-      console.log('Removing marker', index, 'position:', marker.getPosition()?.toString());
-      if (marker) {
-        marker.setMap(null); // Remove from map
-        marker.setVisible(false); // Make invisible
+    },
+    clearMapCompletely() {
+      console.log('clearMapCompletely called');
+
+      // Clear all numbered location markers
+      if (this.currentMarkers && this.currentMarkers.length > 0) {
+        console.log('Clearing', this.currentMarkers.length, 'markers');
+        this.currentMarkers.forEach((marker, index) => {
+          console.log('Removing marker', index, 'position:', marker.getPosition()?.toString());
+          if (marker) {
+            marker.setMap(null); // Remove from map
+            marker.setVisible(false); // Make invisible
+          }
+        });
+        this.currentMarkers.length = 0; // Clear array differently
+        this.currentMarkers = []; // Also reassign
+        console.log('All markers cleared. currentMarkers length:', this.currentMarkers.length);
+      } else {
+        console.log('No markers to clear');
       }
-    });
-    this.currentMarkers.length = 0; // Clear array differently
-    this.currentMarkers = []; // Also reassign
-    console.log('All markers cleared. currentMarkers length:', this.currentMarkers.length);
-  } else {
-    console.log('No markers to clear');
-  }
-  
-  // Clear the route line
-  if (this.directionsRenderer) {
-    this.directionsRenderer.set('directions', null);
-    this.directionsRenderer.setMap(null);
-    this.directionsRenderer.setMap(this.map);
-    console.log('Route cleared');
-  }
-  
-  // Clear search marker
-  if (this.marker) {
-    this.marker.setMap(null);
-    this.marker.setVisible(false);
-    this.marker = null;
-    console.log('Search marker cleared');
-  }
-  
-  console.log('clearMapCompletely finished');
-},
+
+      // Clear the route line
+      if (this.directionsRenderer) {
+        this.directionsRenderer.set('directions', null);
+        this.directionsRenderer.setMap(null);
+        this.directionsRenderer.setMap(this.map);
+        console.log('Route cleared');
+      }
+
+      // Clear search marker
+      if (this.marker) {
+        this.marker.setMap(null);
+        this.marker.setVisible(false);
+        this.marker = null;
+        console.log('Search marker cleared');
+      }
+
+      console.log('clearMapCompletely finished');
+    },
 
     updateItineraryList() {
       this.itinerary = Object.values(this.dailyItinerary).flatMap(day => day.places);
@@ -1423,37 +1441,37 @@ clearMapCompletely() {
 
     // REPLACE your entire renderRoute function with this one:
     renderRoute() {
-  // 1. --- CLEAR THE MAP COMPLETELY ---
-  console.log('Clearing map. Current markers count:', this.currentMarkers.length);
-  
-  // Clear search marker
-  if (this.marker) {
-    this.marker.setMap(null);
-    this.marker = null;
-  }
-  
-  // Clear ALL numbered location markers
-  if (this.currentMarkers && this.currentMarkers.length > 0) {
-    this.currentMarkers.forEach(m => {
-      if (m && m.setMap) {
-        m.setMap(null);
+      // 1. --- CLEAR THE MAP COMPLETELY ---
+      console.log('Clearing map. Current markers count:', this.currentMarkers.length);
+
+      // Clear search marker
+      if (this.marker) {
+        this.marker.setMap(null);
+        this.marker = null;
       }
-    });
-    this.currentMarkers = [];
-  }
-  
-  // Clear the route line
-  if (this.directionsRenderer) {
-    this.directionsRenderer.setDirections({ routes: [] });
-  }
 
-  // 2. --- FIND THE *ACTIVE* DAY --- 
-  if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
-    console.log('No active day to render. Map is clean.');
-    return;
-  }
+      // Clear ALL numbered location markers
+      if (this.currentMarkers && this.currentMarkers.length > 0) {
+        this.currentMarkers.forEach(m => {
+          if (m && m.setMap) {
+            m.setMap(null);
+          }
+        });
+        this.currentMarkers = [];
+      }
 
-  console.log('Rendering route for active date:', this.activeDate);
+      // Clear the route line
+      if (this.directionsRenderer) {
+        this.directionsRenderer.set('directions', null);
+      }
+
+      // 2. --- FIND THE *ACTIVE* DAY --- 
+      if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
+        console.log('No active day to render. Map is clean.');
+        return;
+      }
+
+      console.log('Rendering route for active date:', this.activeDate);
 
       const date = this.activeDate;
       const places = this.dailyItinerary[date].places;
@@ -1464,36 +1482,33 @@ clearMapCompletely() {
       }
 
       // 3. --- DRAW ALL PINS FOR THE ACTIVE DAY ---
-places.forEach((place, index) => {
-  // Check if place has valid coordinates
-  if (!place.lat || !place.lng) {
-    console.warn(`Skipping marker for "${place.name}" - missing coordinates.`);
-    return; // Skip this pin
-  }
+      let labelCounter = 1;
+      places.forEach((place) => {
+        // Use null/undefined check so 0 is allowed (avoid falsy check)
+        if (place.lat == null || place.lng == null) {
+          console.warn(`Skipping marker for "${place.name}" - missing coordinates.`);
+          return;
+        }
 
-  const marker = new google.maps.Marker({
-    position: { lat: place.lat, lng: place.lng },
-    map: null, // Don't set map yet
-    label: {
-      text: `${index + 1}`,
-      color: 'white',
-      fontWeight: 'bold'
-    },
-    title: place.name,
-  });
-  
-  // Explicitly set the map
-  marker.setMap(this.map);
-  
-  this.currentMarkers.push(marker);
-  console.log('Created marker', index + 1, 'at', place.name);
-});
+        const marker = new google.maps.Marker({
+          position: { lat: place.lat, lng: place.lng },
+          map: this.map,
+          label: {
+            // text: String(labelCounter++),
+            color: 'white',
+            fontWeight: 'bold'
+          },
+          title: place.name
+        });
+
+        this.currentMarkers.push(marker);
+      });
 
       // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
       if (places.length < 2) return;
 
       // Filter out any places that failed geocoding
-      const validPlaces = places.filter(p => p.lat && p.lng);
+      const validPlaces = places.filter(p => p.lat != null && p.lng != null);
       if (validPlaces.length < 2) return;
 
       const origin = validPlaces[0];
@@ -1544,7 +1559,7 @@ places.forEach((place, index) => {
         const place = updatedPlaces[i];
 
         // If this place has valid coords, it should correspond to the next leg
-        if (place.lat && place.lng && legs[legIndex]) {
+        if (place.lat != null && place.lng != null && legs[legIndex]) {
           place.distance = legs[legIndex].distance.text;
           place.duration = legs[legIndex].duration.text;
           legIndex++; // Move to the next leg
@@ -1580,10 +1595,28 @@ places.forEach((place, index) => {
       };
     },
 
+        /**
+     * Generates a Google Maps URL for routing from the user's current location 
+     * to the specified destination.
+     * * @param {Object} destination - The place object to route to.
+     * @returns {string} The Google Maps directions URL.
+     */
+    getStartDirectionsUrl(destination) {
+      // Use a blank string or 'Current+Location' for the origin, 
+      // which prompts Google Maps to use the user's location.
+      const originStr = ''; 
+      const destStr = `${destination.lat},${destination.lng}`;
+
+      // The base Google Maps directions URL structure
+      return `https://www.google.com/maps/dir/${originStr}/${destStr}/`;
+    },
+    
+
     getDirectionsUrl(origin, destination) {
       const originStr = `${origin.lat},${origin.lng}`;
       const destStr = `${destination.lat},${destination.lng}`;
-      return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+      // Corrected URL structure
+      return `https://www.google.com/maps/dir/${originStr}/${destStr}/data=!4m2!4m1!3e0`; // data=!4m2!4m1!3e0 often forces DRIVING mode
     },
 
 
@@ -1820,6 +1853,12 @@ places.forEach((place, index) => {
     height: 50vh;
     min-height: 300px;
   }
+}
+
+.remove-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .sidebar-save-bar {

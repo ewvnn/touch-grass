@@ -41,8 +41,8 @@
       <div class="right">
         <div class="info-section">
           <div class="info-row">
-            <strong>Username:</strong>
-            <div class="field-content">
+            <strong>Username:  </strong>
+            <div class="field-content d-flex align-items-center justify-content-md-start justify-content-center gap-2 flex-wrap">
               <template v-if="editingDisplayName">
                 <input v-model="editDisplayName" type="text" class="input" />
                 <button @click="cancelEditDisplayName" class="btn-cancel-field">Cancel</button>
@@ -62,14 +62,14 @@
 
           <div class="info-row">
             <strong>Email:</strong>
-            <div class="field-content">
+            <div class="field-content d-flex align-items-center justify-content-md-start justify-content-center gap-2 flex-wrap">
               <span>{{ email || 'No email available' }}</span>
             </div>
           </div>
 
           <div class="info-row">
             <strong>Date Joined:</strong>
-            <div class="field-content">
+            <div class="field-content d-flex align-items-center justify-content-md-start justify-content-center gap-2 flex-wrap">
               <span>{{ dateJoined || 'N/A' }}</span>
             </div>
           </div>
@@ -818,7 +818,7 @@ async function changePassword() {
   }
 }
 
-.field-content { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.field-content { flex-wrap: wrap; }
 
 .input { 
   flex: 1; 
