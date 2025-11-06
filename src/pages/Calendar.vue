@@ -297,9 +297,7 @@ export default {
         const userDoc = await getDoc(doc(db, "users", this.currentUser.uid));
         this.activities = userDoc.exists() ? userDoc.data().favouritesList || [] : [];
 
-        // Remember which activities were on calendar before refresh
-        const previousActivitiesOnCalendar = new Set(this.activitiesOnCalendar);
-
+        
         // Clear all activity events from calendar
         this.calendar.getEvents().forEach(event => {
           if (event.extendedProps.isActivity) {
@@ -310,19 +308,11 @@ export default {
         // Reset the tracking set
         this.activitiesOnCalendar.clear();
 
-        // Re-add activities that were previously on calendar
         this.activities.forEach((activity) => {
-          if (previousActivitiesOnCalendar.has(activity.id)) {
-            this.addActivityToCalendar(activity);
-          }
+          this.addActivityToCalendar(activity);
         });
 
         // If no activities were previously tracked (first load), add all by default
-        if (previousActivitiesOnCalendar.size === 0) {
-          this.activities.forEach((activity) => {
-            this.addActivityToCalendar(activity);
-          });
-        }
       } catch (error) {
         console.error("Error loading favourites:", error);
       } finally {
