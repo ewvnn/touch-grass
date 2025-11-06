@@ -90,15 +90,16 @@
         <p>Are you sure you want to remove <strong>{{ friendToRemove?.displayName }}</strong> from your friends list?</p>
         
         <div class="modal-buttons">
+          <button @click="closeRemoveModal" class="btn-cancel-remove">
+            Cancel
+          </button>
+          
           <button 
             @click="confirmRemoveFriend" 
             class="btn-confirm-remove"
             :disabled="removingFriend"
           >
             {{ removingFriend ? 'Removing...' : 'Yes, Remove' }}
-          </button>
-          <button @click="closeRemoveModal" class="btn-cancel-remove">
-            Cancel
           </button>
         </div>
       </div>

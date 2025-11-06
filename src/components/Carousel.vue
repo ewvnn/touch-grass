@@ -83,6 +83,7 @@
                 :label="chip.label" :kind="chip.kind" />
             </div>
             <p class="mb-2"><strong>Location:</strong> {{ selectedEvent.location }}</p>
+            
             <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
 
             <p class="mb-2"><strong>Time:</strong> {{ selectedEvent.duration }}</p>

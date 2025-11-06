@@ -43,6 +43,9 @@
         <p>Are you sure you want to remove <strong>{{ favouriteToRemove?.title }}</strong> from your favourites?</p>
         
         <div class="modal-buttons">
+          <button @click="closeRemoveModal" class="btn-cancel-remove">
+            Cancel
+          </button>
           <button 
             @click="confirmRemoveFavourite" 
             class="btn-confirm-remove"
@@ -50,9 +53,7 @@
           >
             {{ removingFavourite ? 'Removing...' : 'Yes, Remove' }}
           </button>
-          <button @click="closeRemoveModal" class="btn-cancel-remove">
-            Cancel
-          </button>
+          
         </div>
       </div>
     </div>

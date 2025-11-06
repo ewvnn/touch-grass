@@ -45,8 +45,8 @@
             <div class="field-content">
               <template v-if="editingDisplayName">
                 <input v-model="editDisplayName" type="text" class="input" />
-                <button @click="saveDisplayName" class="btn-save-field">Save</button>
                 <button @click="cancelEditDisplayName" class="btn-cancel-field">Cancel</button>
+                <button @click="saveDisplayName" class="btn-save-field">Save</button>
               </template>
               <template v-else>
                 <span class="username">{{ displayName || 'No username set' }}</span>
@@ -111,10 +111,10 @@
         <p v-if="passwordSuccess" class="success">{{ passwordSuccess }}</p>
 
         <div class="modal-buttons">
+          <button @click="closePasswordModal">Cancel</button>
           <button @click="changePassword" :disabled="passwordLoading">
             {{ passwordLoading ? 'Updating...' : 'Update Password' }}
           </button>
-          <button @click="closePasswordModal">Cancel</button>
         </div>
       </div>
     </div>
@@ -936,21 +936,21 @@ async function changePassword() {
   cursor: pointer;
 }
 
-.modal button:first-child {
+.modal button:last-child {
   background: #16a34a;
   color: #fff;
 }
 
-.modal button:first-child:hover {
+.modal button:last-child:hover {
   background: #15803d;
 }
 
-.modal button:last-child {
+.modal button:first-child {
   background: #e5e7eb;
   color: #374151;
 }
 
-.modal button:last-child:hover {
+.modal button:first-child:hover {
   background: #d1d5db;
 }
 
