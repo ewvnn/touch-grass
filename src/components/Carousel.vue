@@ -240,6 +240,7 @@ export default {
         alert('Failed to update favourites. Error: ' + error.message);
       } finally {
         this.savingFavourite = false;
+        this.closeModal();
       }
     },
 
