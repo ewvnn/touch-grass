@@ -21,6 +21,7 @@
               <div class="img-wrap">
                 <img :src="event.image" class="card-img-top" :alt="event.title" />
               </div>
+
               <div class="card-body">
                 <div class="modal-tags mb-2">
                   <EventChip v-for="chip in chipsForPrimary(event)" :key="chip.kind + '-' + chip.label"
@@ -65,11 +66,7 @@
           <div class="modal-header justify-content-between align-items-center">
             <h5 class="modal-title mb-0">{{ selectedEvent.title }}</h5>
             <div class="d-flex align-items-center gap-2">
-              <button v-if="selectedEvent" class="btn p-0 fav-btn" :aria-pressed="isFavourite(selectedEvent.id)"
-                :title="isFavourite(selectedEvent.id) ? 'Remove from favourites' : 'Save to favourites'"
-                :disabled="savingFavourite" @click.stop="toggleFavourite">
-                <i :class="['bi', isFavourite(selectedEvent.id) ? 'bi-heart-fill' : 'bi-heart']"></i>
-              </button>
+              
 
               <button type="button" class="btn-close" @click="closeModal"></button>
             </div>
@@ -78,10 +75,19 @@
             <!-- Fixed-size modal image -->
             <img :src="selectedEvent.image" class="img-fluid rounded mb-3" :alt="selectedEvent.title"
               style="width: 100%; height: 300px; object-fit: cover;" />
-            <div class="mb-2 modal-tags">
-              <EventChip v-for="chip in chipsForPrimary(selectedEvent)" :key="chip.kind + '-' + chip.label"
-                :label="chip.label" :kind="chip.kind" />
+
+            <div class="modal-header-tags d-flex align-items-center justify-content-between mb-2">
+              <div class="modal-tags">
+                <EventChip v-for="chip in chipsForPrimary(selectedEvent)" :key="chip.kind + '-' + chip.label"
+                  :label="chip.label" :kind="chip.kind" />
+              </div>
+              <button class="btn p-0 fav-btn" :aria-pressed="isFavourite(selectedEvent.id)"
+                  :title="isFavourite(selectedEvent.id) ? 'Remove from favourites' : 'Save to favourites'"
+                  :disabled="savingFavourite" @click.stop="toggleFavourite">
+                  <i :class="['bi', isFavourite(selectedEvent.id) ? 'bi-heart-fill' : 'bi-heart']"></i>
+              </button>
             </div>
+
             <p class="mb-2"><strong>Location:</strong> {{ selectedEvent.location }}</p>
             
             <p class="mb-2"><strong>Date:</strong> {{ selectedEvent.date }}</p>
@@ -413,9 +419,10 @@ export default {
 }
 
 .modal-content {
-  max-height: 90dvh;
+  max-height: 93dvh;
   border-radius: 12px;
 }
+
 
 .price {
   font-weight: 700;
@@ -499,4 +506,32 @@ export default {
     width: 33.333%;
   }
 }
+
+.modal-header-tags {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-header-tags .modal-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.modal-header-tags .fav-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.modal-content {
+  padding-bottom: 24px;
+}
+.modal-footer {
+  padding-bottom: 12px;
+}
+
 </style>
