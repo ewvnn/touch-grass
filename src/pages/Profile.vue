@@ -8,11 +8,13 @@
       <!-- Left: profile picture -->
       <div class="left">
         <div class="avatar-container">
-          <img
-            class="avatar"
-            :src="avatarUrl"
-            alt="Profile picture"
-          />
+          <div class="avatar-wrapper">
+            <img class="avatar" :src="avatarUrl" alt="Profile picture" />
+            <div v-if="uploading" class="avatar-overlay">
+              <span>{{ uploading === 'deleting' ? 'Deleting...' : 'Uploading...' }}</span>
+            </div>
+          </div>
+
           <div class="avatar-buttons">
             <label for="profile-pic-upload" class="btn-upload-pic bg-success">
               Upload Picture
@@ -33,7 +35,6 @@
               Delete Picture
             </button>
           </div>
-          <p v-if="uploading">{{ uploading === 'deleting' ? 'Deleting...' : 'Uploading...' }}</p>
         </div>
       </div>
 
@@ -1196,4 +1197,24 @@ async function changePassword() {
 .btn-confirm:hover {
   background: #16a34a;
 }
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
 </style>
