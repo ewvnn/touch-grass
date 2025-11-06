@@ -152,6 +152,10 @@ npm run build
 npm run preview
 ```
 
+To deploy to the web:
+```bash
+firebase deploy --only hosting
+```
 ---
 
 ### 5) Testing the Application
