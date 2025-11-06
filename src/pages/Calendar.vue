@@ -157,8 +157,8 @@
             <div ref="availabilityCalendar" class="availability-calendar-container"></div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" @click="showAvailabilityModal = false">Close</button>
-            <button type="button" class="btn-success" @click="saveAvailability">Save Changes</button>
+            <button type="button" class="btn btn-secondary" @click="showAvailabilityModal = false">Close</button>
+            <button type="button" class="btn btn-success" @click="saveAvailability">Save Changes</button>
           </div>
         </div>
       </div>
@@ -497,7 +497,7 @@ export default {
           plugins: [dayGridPlugin, interactionPlugin],
           initialView: "dayGridMonth",
           validRange: {
-            start: new Date().toISOString().split('T')[0] // Allow selection from today onwards
+            start: new Date().toLocaleDateString('en-CA') // gives YYYY-MM-DD in local timezone
           },
           dateClick: (info) => {
             this.toggleUserAvailability(info.dateStr);
