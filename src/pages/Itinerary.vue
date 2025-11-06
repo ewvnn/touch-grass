@@ -3,9 +3,9 @@
 
     <div class="itinerary-split-view container-fluid">
       <div class="row g-3 w-100">
-        
+
         <!-- Saved Activities Column: Left on desktop (md+), Second on mobile -->
-       <div class="col-12 col-md-6 order-2 order-md-2">
+        <div class="col-12 col-md-6 order-2 order-md-2">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="mb-0">Saved Activities</h5>
@@ -51,7 +51,7 @@
             <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
             <button @click="showDateSelectionModal = true"
               class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
-              <i class="fas fa-calendar-alt me-2"></i> Add trip dates
+              <span class="me-2">📅</span> Add trip dates
             </button>
           </div>
 
@@ -63,7 +63,7 @@
                 <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
                   :disabled="!currentUser || !tripId || isSaving">
                   <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                  <i v-else class="fas fa-save me-1"></i>
+                  <span v-else class="me-1">💾</span>
                   Save
                 </button>
                 <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
@@ -78,12 +78,15 @@
                 {{ formatDay(date) }}
 
                 <span class="day-header-controls">
-                  <button @click.stop="showDeleteDayConfirm(date)" class="btn btn-sm btn-danger" title="Delete this day">
+                  <button @click.stop="showDeleteDayConfirm(date)" class="btn btn-sm btn-danger"
+                    title="Delete this day">
                     Delete
                   </button>
 
-                  <i @click.stop="toggleDay(date)"
-                    :class="['fas', dailyItinerary[date].isExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+                  <span @click.stop="toggleDay(date)"
+                    style="width: 20px; display: inline-block; text-align: center; cursor: pointer; color: green;">
+                    {{ dailyItinerary[date].isExpanded ? '▲' : '▼' }}
+                  </span>
                 </span>
               </h3>
 
@@ -124,7 +127,7 @@
                       <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
                         <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
                           title="Remove place">
-                          <i class="fas fa-trash"></i>
+                          <span>🗑️</span>
                         </button>
                       </div>
                     </div>
@@ -137,21 +140,21 @@
                 </button>
               </div>
               <small v-if="!tripId" class="text-muted d-block mt-2">
-              Choose dates first to create this trip.
-            </small>
-            <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
-              Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
-            </small>
+                Choose dates first to create this trip.
+              </small>
+              <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
+                Last saved: {{ new Date(lastSavedAt).toLocaleTimeString() }}
+              </small>
               <hr />
             </div>
           </div>
-          
 
-            <!-- <button class="btn btn-success w-100" @click="saveItinerary" :disabled="!currentUser || !tripId || isSaving">
+
+          <!-- <button class="btn btn-success w-100" @click="saveItinerary" :disabled="!currentUser || !tripId || isSaving">
               <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
               Save itinerary
             </button> -->
-            <!-- <small v-if="!tripId" class="text-muted d-block mt-2">
+          <!-- <small v-if="!tripId" class="text-muted d-block mt-2">
               Choose dates first to create this trip.
             </small>
             <small v-else-if="lastSavedAt" class="text-muted d-block mt-2">
@@ -203,7 +206,8 @@
                   first.</small>
               </div>
               <div class="col-md-4 text-center">
-                <img :src="selectedPlace.photoUrl" class="img-fluid rounded-start place-photo" :alt="selectedPlace.name">
+                <img :src="selectedPlace.photoUrl" class="img-fluid rounded-start place-photo"
+                  :alt="selectedPlace.name">
               </div>
             </div>
           </div>
@@ -281,7 +285,7 @@ import { nextTick } from 'vue';
 import { auth, db } from "../firebase.js"; // Adjust path if needed
 import {
   doc, setDoc, getDoc, addDoc, collection, serverTimestamp, onSnapshot,
-  getDocs, query, orderBy, limit,updateDoc
+  getDocs, query, orderBy, limit, updateDoc
 } from "firebase/firestore";
 
 import { onAuthStateChanged } from "firebase/auth";
@@ -518,7 +522,7 @@ export default {
       // Loop through the *selected* date range
       for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
         const dateStr = new Date(t).toISOString().split('T')[0];
-        
+
         // If the day *doesn't* exist in our copy, add it as a new empty day.
         // If it *does* exist (like Nov 19), this check is skipped,
         // and the existing data is preserved.
@@ -529,11 +533,11 @@ export default {
           };
         }
       }
-      
+
       // We no longer need the destructive "finalDailyItinerary" filtering logic.
       // This new object *is* the final object.
       this.dailyItinerary = newDailyItinerary;
-      
+
       // --- END OF FIX ---
 
       // Now, find the *true* first and last day from all keys
@@ -778,7 +782,7 @@ export default {
       // 1. Create a new object without the deleted day
       const newDailyItinerary = { ...this.dailyItinerary };
       delete newDailyItinerary[date];
-      
+
       // 2. Set the local state
       this.dailyItinerary = newDailyItinerary;
 
@@ -803,7 +807,7 @@ export default {
 
     // async deleteDay() {
     //   if (!this.dateToDelete) return;
-      
+
     //   this.isUpdatingLocally = true; // <-- SET FLAG: "Don't listen!"
 
     //   try {
@@ -812,7 +816,7 @@ export default {
     //     // Create a new object *without* the deleted day's key
     //     const newDailyItinerary = { ...this.dailyItinerary };
     //     delete newDailyItinerary[date];
-        
+
     //     this.dailyItinerary = newDailyItinerary;
 
     //     // Reset the modal
@@ -821,7 +825,7 @@ export default {
 
     //     // Update the helper list
     //     this.updateItineraryList();
-        
+
     //     // Check if the active date was the one deleted
     //     this.ensureValidActiveDate();
 
@@ -831,7 +835,7 @@ export default {
 
     //   } catch (error) {
     //     console.error("Error saving after day deletion:", error);
-      
+
     //   } finally {
     //     // --- THIS IS CRITICAL ---
     //     // No matter what happens, turn the listener back on
@@ -846,7 +850,7 @@ export default {
     // deleteDay() {
     //   if (!this.dateToDelete) return;
 
-      
+
 
     //   const date = this.dateToDelete;
 
@@ -1474,10 +1478,10 @@ export default {
     },
 
     getDirectionsUrl(origin, destination) {
-  const originStr = `${origin.lat},${origin.lng}`;
-  const destStr = `${destination.lat},${destination.lng}`;
-  return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
-},
+      const originStr = `${origin.lat},${origin.lng}`;
+      const destStr = `${destination.lat},${destination.lng}`;
+      return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+    },
 
 
     // --- Formatting Helpers ---
@@ -1642,40 +1646,42 @@ export default {
     padding-bottom: 100px;
     max-height: 70vh;
   }
-  
+
   .activities-scrollable {
     max-height: calc(70vh - 120px);
     overflow-y: auto;
   }
+
   /* Saved Activities Card - Pop-up window styling */
-.col-12.col-md-6.order-2{
-  background-color: #fff;
-}
-.col-12.col-md-6.order-2 .card {
-  margin: 20px;
-  max-height: 70vh;
-  /* height: 500px; */
-  
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e0e0e0;
-}
-
-@media (min-width: 768px) {
-  .col-12.col-md-6.order-2 .card {
-    position: static;
-    top: 20px;
-    max-width: 90%;
-    margin-left: auto;
-    margin-right: auto;
+  .col-12.col-md-6.order-2 {
+    background-color: #fff;
   }
-}
 
-@media (max-width: 767px) {
   .col-12.col-md-6.order-2 .card {
-    margin: 10px;
+    margin: 20px;
+    max-height: 70vh;
+    /* height: 500px; */
+
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e0e0e0;
   }
-}
+
+  @media (min-width: 768px) {
+    .col-12.col-md-6.order-2 .card {
+      position: static;
+      top: 20px;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .col-12.col-md-6.order-2 .card {
+      margin: 10px;
+    }
+  }
 }
 
 /* On small screens, make sidebars scrollable but not too tall */
@@ -1683,7 +1689,7 @@ export default {
   .itinerary-sidebar {
     max-height: 60vh;
   }
-  
+
   .activities-scrollable {
     max-height: 50vh;
     overflow-y: auto;
