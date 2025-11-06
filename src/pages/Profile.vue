@@ -838,7 +838,7 @@ async function changePassword() {
   }
 }
 
-.btn-save-field, .btn-change-password { padding: 0.4rem 0.8rem; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
+.btn-save-field, .btn-change-password { padding: 0.4rem 0.8rem; background: #15803d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
 .btn-save-field:hover, .btn-change-password:hover { background: #15803d; }
 .btn-cancel-field { padding: 0.4rem 0.8rem; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
 .btn-cancel-field:hover { background: #d1d5db; }
