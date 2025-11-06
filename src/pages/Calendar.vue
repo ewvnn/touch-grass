@@ -70,8 +70,25 @@
                     <small class="d-block text-muted">{{ activity.location }}</small>
                     <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
                     <small class="d-block mt-1">
-                      <span class="badge bg-info">{{ activity.category }}</span>
-                      <span v-if="activity.badge" class="badge bg-warning ms-1">{{ activity.badge }}</span>
+                      <span 
+                        class="badge" 
+                        :style="{ 
+                          backgroundColor: tagStyles(activity.category).bg, 
+                          color: tagStyles(activity.category).fg 
+                        }"
+                      >
+                        {{ activity.category }}
+                      </span>
+                      <span 
+                        v-if="activity.badge" 
+                        class="badge ms-1"
+                        :style="{ 
+                          backgroundColor: badgeStyles(activity.badge).bg, 
+                          color: badgeStyles(activity.badge).fg 
+                        }"
+                      >
+                        {{ activity.badge }}
+                      </span>
                     </small>
                   </div>
                   <button 
@@ -157,6 +174,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { auth, db } from "../firebase.js";
 import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { tagStyles, badgeStyles } from "@/lib/tagColors";
 
 export default {
   name: "CalendarComponent",
@@ -177,6 +195,8 @@ export default {
       tooltipPos: { top: 0, left: 0 },
       isMouseOverPopup: false,
       isMouseOverEvent: false,
+      tagStyles,
+      badgeStyles,
     };
   },
   async mounted() {
