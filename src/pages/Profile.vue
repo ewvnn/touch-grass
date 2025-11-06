@@ -793,10 +793,47 @@ async function changePassword() {
 .upload-input { display: none; }
 .avatar-buttons { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
 
-.btn-upload-pic { padding: 0.5rem 1rem; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px;}
-.btn-upload-pic:hover { background: #16a34a; }
-.btn-delete-pic { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.95rem; min-width: 140px; height: 40px; }
-.btn-delete-pic:hover:not(:disabled) { background: #dc2626; }
+.btn-upload-pic { 
+  padding: 0.5rem 1rem; 
+  background: #15803d !important; 
+  color: white; 
+  border: none; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 500; 
+  transition: background 0.3s ease; 
+  font-size: 0.95rem; 
+  min-width: 140px; 
+  height: 40px;
+}
+
+.btn-upload-pic:hover { 
+  background: #14532d !important; 
+}
+
+.btn-delete-pic { 
+  padding: 0.5rem 1rem; 
+  background: #ef4444; 
+  color: white; 
+  border: none; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 500; 
+  transition: background 0.3s ease; 
+  font-size: 0.95rem; 
+  min-width: 140px; 
+  height: 40px; 
+}
+
+.btn-delete-pic:hover:not(:disabled) { 
+  background: #b91c1c; 
+}
+
+.btn-delete-pic:disabled { 
+  background: #9ca3af; 
+  cursor: not-allowed; 
+}
+
 .btn-delete-pic:disabled { background: #9ca3af; cursor: not-allowed; }
 .info-section { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
 
@@ -838,27 +875,57 @@ async function changePassword() {
   }
 }
 
-.btn-save-field, .btn-change-password { padding: 0.4rem 0.8rem; background: #15803d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
-.btn-save-field:hover, .btn-change-password:hover { background: #15803d; }
-.btn-cancel-field { padding: 0.4rem 0.8rem; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s; font-size: 0.9rem; }
-.btn-cancel-field:hover { background: #d1d5db; }
+.btn-save-field, .btn-change-password { 
+  padding: 0.4rem 0.8rem; 
+  background: #15803d; 
+  color: white; 
+  border: none; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 500; 
+  transition: background 0.3s ease; 
+  font-size: 0.9rem; 
+}
+
+.btn-save-field:hover, .btn-change-password:hover { 
+  background: #14532d; 
+}
+
+.btn-cancel-field { 
+  padding: 0.4rem 0.8rem; 
+  background: #e5e7eb; 
+  color: #374151; 
+  border: none; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 500; 
+  transition: background 0.3s ease; 
+  font-size: 0.9rem; 
+}
+
+.btn-cancel-field:hover { 
+  background: #9ca3af; 
+}
+
 .btn-change-password {
   padding: 0.5rem 1rem;
-  background: #22c55e;
+  background: #15803d !important;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: background 0.3s ease;
   font-size: 0.95rem;
   min-width: 140px;
   height: 40px;
 }
 
 .btn-change-password:hover {
-  background: #15803d;
+  background: #14532d !important;
 }
+
+
 .success { color: #16a34a; margin-top: 0.75rem; font-size: 1rem; }
 .error { margin-top: 0.75rem; color: #b91c1c; font-size: 1rem; }
 .edit-icon {
