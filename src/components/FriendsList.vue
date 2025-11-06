@@ -387,7 +387,7 @@ async function confirmRemoveFriend() {
 
 .btn-search {
   padding: 0.5rem 1rem;
-  background: #3b82f6;
+  background: #15803d !important;
   color: white;
   border: none;
   border-radius: 6px;
@@ -397,7 +397,7 @@ async function confirmRemoveFriend() {
 }
 
 .btn-search:hover {
-  background: #2563eb;
+  background: #14532d !important;
 }
 
 .error {
