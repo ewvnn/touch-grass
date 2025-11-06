@@ -196,7 +196,7 @@ Each member should contribute 2–3 sentences on their learning and project expe
 
 >*Ewen:* I learned about how implementing frameworks like Vue can build efficient websites that make web development easier. I learned how to apply HTML, CSS and Javascript to a functional website. I have learned a lot on how each component interacts with each other to perform an action, but I still feel that there is still so much about web development that can be learned and implemented.
 
->*Xiao Thong:* I learned to deploy Firebase and configure Firebase Authentication and Firestore from scratch, and integrate them with our website. Moreover, it is enlighted to know how Vue can speed up development while keeping the UI modular, maintainable, and easy to extend.
+>*Xiao Thong:* I learned to deploy Firebase and configure Firebase Authentication and Firestore from scratch, and integrate them with our website. It was the first time using Firebase so it took me some times to figure it out how to do it, but eventually I managed to deploy it. Moreover, it is enlighted to know how Vue can speed up development while keeping the UI modular, maintainable, and easy to extend.
 
 > *Wasil:* Improved UI/UX design workflow and collaboration using Figma.
  
