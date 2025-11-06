@@ -32,8 +32,25 @@
                       <small class="d-block text-muted">{{ element.location }}</small>
                       <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
                       <small class="d-block mt-1">
-                        <span class="badge bg-info">{{ element.category }}</span>
-                        <span v-if="element.badge" class="badge bg-warning ms-1">{{ element.badge }}</span>
+                        <span 
+                        class="badge" 
+                        :style="{ 
+                          backgroundColor: tagStyles(element.category).bg, 
+                          color: tagStyles(element.category).fg 
+                        }"
+                      >
+                        {{ element.category }}
+                      </span>
+                      <span 
+                        v-if="element.badge" 
+                        class="badge ms-1"
+                        :style="{ 
+                          backgroundColor: badgeStyles(element.badge).bg, 
+                          color: badgeStyles(element.badge).fg 
+                        }"
+                      >
+                        {{ element.badge }}
+                      </span>
                       </small>
                     </div>
                   </template>
@@ -290,6 +307,7 @@ import {
 
 import { onAuthStateChanged } from "firebase/auth";
 import draggable from 'vuedraggable';
+import { tagStyles, badgeStyles } from "@/lib/tagColors";
 
 export default {
   name: 'ItineraryPlanner',
@@ -313,6 +331,8 @@ export default {
       startDateInput: '', // YYYY-MM-DD
       endDateInput: '', // YYYY-MM-DD
       dateError: '',
+      tagStyles,
+      badgeStyles,
 
       //favourite list
       activities: [],
@@ -714,25 +734,25 @@ export default {
     // In your 'methods: { ... }' object
 
     setActiveDay(date) {
-      // 1. Set the active date
-      this.activeDate = date;
+  // 1. Set the active date
+  this.activeDate = date;
 
-      // 2. Loop through all days to collapse/expand
-      Object.keys(this.dailyItinerary).forEach(dayKey => {
+  // 2. Loop through all days to collapse/expand
+  Object.keys(this.dailyItinerary).forEach(dayKey => {
+    if (dayKey === date) {
+      // This is the active day, expand it
+      this.dailyItinerary[dayKey].isExpanded = true;
+    } else {
+      // This is an inactive day, collapse it
+      this.dailyItinerary[dayKey].isExpanded = false;
+    }
+  });
 
-        if (dayKey === date) {
-          // This is the active day, expand it
-          this.dailyItinerary[dayKey].isExpanded = true;
-        } else {
-          // This is an inactive day, collapse it
-          this.dailyItinerary[dayKey].isExpanded = false;
-        }
-
-      });
-
-      // 3. Render the route
-      this.renderRoute();
-    },
+  // 3. Clear the map and render the route for the active day
+  this.$nextTick(() => {
+    this.renderRoute();
+  });
+},
 
     // *** NEW: DELETE DAY METHODS ***
     showDeleteDayConfirm(date) {
@@ -1273,11 +1293,16 @@ export default {
      * (reordering OR adding). We just update the map.
      */
     onDragEnd() {
-      this.$nextTick(() => {
-        this.renderRoute();
-        // this.scheduleSave(); // Removed for manual save
-      });
-    },
+  // Force re-render after drag to update pin numbers
+  this.$nextTick(() => {
+    // Clear existing markers first
+    this.currentMarkers.forEach(m => m.setMap(null));
+    this.currentMarkers = [];
+    
+    // Then render the route with new order
+    this.renderRoute();
+  });
+},
 
 
     async removePlace(date, index) {
@@ -1327,13 +1352,70 @@ export default {
 
     // },
 
-    toggleDay(date) {
-      // This function ONLY toggles the list.
-      // It no longer calls renderRoute().
-      this.dailyItinerary[date].isExpanded = !this.dailyItinerary[date].isExpanded;
+   toggleDay(date) {
+  const wasExpanded = this.dailyItinerary[date].isExpanded;
+  
+  // Toggle the expansion state
+  this.dailyItinerary[date].isExpanded = !wasExpanded;
 
-      // (We've removed the renderRoute() call from here)
-    },
+  // If we just expanded this day, make it the active day and render its route
+  if (!wasExpanded) {
+    this.activeDate = date;
+    // Collapse all other days
+    Object.keys(this.dailyItinerary).forEach(dayKey => {
+      if (dayKey !== date) {
+        this.dailyItinerary[dayKey].isExpanded = false;
+      }
+    });
+    this.$nextTick(() => {
+      this.renderRoute();
+    });
+  } else {
+    // If we just collapsed this day, clear the map completely
+    this.activeDate = null;
+    
+    // Use the dedicated clear method
+    this.clearMapCompletely();
+  }
+},
+clearMapCompletely() {
+  console.log('clearMapCompletely called');
+  
+  // Clear all numbered location markers
+  if (this.currentMarkers && this.currentMarkers.length > 0) {
+    console.log('Clearing', this.currentMarkers.length, 'markers');
+    this.currentMarkers.forEach((marker, index) => {
+      console.log('Removing marker', index, 'position:', marker.getPosition()?.toString());
+      if (marker) {
+        marker.setMap(null); // Remove from map
+        marker.setVisible(false); // Make invisible
+      }
+    });
+    this.currentMarkers.length = 0; // Clear array differently
+    this.currentMarkers = []; // Also reassign
+    console.log('All markers cleared. currentMarkers length:', this.currentMarkers.length);
+  } else {
+    console.log('No markers to clear');
+  }
+  
+  // Clear the route line
+  if (this.directionsRenderer) {
+    this.directionsRenderer.set('directions', null);
+    this.directionsRenderer.setMap(null);
+    this.directionsRenderer.setMap(this.map);
+    console.log('Route cleared');
+  }
+  
+  // Clear search marker
+  if (this.marker) {
+    this.marker.setMap(null);
+    this.marker.setVisible(false);
+    this.marker = null;
+    console.log('Search marker cleared');
+  }
+  
+  console.log('clearMapCompletely finished');
+},
 
     updateItineraryList() {
       this.itinerary = Object.values(this.dailyItinerary).flatMap(day => day.places);
@@ -1341,20 +1423,37 @@ export default {
 
     // REPLACE your entire renderRoute function with this one:
     renderRoute() {
-      // 1. --- CLEAR THE MAP ---
-      if (this.marker) {
-        this.marker.setMap(null);
-        this.marker = null;
+  // 1. --- CLEAR THE MAP COMPLETELY ---
+  console.log('Clearing map. Current markers count:', this.currentMarkers.length);
+  
+  // Clear search marker
+  if (this.marker) {
+    this.marker.setMap(null);
+    this.marker = null;
+  }
+  
+  // Clear ALL numbered location markers
+  if (this.currentMarkers && this.currentMarkers.length > 0) {
+    this.currentMarkers.forEach(m => {
+      if (m && m.setMap) {
+        m.setMap(null);
       }
-      this.currentMarkers.forEach(m => m.setMap(null));
-      this.currentMarkers = [];
-      this.directionsRenderer.setDirections({ routes: [] });
+    });
+    this.currentMarkers = [];
+  }
+  
+  // Clear the route line
+  if (this.directionsRenderer) {
+    this.directionsRenderer.setDirections({ routes: [] });
+  }
 
-      // 2. --- FIND THE *ACTIVE* DAY ---
-      if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
-        console.log('No active day to render. Map is clean.');
-        return;
-      }
+  // 2. --- FIND THE *ACTIVE* DAY --- 
+  if (!this.activeDate || !this.dailyItinerary[this.activeDate]) {
+    console.log('No active day to render. Map is clean.');
+    return;
+  }
+
+  console.log('Rendering route for active date:', this.activeDate);
 
       const date = this.activeDate;
       const places = this.dailyItinerary[date].places;
@@ -1365,26 +1464,30 @@ export default {
       }
 
       // 3. --- DRAW ALL PINS FOR THE ACTIVE DAY ---
-      places.forEach((place, index) => {
-        // Check if place has valid coordinates
-        if (!place.lat || !place.lng) {
-          console.warn(`Skipping marker for "${place.name}" - missing coordinates.`);
-          return; // Skip this pin
-        }
+places.forEach((place, index) => {
+  // Check if place has valid coordinates
+  if (!place.lat || !place.lng) {
+    console.warn(`Skipping marker for "${place.name}" - missing coordinates.`);
+    return; // Skip this pin
+  }
 
-        const marker = new google.maps.Marker({
-          position: { lat: place.lat, lng: place.lng },
-          map: this.map,
-          // ✅ This is the corrected label object
-          label: {
-            text: `${index + 1}`,
-            color: 'white',
-            fontWeight: 'bold'
-          },
-          title: place.name,
-        });
-        this.currentMarkers.push(marker);
-      });
+  const marker = new google.maps.Marker({
+    position: { lat: place.lat, lng: place.lng },
+    map: null, // Don't set map yet
+    label: {
+      text: `${index + 1}`,
+      color: 'white',
+      fontWeight: 'bold'
+    },
+    title: place.name,
+  });
+  
+  // Explicitly set the map
+  marker.setMap(this.map);
+  
+  this.currentMarkers.push(marker);
+  console.log('Created marker', index + 1, 'at', place.name);
+});
 
       // 4. --- DRAW THE ROUTE FOR THE ACTIVE DAY ---
       if (places.length < 2) return;
