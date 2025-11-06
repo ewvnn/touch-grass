@@ -118,6 +118,7 @@ VITE_FIREBASE_PROJECT_ID=<your_project_id>
 VITE_FIREBASE_STORAGE_BUCKET=<your_storage_bucket>
 VITE_FIREBASE_MESSAGING_SENDER_ID=<your_sender_id>
 VITE_FIREBASE_APP_ID=<your_app_id>
+VITE_GOOGLE_MAPS_API_KEY=<your_google_maps_api_key>
 ```
 
 > Never commit the `.env` file to your repository.  
@@ -199,7 +200,7 @@ Each member should contribute 2–3 sentences on their learning and project expe
 
 > *Wasil:* Improved UI/UX design workflow and collaboration using Figma.
  
-> *Fazil:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.
+> *Fazil:* I learnt how powerful and seamless it is by implementing frameworks like Vue for projects that spans across many webpages. I applied all we learnt in class by combining HTML, CSS, Javascript, Vue and using Google Maps API to pin point locations for travel and seamlessly route between them. The sky is the limit for web development and it opened me up to its the endless possibilities and there are many amazing frameworks developers have created that we could tap on for our own development too.
 
 > *Jia Le:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
 
@@ -207,6 +208,6 @@ As a team, reflect on:
 - **Key takeaways from working with real-world frameworks:**
 We learned that using frameworks makes coding more efficient and simpler, especially for reusable content or components. 
 - **Challenges faced and how they were resolved:**
-None of us had the technical knowledge to build a website, but it was a fulfilling challenge to learn along the way. We felt that we had a better understanding of the architecture required to build a website and how each aspect fucntions. When we encountered issues with ideation and coding, we consulted the professors, TAs and other seniors for help and advice, and worked toward getting to the next checkpoint.
+None of us had the technical knowledge to build a website, but it was a fulfilling challenge to learn along the way. We felt that we had a better understanding of the architecture required to build a website and how each aspect functions. When we encountered issues with ideation and coding, we consulted the professors, TAs and other seniors for help and advice, and worked toward getting to the next checkpoint.
 - **Insights on teamwork, project management, and problem-solving:**
 We worked cohesively as a team, exchanging ideas and communicating well such that our ideas were adequately translated onto the website. Project Management could be better allocated, as we mainly did our parts during our own time. We feel that we did divide the workload equally.
