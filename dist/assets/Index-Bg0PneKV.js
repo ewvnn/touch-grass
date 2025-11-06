@@ -1,4 +1,4 @@
-import{_ as I,r as _,o as W,a as re,c,b as t,F as m,d as p,e as n,n as N,f as le,t as d,g as D,h as y,w as T,i as C,j as U,k as F,s as G,u as R,l as X,m as K,p as Z,q as w,v as P,x as ie,y as Q,z as ne,A as E,B as ae,C as ce}from"./index-CCUO2SZ1.js";import{d as Y,a as J}from"./firebase-Qt0bJ9_b.js";const de={class:"hero-section"},ue={class:"grass-container"},fe=["viewBox"],ve=["width"],he=["d","fill","opacity"],ge={__name:"Hero",setup(s){const e=_([]),i=_(-1e3),g=_(-1e3),r=_(null),l=_(1200);_(200);function u(a,v,h,b){return`
+import{_ as I,r as _,o as W,a as re,c,b as t,F as m,d as p,e as n,n as N,f as le,t as d,g as D,h as y,w as T,i as C,j as U,k as F,s as G,u as R,l as X,m as K,p as Z,q as w,v as P,x as ie,y as Q,z as ne,A as E,B as ae,C as ce}from"./index-Cfbfs0eM.js";import{d as Y,a as J}from"./firebase-4hlW7Out.js";const de={class:"hero-section"},ue={class:"grass-container"},fe=["viewBox"],ve=["width"],he=["d","fill","opacity"],ge={__name:"Hero",setup(s){const e=_([]),i=_(-1e3),g=_(-1e3),r=_(null),l=_(1200);_(200);function u(a,v,h,b){return`
     M ${a} 150
     Q ${a+b} ${150-v*.5}, ${a+b*.5} ${150-v*.8}
     Q ${a+b*.3} ${150-v}, ${a} ${150-v}
