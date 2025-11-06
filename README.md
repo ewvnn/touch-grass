@@ -202,11 +202,12 @@ Each member should contribute 2–3 sentences on their learning and project expe
 
 >*Xiao Thong:* I learned to deploy Firebase and configure Firebase Authentication and Firestore from scratch, and integrate them with our website. It was the first time using Firebase so it took me some times to figure it out how to do it, but eventually I managed to deploy it. Moreover, it is enlighted to know how Vue can speed up development while keeping the UI modular, maintainable, and easy to extend.
 
-> *Wasil:* Improved UI/UX design workflow and collaboration using Figma.
+> *Wasil:* I learned how APIs work and their different functionalities to implement especially Google Maps API that has different APIs within. Moreover, I learnt about Vue Draggable and how it can be implemented to simplify a dragging feature we wanted to implement. We also went through multiple rounds of design changes to enhance the user experience.
  
 > *Fazil:* I learnt how powerful and seamless it is by implementing frameworks like Vue for projects that spans across many webpages. I applied all we learnt in class by combining HTML, CSS, Javascript, Vue and using Google Maps API to pin point locations for travel and seamlessly route between them. The sky is the limit for web development and it opened me up to its the endless possibilities and there are many amazing frameworks developers have created that we could tap on for our own development too.
 
-> *Jia Le:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
+> *Jia Le:* I learnt how to use Vue and implement components effectively, which deepened my understanding of front-end development. I also explored new CSS styling techniques that greatly enhanced the visual appeal of web pages and opened my eyes to the vast possibilities within CSS. Additionally, I experimented with some out-of-scope JavaScript code, which helped me broaden my technical skills beyond the core requirements.
+
 
 As a team, reflect on:
 - **Key takeaways from working with real-world frameworks:**
