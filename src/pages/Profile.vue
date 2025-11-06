@@ -46,8 +46,9 @@
             <div class="field-content d-flex align-items-center justify-content-md-start justify-content-center gap-2 flex-wrap">
               <template v-if="editingDisplayName">
                 <input v-model="editDisplayName" type="text" class="input" />
-                <button @click="cancelEditDisplayName" class="btn-cancel-field">Cancel</button>
                 <button @click="saveDisplayName" class="btn-save-field">Save</button>
+                <button @click="cancelEditDisplayName" class="btn-cancel-field">Cancel</button>
+                
               </template>
               <template v-else>
                 <span class="username">{{ displayName || 'No username set' }}</span>
