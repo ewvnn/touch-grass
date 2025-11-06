@@ -30,7 +30,7 @@
                     <div class="list-group-item" style="cursor: grab;">
                       <strong>{{ element.title }}</strong>
                       <small class="d-block text-muted">{{ element.location }}</small>
-                      <small class="d-block text-muted mt-1">📅 {{ element.date }}</small>
+                      <small class="d-block text-muted mt-1">{{ element.date }}</small>
                       <small class="d-block mt-1">
                         <span class="badge" :style="{
                           backgroundColor: tagStyles(element.category).bg,
@@ -61,7 +61,7 @@
             <p class="mb-4 text-secondary fs-5">Nothing's planned yet. Let's get started!</p>
             <button @click="showDateSelectionModal = true"
               class="btn btn-lg rounded-pill px-4 py-3 shadow-sm text-white bg-success">
-              <span class="me-2">📅</span> Add trip dates
+              <span class="me-2"></span> Add trip dates
             </button>
           </div>
 
@@ -70,10 +70,10 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
               <span class="fs-5 fw-bold text-success">{{ dateRangeDisplay }}</span>
               <div>
-                <button class="btn btn-sm btn-success me-2" @click="saveItinerary"
+                <button class="btn btn-sm btn-success me-2" @click="saveAndReload" 
                   :disabled="!currentUser || !tripId || isSaving">
                   <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                  <span v-else class="me-1">💾</span>
+                  <!-- <span v-else class="me-1">💾</span> -->
                   Save
                 </button>
                 <button @click="showDateSelectionModal = true" class="btn btn-sm btn-outline-secondary">
@@ -132,12 +132,21 @@
                           <a :href="getDirectionsUrl(dailyItinerary[date].places[index - 1], element)" target="_blank"
                             class="btn btn-sm btn-link p-0 directions-btn">Open in Maps</a>
                         </div>
+
+                        <div v-if="index === 0"
+                          class="route-info d-flex align-items-center mt-2 pt-2 border-top">
+                          <span class="distance-text me-3">Start your journey here:</span>
+                          <a :href="getStartDirectionsUrl(element)" target="_blank"
+                            class="btn btn-sm btn-link p-0 directions-btn">
+                            <i class="fas fa-car me-1"></i> Route from my location
+                          </a>
+                        </div>
                       </div>
 
                       <div class="d-flex align-items-center flex-shrink-0 ms-2 control-group">
-                        <button @click="removePlace(date, index)" class="btn btn-sm btn-outline-danger p-1"
+                        <button @click="removePlace(date, index)" class="btn btn-sm p-1"
                           title="Remove place">
-                          <span>🗑️</span>
+                          <span> <img class="remove-icon" src="../../public/images/remove-icon.png" alt=""></span>
                         </button>
                       </div>
                     </div>
@@ -682,6 +691,21 @@ export default {
         console.error("Error saving itinerary:", error);
       } finally {
         this.isSaving = false;
+      }
+    },
+
+    // Add this new method
+    async saveAndReload() {
+      try {
+        // Wait for the save to complete
+        await this.saveItinerary();
+        
+        // NOW, force the page to reload
+        location.reload();
+        
+      } catch (error) {
+        // If the save fails, log it and DON'T reload
+        console.error("Save failed, not reloading:", error);
       }
     },
 
@@ -1469,7 +1493,7 @@ export default {
           position: { lat: place.lat, lng: place.lng },
           map: this.map,
           label: {
-            text: String(labelCounter++),
+            // text: String(labelCounter++),
             color: 'white',
             fontWeight: 'bold'
           },
@@ -1570,10 +1594,28 @@ export default {
       };
     },
 
+        /**
+     * Generates a Google Maps URL for routing from the user's current location 
+     * to the specified destination.
+     * * @param {Object} destination - The place object to route to.
+     * @returns {string} The Google Maps directions URL.
+     */
+    getStartDirectionsUrl(destination) {
+      // Use a blank string or 'Current+Location' for the origin, 
+      // which prompts Google Maps to use the user's location.
+      const originStr = ''; 
+      const destStr = `${destination.lat},${destination.lng}`;
+
+      // The base Google Maps directions URL structure
+      return `https://www.google.com/maps/dir/${originStr}/${destStr}/`;
+    },
+    
+
     getDirectionsUrl(origin, destination) {
       const originStr = `${origin.lat},${origin.lng}`;
       const destStr = `${destination.lat},${destination.lng}`;
-      return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}&travelmode=driving`;
+      // Corrected URL structure
+      return `https://www.google.com/maps/dir/${originStr}/${destStr}/data=!4m2!4m1!3e0`; // data=!4m2!4m1!3e0 often forces DRIVING mode
     },
 
 
@@ -1810,6 +1852,12 @@ export default {
     height: 50vh;
     min-height: 300px;
   }
+}
+
+.remove-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .sidebar-save-bar {

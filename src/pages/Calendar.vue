@@ -68,7 +68,7 @@
                   <div class="flex-grow-1">
                     <strong>{{ activity.title }}</strong>
                     <small class="d-block text-muted">{{ activity.location }}</small>
-                    <small class="d-block text-muted mt-1">📅 {{ activity.date }}</small>
+                    <small class="d-block text-muted mt-1">{{ activity.date }}</small>
                     <small class="d-block mt-1">
                       <span 
                         class="badge" 
