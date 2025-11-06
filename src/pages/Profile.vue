@@ -876,31 +876,34 @@ async function changePassword() {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw;    /* full viewport width */
+  height: 100vh;   /* full viewport height */
   background: rgba(0,0,0,0.5);
+
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; /* horizontal centering */
+  align-items: center;     /* vertical centering */
+
   z-index: 1000;
-  padding: 1rem;
-  box-sizing: border-box;
 }
 
 .modal {
   background: #fff;
   padding: 2rem;
   border-radius: 12px;
+  /* width: auto; */
   max-width: 400px;
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  max-height: 90vh;
+  height: auto;       /* shrink to content */
+  max-height: 90vh;   /* prevent going off-screen */
   border: 3px solid black;
-  box-sizing: border-box;
-  overflow-y: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @media (max-width: 768px) {
