@@ -15,7 +15,7 @@
 | <img src="photos/xiaothong.png" width="80"> | Lai Xiao Thong | Landing Page and Firebase Authentication |
 | <img src="photos/fazil.jpeg" width="80"> | Fazil Akram Dereinda | Itinerary and API Integration |
 | <img src="photos/wasil.jpeg" width="80"> | Mohamed Wasil Raseen | Itinerary and API Integration |
-| <img src="photos/jiale.jpeg" width="80"> | Lim Jia Le | Calendar and Landing Page |
+| <img src="photos/jiale.jpeg" width="80"> | Lee Jia Le | Calendar and Landing Page |
 
 
 ---
